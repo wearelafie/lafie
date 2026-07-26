@@ -130,6 +130,38 @@ clients/lafie-navigator/
 - Le hamburger de `TopBar` bascule `SideNav` (rail 48px ↔ drawer 240px).
 - L'icône **⚙ Réglages** ouvre le **`SettingsDialog`** (`features/settings`, façon Outlook) : nav gauche (Langue, Apparence, Notifications, Confidentialité, Recherche) + panneau **Apparence** (mode **Clair/Sombre/Système**, couleurs, barre de navigation).
 
+### Icônes
+
+Deux familles, deux usages :
+
+| Usage | Source | Rendu |
+| --- | --- | --- |
+| **Menu / navigation** (SideNav) | **fluent-color** (`@iconify-json/fluent-color`) via **unplugin-icons** | **colorées** (dégradés multi-tons), fidèle aux « icônes d'application colorées » Outlook |
+| Contrôles / actions (TopBar, CommandBar, boutons) | `@fluentui/react-icons` | monochromes (héritent `currentColor`) |
+
+**Mise en place (offline, tree-shakée) :**
+- `unplugin-icons` (Vite) + `@svgr/core` + `@svgr/plugin-jsx` (compilateur JSX) consomment `@iconify-json/fluent-color`.
+- `vite.config.ts` : `Icons({ compiler: 'jsx', jsx: 'react' })`.
+- Types : `/// <reference types="unplugin-icons/types/react" />` dans `src/vite-env.d.ts`.
+- Import : `import HomeIcon from '~icons/fluent-color/home-24'` → composant React SVG. Taille forcée à 20px dans la SideNav (`& svg`).
+
+**Mapping du menu** (variantes `-24`) :
+
+| Module | Icône fluent-color |
+| --- | --- |
+| Accueil | `home-24` |
+| Patients | `people-24` |
+| Agenda | `calendar-24` |
+| Clinique | `person-heart-24` |
+| Pharmacie | `molecule-24` *(le set n'a pas de pilule/gélule)* |
+| Laboratoire | `data-scatter-24` *(pas de bécher/microscope)* |
+| Facturation | `receipt-24` |
+| Administration | `settings-24` |
+
+> Le set fluent-color (890 icônes) n'a **ni pilule ni bécher** → Pharmacie/Labo utilisent des approximations (`molecule`, `data-scatter`). À réévaluer si un set médical coloré est ajouté.
+
+> ⚠️ **Gotcha install** : le projet est en **Vite 8** alors que `vite-plugin-pwa` déclare un peer Vite ≤ 7 → les `npm install` nécessitent `--legacy-peer-deps` (fixé via `.npmrc` `legacy-peer-deps=true` ; le Dockerfile passe le flag à `npm ci`).
+
 ### Responsive / mobile
 
 Breakpoint **768px** via `shared/hooks/useMediaQuery` (`useIsMobile`).

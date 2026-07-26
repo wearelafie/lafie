@@ -1,8 +1,10 @@
 # --- build ---
 FROM node:24-alpine AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package*.json .npmrc* ./
+# --legacy-peer-deps : le projet est en Vite 8 alors que vite-plugin-pwa déclare
+# un peer Vite <= 7 (compatible en pratique). À retirer quand pwa supportera Vite 8.
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 

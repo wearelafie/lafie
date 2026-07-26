@@ -3,11 +3,14 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import Icons from 'unplugin-icons/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Icônes Iconify (fluent-color) importées offline + tree-shakées via ~icons/*.
+    Icons({ compiler: 'jsx', jsx: 'react' }),
     VitePWA({
       registerType: 'autoUpdate',
       // PWA : app installable + cache des assets (shell offline).
