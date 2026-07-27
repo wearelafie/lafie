@@ -7,7 +7,7 @@ using Lafie.Organization.Application;
 using Lafie.Organization.Domain;
 using Lafie.Patient.Application;
 using Lafie.Patient.Domain;
-using Lafie.SharedKernel;
+using Lafie.Core;
 using Lafie.Terminology.Application;
 using Lafie.Terminology.Domain;
 using NetArchTest.Rules;
@@ -21,9 +21,10 @@ namespace Lafie.ArchitectureTests;
 /// </summary>
 public class LayeringTests
 {
-    // Préfixes précis (point final) pour ne pas confondre "Lafie.Shared" et "Lafie.SharedKernel".
-    private const string SharedNs = "Lafie.Shared.";
-    private const string InfrastructureNs = "Lafie.Infrastructure.";
+    // Préfixes des BuildingBlocks interdits au Domaine (il ne dépend que de Lafie.Core).
+    // Point final pour ne pas confondre "Lafie.Shared" et... (aucun autre préfixe ambigu ici).
+    private static readonly string[] FrameworkNs =
+        ["Lafie.Shared.", "Lafie.Persistence.", "Lafie.Eventing.", "Lafie.Web."];
 
     private static readonly string[] ModuleNames =
         ["Identity", "Organization", "Patient", "Terminology", "Interop"];
@@ -53,7 +54,7 @@ public class LayeringTests
         {
             var result = Types.InAssembly(assembly)
                 .ShouldNot()
-                .HaveDependencyOnAny(SharedNs, InfrastructureNs)
+                .HaveDependencyOnAny(FrameworkNs)
                 .GetResult();
 
             Assert.True(
@@ -91,14 +92,14 @@ public class LayeringTests
     [Fact]
     public void SharedKernel_ne_depend_de_rien_d_autre_dans_Lafie()
     {
-        var result = Types.InAssembly(typeof(Entity).Assembly)
+        var result = Types.InAssembly(typeof(ILafieCore).Assembly)
             .ShouldNot()
-            .HaveDependencyOnAny(SharedNs, InfrastructureNs)
+            .HaveDependencyOnAny(FrameworkNs)
             .GetResult();
 
         Assert.True(
             result.IsSuccessful,
-            "Lafie.SharedKernel ne doit dépendre d'aucun autre projet Lafie : "
+            "Lafie.Core ne doit dépendre d'aucun autre projet Lafie : "
             + string.Join(", ", result.FailingTypeNames ?? []));
     }
 }

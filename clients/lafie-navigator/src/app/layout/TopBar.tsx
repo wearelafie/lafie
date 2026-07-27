@@ -5,7 +5,6 @@ import {
   Button,
   CounterBadge,
   SearchBox,
-  Text,
   Tooltip,
   makeStyles,
   mergeClasses,
@@ -29,7 +28,7 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorBrandBackground,
     color: tokens.colorNeutralForegroundOnBrand,
   },
-  brand: { fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase400 },
+  logo: { height: '28px', width: 'auto', display: 'block' },
   searchWrap: { flex: 1, display: 'flex', justifyContent: 'center' },
   search: { width: '100%', maxWidth: '480px' },
   right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS },
@@ -60,7 +59,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         icon={<Apps24Regular />}
         aria-label="Applications"
       />
-      <Text className={styles.brand}>Lafie</Text>
+      <img src="/logo/lafie-white.svg" alt="Lafie" className={styles.logo} />
 
       <div className={styles.searchWrap}>
         <SearchBox className={styles.search} placeholder={t('search')} />

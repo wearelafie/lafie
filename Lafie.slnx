@@ -4,9 +4,13 @@
     <Project Path="src/Api/Lafie.Api/Lafie.Api.csproj" />
   </Folder>
   <Folder Name="/src/BuildingBlocks/">
-    <Project Path="src/BuildingBlocks/Lafie.Infrastructure/Lafie.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Caching/Lafie.Caching.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Core/Lafie.Core.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Eventing.Abstractions/Lafie.Eventing.Abstractions.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Eventing/Lafie.Eventing.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Persistence/Lafie.Persistence.csproj" />
     <Project Path="src/BuildingBlocks/Lafie.Shared/Lafie.Shared.csproj" />
-    <Project Path="src/BuildingBlocks/Lafie.SharedKernel/Lafie.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/Lafie.Web/Lafie.Web.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Identity/">
@@ -41,5 +45,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Lafie.ArchitectureTests/Lafie.ArchitectureTests.csproj" />
+    <Project Path="tests/Lafie.Framework.Tests/Lafie.Framework.Tests.csproj" />
   </Folder>
 </Solution>

@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lafie.Interop.Application\Lafie.Interop.Application.csproj" />
-    <ProjectReference Include="..\..\..\BuildingBlocks\Lafie.Infrastructure\Lafie.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Lafie.Persistence\Lafie.Persistence.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

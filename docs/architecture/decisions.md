@@ -79,6 +79,12 @@ Décisions structurantes de Lafie. Format léger. Statut au 2026-07-21 : **valid
 **Pourquoi.** Spec fournie par l'utilisateur (2026-07-22). **Persistance maintenue en Dapper** (la ligne EF Core de la spec est écartée — cf. ADR-009) ; patterns EF réinterprétés pour Dapper (soft-delete/audit/domain events/tenant — voir stack.md).
 **Conséquence.** Mediator remplace les interfaces CQRS maison de `Lafie.Shared`. Adoption **par phases** (baseline → auth → multitenancy → cross-cutting). ⚠️ ASP.NET Identity suppose EF : en Dapper, prévoir stores custom ou JWT-only (à trancher au module Identity).
 
+## ADR-013 — BuildingBlocks par préoccupation (inspiré fullstackhero) + dossier agent ✅ validé
+
+**Décision.** Restructurer les BuildingBlocks en projets par préoccupation à la fullstackhero/dotnet-starter-kit, **adaptés à notre stack** : `Lafie.Core` (ex-SharedKernel), `Lafie.Shared`, `Lafie.Persistence` (Dapper), `Lafie.Eventing`, `Lafie.Web` ; différés : Caching/Jobs/Mailing/Storage/Quota. Mettre en place un dossier **`.agents/`** (rules + skills) + `AGENTS.md` + `CLAUDE.md`.
+**Pourquoi.** Demande utilisateur (2026-07-24) : aligner la base sur un kit éprouvé, tout en conservant NOS choix de packages (Dapper≠EF Core, Mediator≠MediatR, pas de migrations EF, HybridCache/Valkey, Finbuckle).
+**Conséquence.** Renommages : SharedKernel→Core, Infrastructure→Persistence+Eventing (split). Web ajouté (`IModule`). Tests d'archi mis à jour (préfixes Core/Persistence/Eventing/Web). Build 28 projets, 0/0. Conventions dans `.agents/rules/*` (stack, architecture, buildingblocks-protection, persistence-dapper, mediator) ; procédures `.agents/skills/*` (add-module, query-patterns-dapper, add-sql-migration).
+
 ## Stack retenue
 
 .NET 10 · ASP.NET Core · Firely `Hl7.Fhir.R4` · **Dapper + Npgsql** · FluentValidation · Outbox/bus in-process · Docker Compose (Postgres + web) · **React + TypeScript + Vite** (frontend, nginx) · NetArchTest/ArchUnitNET · OpenTelemetry.

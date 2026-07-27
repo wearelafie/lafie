@@ -15,7 +15,9 @@
     <ProjectReference Include="..\..\Modules\Patient\Lafie.Patient.Api\Lafie.Patient.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Terminology\Lafie.Terminology.Api\Lafie.Terminology.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Interop\Lafie.Interop.Api\Lafie.Interop.Api.csproj" />
-    <ProjectReference Include="..\..\BuildingBlocks\Lafie.Infrastructure\Lafie.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\Lafie.Persistence\Lafie.Persistence.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\Lafie.Eventing\Lafie.Eventing.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\Lafie.Web\Lafie.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

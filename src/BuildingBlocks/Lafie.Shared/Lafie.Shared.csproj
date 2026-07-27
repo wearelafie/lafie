@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Lafie.SharedKernel\Lafie.SharedKernel.csproj" />
+    <ProjectReference Include="..\Lafie.Core\Lafie.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

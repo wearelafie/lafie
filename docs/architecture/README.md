@@ -17,12 +17,16 @@ Lafie.slnx                          solution .NET : backend (Api, BuildingBlocks
 ├── src                             ← BACKEND (.NET)
 │   ├── Api
 │   │   └── Lafie.Api               ASP.NET Core host, FHIR REST facade, SMART on FHIR, composition des modules
-│   ├── BuildingBlocks
-│   │   ├── Lafie.SharedKernel      types domaine de base (AggregateRoot, ValueObject, DomainEvent, Result)
-│   │   ├── Lafie.Shared            contrats inter-modules : integration events, API publiques,
-│   │   │                           abstractions CQRS (ICommand/IQuery, IEventBus) + PORTS de conformité
-│   │   └── Lafie.Infrastructure    technique partagé : Dapper/Npgsql (connection factory), Outbox + bus in-process,
-│   │                               wrappers FHIR (Firely Hl7.Fhir.R4), auth OIDC/SMART, audit ATNA, télémétrie
+│   ├── BuildingBlocks             (découpage par préoccupation, inspiré fullstackhero, adapté à notre stack)
+│   │   ├── Lafie.Core             Domain/ (BaseEntity, AggregateRoot, IDomainEvent:INotification, IAuditable/ISoftDeletable/IHasTenant, ValueObject, Money)
+│   │   │                          Common/ (Result, QueryStringKeys) · Context/ (ICurrentUser…) · Abstractions/ (IAppUser) · Exceptions/
+│   │   ├── Lafie.Shared           contrats inter-modules + PORTS de conformité (+ Mediator.Abstractions)
+│   │   ├── Lafie.Persistence      DAPPER/Npgsql : IDbConnectionFactory, DatabaseHealth (pas d'EF)
+│   │   ├── Lafie.Eventing.Abstractions  IEventBus, IIntegrationEvent, IIntegrationEventHandler, IEventSerializer
+│   │   ├── Lafie.Eventing         InMemory/ · Outbox/ (OutboxMessage, IOutboxStore) · Serialization/ · Telemetry/
+│   │   ├── Lafie.Caching          HybridCache : ICacheService, CacheKeys (Valkey L2 optionnel)
+│   │   ├── Lafie.Web              contrats web : IModule (DI + endpoints) ; behaviors Mediator/ProblemDetails à venir
+│   │   └── (différés)             Jobs (Hangfire) · Mailing · Storage (MinIO/S3) · Quota
 │   └── Modules
 │       ├── Identity                utilisateurs, professionnels, rôles, authent./autoris.
 │       ├── Organization            établissements, services, unités, localisations
@@ -37,10 +41,13 @@ Lafie.slnx                          solution .NET : backend (Api, BuildingBlocks
 ├── clients                         ← FRONTEND (hors solution .NET, toolchain Node)
 │   └── lafie-navigator                        React + TypeScript + Vite (SPA) + Dockerfile (nginx)
 └── tests
-    ├── Lafie.ArchitectureTests     frontières de modules (NetArchTest/ArchUnitNET)
-    ├── <Module>.UnitTests          domaine + handlers
-    └── Lafie.IntegrationTests      Postgres (Testcontainers)
+    ├── Lafie.ArchitectureTests     frontières de modules (NetArchTest)
+    ├── Lafie.Framework.Tests       unit BuildingBlocks : Core/ · Eventing/ · Caching/ (xUnit)
+    ├── <Module>.UnitTests          domaine + handlers (à venir)
+    └── Lafie.IntegrationTests      Postgres (Testcontainers, à venir)
 ```
+
+> ⚠️ Exécution des tests .NET bloquée en natif par **Smart App Control** (`0x800711C7`). Les lancer via **Docker/Linux** : `docker run --rm -v <repo>:/src -w /src mcr.microsoft.com/dotnet/sdk:10.0 dotnet test tests/Lafie.Framework.Tests`. (Framework.Tests : **19/19 verts**.)
 
 > **Séparation clients / backend.** Le frontend est une **SPA React + TypeScript (Vite)** sous `clients/lafie-navigator`, avec sa **propre toolchain Node** et son **propre `Dockerfile`** (build Node → **nginx**). Il **ne fait pas partie de la solution .NET** (`Lafie.slnx` = backend + tests). Client **fin** : il consomme l'API par HTTP via **`/api`** (proxy nginx en conteneur, proxy Vite en dev → pas de CORS). L'image Docker de l'API n'inclut pas les clients (`clients/` exclu via `.dockerignore`). **Mobile** : ultérieur (React Native ou PWA), hors périmètre actuel.
 
@@ -50,11 +57,18 @@ Chaque module sous `Modules/` = **4 projets** : `Lafie.<Module>.Domain`, `.Appli
 
 ## 3. Rôle des BuildingBlocks
 
+> Découpage **par préoccupation** (inspiré fullstackhero/dotnet-starter-kit), **adapté à notre stack** : Dapper (pas EF Core), Mediator (pas MediatR), HybridCache/Valkey, pas de migrations EF (SQL brut).
+
 | Projet | Contenu | Dépendances |
 | --- | --- | --- |
-| `Lafie.SharedKernel` | `Entity`, `AggregateRoot`, `ValueObject`, `DomainEvent`, `Result`, identifiants forts | aucune |
-| `Lafie.Shared` | integration events, interfaces publiques de module, abstractions CQRS, **ports de conformité** | SharedKernel |
-| `Lafie.Infrastructure` | Dapper/Npgsql (`IDbConnectionFactory`), Outbox + bus in-process, wrappers FHIR (Firely), auth OIDC/SMART, audit ATNA, OpenTelemetry | Shared |
+| `Lafie.Core` | `Domain/` (BaseEntity, AggregateRoot, IDomainEvent:INotification, IAuditable/ISoftDeletable/IHasTenant/IGlobalEntity, ValueObject, Money), `Common/` (Result, QueryStringKeys), `Context/`, `Abstractions/`, `Exceptions/` | `Mediator.Abstractions` (INotification) |
+| `Lafie.Shared` | interfaces publiques de module, **ports de conformité** (+ `Mediator.Abstractions`) | Core |
+| `Lafie.Persistence` | **Dapper/Npgsql** : `IDbConnectionFactory`, `NpgsqlConnectionFactory`, `DatabaseHealth`, `AddLafiePersistence` | Shared |
+| `Lafie.Eventing.Abstractions` | `IEventBus`, `IIntegrationEvent(+base)`, `IIntegrationEventHandler`, `IEventSerializer` | aucune |
+| `Lafie.Eventing` | `InMemoryEventBus`, `Outbox/` (`OutboxMessage`, `IOutboxStore`), `JsonEventSerializer`, `AddLafieEventing` | Eventing.Abstractions |
+| `Lafie.Caching` | **HybridCache** : `ICacheService`, `CacheService`, `CacheKeys`, `CachingOptions`, `AddLafieCaching` (Valkey L2 optionnel) | — |
+| `Lafie.Web` | `IModule` (DI + endpoints) ; behaviors Mediator / ProblemDetails / OpenApi à venir | Shared |
+| *(différés)* | Jobs (Hangfire), Mailing, Storage (MinIO/S3), Quota | — |
 
 ## 4. Couches par module (hexagonal)
 

@@ -1,5 +1,6 @@
+using Lafie.Eventing;
 using Lafie.Identity.Api;
-using Lafie.Infrastructure.Persistence;
+using Lafie.Persistence;
 using Lafie.Interop.Api;
 using Lafie.Organization.Api;
 using Lafie.Patient.Api;
@@ -21,6 +22,9 @@ builder.Services.AddMediator();
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? "Host=localhost;Port=5433;Database=lafie;Username=lafie;Password=lafie";
 builder.Services.AddLafiePersistence(connectionString);
+
+// Eventing (bus in-process ; Outbox/broker à venir).
+builder.Services.AddLafieEventing();
 
 // Enregistrement des modules — Phase 0 (socle).
 builder.Services
