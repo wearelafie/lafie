@@ -122,7 +122,7 @@ clients/lafie-navigator/
 | --- | --- | --- |
 | Barre haute (brand) | `TopBar.tsx` | **lanceur de modules** (icône ⊞ **et** logo **Lafie** cliquables), `SearchBox`, bascule langue, notifications (`CounterBadge`), réglages, `Avatar` |
 | Ruban d'actions | `CommandBar.tsx` | `Toolbar` (Nouveau patient, Actualiser…) |
-| Navigation latérale | `SideNav.tsx` | **maison** (Button/Tooltip/Menu Fluent) : rail collapsible ↔ drawer, **sous-menus** par module (accordéon étendu, **flyout** `Menu` au survol en rail réduit) ; items = modules (miroir backend) |
+| Navigation latérale | `SideNav.tsx` | **dynamique** : affiche l'en-tête du **grand module actif** + **ses sous-modules uniquement** (selon la route) ; rail collapsible ↔ drawer |
 | Contenu | `<Outlet/>` | route active |
 
 - Le **contenu d'accueil** = **dashboard widgets** (`features/dashboard` : KPI `StatCard`, agenda du jour, statut système), **pas** un faux 3-panneaux.
@@ -130,11 +130,11 @@ clients/lafie-navigator/
 - Le hamburger de `TopBar` bascule `SideNav` (rail 48px ↔ drawer 240px).
 - L'icône **⚙ Réglages** ouvre le **`SettingsDialog`** (`features/settings`, façon Outlook) : nav gauche (Langue, Apparence, Notifications, Confidentialité, Recherche) + panneau **Apparence** (mode **Clair/Sombre/Système**, couleurs, barre de navigation).
 
-### Modèle de navigation & lanceur de modules
+### Modèle de navigation à deux niveaux (façon Outlook/Teams)
 
-- **`app/nav/navModel.tsx`** = **source de vérité unique** de la navigation (modules + sous-items : `key`, `to`, `labelKey`, `icon`). Consommé par **`SideNav`**, **`AppLauncherDialog`** et le **routeur** (génération des routes à plat via `flatRoutes`).
-- **Sous-menus `SideNav`** : parents colorés (fluent-color) + sous-items mono (`@fluentui/react-icons` `*20Regular`). Rail étendu = accordéon (chevron, groupe actif auto-ouvert) ; rail réduit (48px) = **flyout** `Menu openOnHover`. Sélection pilotée par la route (`useRouterState`).
-- **Lanceur** (`app/layout/AppLauncherDialog.tsx`) : `Dialog` modal ouvert par le **logo** ou l'icône **⊞**. Grille de cartes (une par module) = icône couleur + titre (lien) + sous-items ; **recherche** filtrante (réinitialisée à l'ouverture) ; clic → navigue + ferme ; plein écran en mobile.
+- **`app/nav/navModel.tsx`** = **source de vérité unique** (grands modules + sous-modules : `key`, `to`, `labelKey`, `icon`). Consommé par **`SideNav`**, **`AppLauncherDialog`** et le **routeur** (routes à plat via `flatRoutes`). Helper `findActiveModule(pathname)` = grand module actif (correspondance la plus spécifique ; `/` → Accueil).
+- **Niveau 1 — Lanceur** (`app/layout/AppLauncherDialog.tsx`) : `Dialog` modal ouvert par le **logo** ou l'icône **⊞**. **Grille de tuiles = grands modules uniquement** (icône couleur + nom, **pas** de sous-items) ; **recherche** filtrante (réinitialisée à l'ouverture) ; clic → navigue vers le module + ferme ; plein écran en mobile. Le lanceur est le **commutateur de grands modules**.
+- **Niveau 2 — `SideNav` dynamique** : en-tête = **grand module actif** (icône couleur, lien vers sa racine) + **ses sous-modules uniquement** (icônes mono `@fluentui/react-icons` `*20Regular`). Change selon la route (`useRouterState` + `findActiveModule`). Rail réduit (48px) = icônes + `Tooltip`. Sélection du sous-module pilotée par la route.
 - **Routes** : générées depuis `navModel` → **pages stub** `shared/components/PlaceholderPage` (« Module en cours de construction ») en attendant les vraies features ; `/` reste le dashboard.
 
 ### Icônes

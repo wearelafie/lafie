@@ -17,9 +17,9 @@ import { navItems } from '@app/nav/navModel'
 const useStyles = makeStyles({
   surface: {
     width: '92vw',
-    maxWidth: '1040px',
-    height: '82vh',
-    maxHeight: '680px',
+    maxWidth: '920px',
+    height: '78vh',
+    maxHeight: '600px',
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -48,37 +48,33 @@ const useStyles = makeStyles({
     flex: 1,
     overflowY: 'auto',
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
     gap: tokens.spacingHorizontalL,
-    padding: tokens.spacingVerticalL,
+    padding: tokens.spacingVerticalXL,
     alignContent: 'start',
   },
-  card: {
+  tile: {
     backgroundColor: tokens.colorNeutralBackground1,
     borderRadius: tokens.borderRadiusLarge,
     border: `1px solid ${tokens.colorNeutralStroke2}`,
-    padding: tokens.spacingVerticalM,
+    padding: tokens.spacingVerticalL,
+    minHeight: '120px',
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
     rowGap: tokens.spacingVerticalS,
-    transition: 'box-shadow .12s ease, border-color .12s ease',
+    textAlign: 'center',
+    textDecoration: 'none',
+    color: tokens.colorNeutralForeground1,
+    transition: 'box-shadow .12s ease, border-color .12s ease, transform .12s ease',
     ':hover': {
       boxShadow: tokens.shadow8,
       border: `1px solid ${tokens.colorBrandStroke1}`,
+      transform: 'translateY(-2px)',
     },
   },
-  cardHead: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalS, textDecoration: 'none' },
-  cardIcon: { display: 'flex', '& svg': { width: '28px', height: '28px' } },
-  cardTitle: { color: tokens.colorNeutralForeground1 },
-  subList: { display: 'flex', flexDirection: 'column', rowGap: '1px' },
-  subLink: { textDecoration: 'none', display: 'block' },
-  subBtn: {
-    justifyContent: 'flex-start',
-    width: '100%',
-    fontWeight: tokens.fontWeightRegular,
-    color: tokens.colorNeutralForeground2,
-    '& svg': { width: '18px', height: '18px' },
-  },
+  tileIcon: { display: 'flex', '& svg': { width: '40px', height: '40px' } },
   empty: {
     gridColumn: '1 / -1',
     textAlign: 'center',
@@ -105,18 +101,10 @@ export function AppLauncherDialog({
   }, [open])
 
   const q = query.trim().toLowerCase()
-  const groups = useMemo(() => {
-    if (!q) return navItems
-    return navItems
-      .map((it) => {
-        const parentMatch = t(it.labelKey).toLowerCase().includes(q)
-        const kids = (it.children ?? []).filter((c) => t(c.labelKey).toLowerCase().includes(q))
-        if (parentMatch) return it
-        if (kids.length) return { ...it, children: kids }
-        return null
-      })
-      .filter((it): it is (typeof navItems)[number] => it !== null)
-  }, [q, t])
+  const modules = useMemo(
+    () => (q ? navItems.filter((it) => t(it.labelKey).toLowerCase().includes(q)) : navItems),
+    [q, t],
+  )
 
   return (
     <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)} modalType="modal">
@@ -139,28 +127,15 @@ export function AppLauncherDialog({
         </div>
 
         <div className={styles.grid}>
-          {groups.map((it) => (
-            <section key={it.key} className={styles.card}>
-              <Link to={it.to} className={styles.cardHead} onClick={close}>
-                <span className={styles.cardIcon}>{it.icon}</span>
-                <Text className={styles.cardTitle} weight="semibold" size={400}>
-                  {t(it.labelKey)}
-                </Text>
-              </Link>
-              {it.children?.length ? (
-                <div className={styles.subList}>
-                  {it.children.map((c) => (
-                    <Link key={c.key} to={c.to} className={styles.subLink} onClick={close}>
-                      <Button appearance="subtle" icon={c.icon} className={styles.subBtn}>
-                        {t(c.labelKey)}
-                      </Button>
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </section>
+          {modules.map((it) => (
+            <Link key={it.key} to={it.to} className={styles.tile} onClick={close}>
+              <span className={styles.tileIcon}>{it.icon}</span>
+              <Text weight="semibold" size={400}>
+                {t(it.labelKey)}
+              </Text>
+            </Link>
           ))}
-          {groups.length === 0 && (
+          {modules.length === 0 && (
             <div className={styles.empty}>
               <Text>{t('launcher.noResult')}</Text>
             </div>

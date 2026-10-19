@@ -144,6 +144,16 @@ export const navItems: NavItem[] = [
   },
 ]
 
+// Grand module actif selon la route courante (sidebar dynamique).
+// Correspondance la plus spécifique ; '/' => Accueil.
+export function findActiveModule(pathname: string): NavItem {
+  const matches = navItems.filter((it) =>
+    it.to === '/' ? pathname === '/' : pathname === it.to || pathname.startsWith(`${it.to}/`),
+  )
+  const nonRoot = matches.filter((m) => m.to !== '/').sort((a, b) => b.to.length - a.to.length)
+  return nonRoot[0] ?? navItems[0]
+}
+
 // Liste à plat de toutes les routes (parents + enfants), pour générer le routeur.
 export type FlatRoute = { to: string; labelKey: string }
 
