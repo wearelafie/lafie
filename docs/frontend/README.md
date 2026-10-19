@@ -120,15 +120,22 @@ clients/lafie-navigator/
 
 | Région | Fichier | Contenu |
 | --- | --- | --- |
-| Barre haute (brand) | `TopBar.tsx` | app-launcher, marque **Lafie**, `SearchBox`, bascule langue, notifications (`CounterBadge`), réglages, `Avatar` |
+| Barre haute (brand) | `TopBar.tsx` | **lanceur de modules** (icône ⊞ **et** logo **Lafie** cliquables), `SearchBox`, bascule langue, notifications (`CounterBadge`), réglages, `Avatar` |
 | Ruban d'actions | `CommandBar.tsx` | `Toolbar` (Nouveau patient, Actualiser…) |
-| Navigation latérale | `SideNav.tsx` | **maison** (Button/Tooltip Fluent stables) : rail collapsible ↔ drawer ; items = modules (miroir backend) |
+| Navigation latérale | `SideNav.tsx` | **maison** (Button/Tooltip/Menu Fluent) : rail collapsible ↔ drawer, **sous-menus** par module (accordéon étendu, **flyout** `Menu` au survol en rail réduit) ; items = modules (miroir backend) |
 | Contenu | `<Outlet/>` | route active |
 
 - Le **contenu d'accueil** = **dashboard widgets** (`features/dashboard` : KPI `StatCard`, agenda du jour, statut système), **pas** un faux 3-panneaux.
 - Le **3-panneaux liste/détail** (`shared/ui/layout/ThreePane`, à venir) est réservé aux modules type Patients (liste → détail), rendu **dans** le contenu du shell.
 - Le hamburger de `TopBar` bascule `SideNav` (rail 48px ↔ drawer 240px).
 - L'icône **⚙ Réglages** ouvre le **`SettingsDialog`** (`features/settings`, façon Outlook) : nav gauche (Langue, Apparence, Notifications, Confidentialité, Recherche) + panneau **Apparence** (mode **Clair/Sombre/Système**, couleurs, barre de navigation).
+
+### Modèle de navigation & lanceur de modules
+
+- **`app/nav/navModel.tsx`** = **source de vérité unique** de la navigation (modules + sous-items : `key`, `to`, `labelKey`, `icon`). Consommé par **`SideNav`**, **`AppLauncherDialog`** et le **routeur** (génération des routes à plat via `flatRoutes`).
+- **Sous-menus `SideNav`** : parents colorés (fluent-color) + sous-items mono (`@fluentui/react-icons` `*20Regular`). Rail étendu = accordéon (chevron, groupe actif auto-ouvert) ; rail réduit (48px) = **flyout** `Menu openOnHover`. Sélection pilotée par la route (`useRouterState`).
+- **Lanceur** (`app/layout/AppLauncherDialog.tsx`) : `Dialog` modal ouvert par le **logo** ou l'icône **⊞**. Grille de cartes (une par module) = icône couleur + titre (lien) + sous-items ; **recherche** filtrante (réinitialisée à l'ouverture) ; clic → navigue + ferme ; plein écran en mobile.
+- **Routes** : générées depuis `navModel` → **pages stub** `shared/components/PlaceholderPage` (« Module en cours de construction ») en attendant les vraies features ; `/` reste le dashboard.
 
 ### Icônes
 
