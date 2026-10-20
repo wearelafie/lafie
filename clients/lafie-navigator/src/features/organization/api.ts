@@ -76,6 +76,10 @@ export function getOrganizations(filter: OrganizationFilter): Promise<PagedResul
   return getJson<PagedResult<Organization>>(`/api/organizations?${q.toString()}`)
 }
 
+export function getOrganization(id: string): Promise<Organization> {
+  return getJson<Organization>(`/api/organizations/${id}`)
+}
+
 export function createOrganization(input: OrganizationInput): Promise<{ id: string }> {
   return postJson<{ id: string }>('/api/organizations', input)
 }

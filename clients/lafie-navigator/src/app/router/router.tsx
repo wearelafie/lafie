@@ -3,6 +3,7 @@ import { createRootRoute, createRoute, createRouter } from '@tanstack/react-rout
 import { AppShell } from '@app/layout/AppShell'
 import { DashboardPage } from '@features/dashboard'
 import { OrganizationsPage } from '@features/organization'
+import { BuildingsPage } from '@features/building'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -33,7 +34,12 @@ const moduleRoutes = flatRoutes
     })
   })
 
-const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes])
+// Routes additionnelles (hors navModel) : écrans de détail/sous-ressources.
+const extraRoutes = [
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/buildings', component: BuildingsPage }),
+]
+
+const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes, ...extraRoutes])
 
 export const router = createRouter({ routeTree })
 
