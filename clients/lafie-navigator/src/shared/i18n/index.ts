@@ -11,6 +11,18 @@ const resources = {
       appSubtitle: 'Plateforme HIS/EMR',
       search: 'Rechercher un patient, un dossier…',
       switchLang: 'English',
+      topbar: {
+        language: 'Langue',
+        status: { online: 'En ligne', offline: 'Déconnecté', connecting: 'Connexion…' },
+        profile: {
+          myProfile: 'Mon profil',
+          accountSecurity: 'Sécurité du compte',
+          settings: 'Paramètres',
+          help: 'Aide',
+          systemInfo: 'Infos système',
+          logout: 'Déconnexion',
+        },
+      },
       nav: {
         home: 'Accueil',
         patients: 'Patients',
@@ -156,6 +168,18 @@ const resources = {
       appSubtitle: 'HIS/EMR platform',
       search: 'Search a patient, a record…',
       switchLang: 'Français',
+      topbar: {
+        language: 'Language',
+        status: { online: 'Online', offline: 'Offline', connecting: 'Connecting…' },
+        profile: {
+          myProfile: 'My profile',
+          accountSecurity: 'Account security',
+          settings: 'Settings',
+          help: 'Help',
+          systemInfo: 'System info',
+          logout: 'Sign out',
+        },
+      },
       nav: {
         home: 'Home',
         patients: 'Patients',
