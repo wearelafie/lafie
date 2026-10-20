@@ -83,14 +83,18 @@ const useStyles = makeStyles({
   dotConnecting: { backgroundColor: '#f5c451' },
   langLabel: { '@media (max-width: 768px)': { display: 'none' } },
   // Menu profil
+  profileMenu: { minWidth: '320px', maxWidth: '360px' },
   profileHeader: {
     display: 'flex',
-    flexDirection: 'column',
-    rowGap: '2px',
-    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    alignItems: 'center',
+    columnGap: tokens.spacingHorizontalM,
+    padding: `${tokens.spacingVerticalL} ${tokens.spacingHorizontalL}`,
   },
+  profileInfo: { display: 'flex', flexDirection: 'column', rowGap: '2px', minWidth: 0 },
   profileName: { color: tokens.colorNeutralForeground1 },
   profileUser: { color: tokens.colorNeutralForeground3 },
+  profileRole: { color: tokens.colorBrandForeground1 },
+  profileItem: { paddingTop: tokens.spacingVerticalM, paddingBottom: tokens.spacingVerticalM },
   avatarBtn: {
     padding: 0,
     minWidth: 0,
@@ -206,27 +210,43 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
               />
             </button>
           </MenuTrigger>
-          <MenuPopover>
+          <MenuPopover className={styles.profileMenu}>
             <div className={styles.profileHeader}>
-              <Text className={styles.profileName} weight="semibold">
-                {currentUser.name}
-              </Text>
-              <Text className={styles.profileUser} size={200}>
-                {currentUser.username}
-              </Text>
+              <Avatar name={currentUser.name} size={48} color="colorful" />
+              <div className={styles.profileInfo}>
+                <Text className={styles.profileName} weight="semibold" size={400}>
+                  {currentUser.name}
+                </Text>
+                <Text className={styles.profileUser} size={200}>
+                  {currentUser.username}
+                </Text>
+                <Text className={styles.profileRole} size={200}>
+                  {currentUser.role}
+                </Text>
+              </div>
             </div>
             <Divider />
             <MenuList>
-              <MenuItem icon={<Person20Regular />}>{t('topbar.profile.myProfile')}</MenuItem>
-              <MenuItem icon={<ShieldKeyhole20Regular />}>{t('topbar.profile.accountSecurity')}</MenuItem>
-              <MenuItem icon={<Settings20Regular />} onClick={() => setSettingsOpen(true)}>
+              <MenuItem className={styles.profileItem} icon={<Person20Regular />}>
+                {t('topbar.profile.myProfile')}
+              </MenuItem>
+              <MenuItem className={styles.profileItem} icon={<ShieldKeyhole20Regular />}>
+                {t('topbar.profile.accountSecurity')}
+              </MenuItem>
+              <MenuItem className={styles.profileItem} icon={<Settings20Regular />} onClick={() => setSettingsOpen(true)}>
                 {t('topbar.profile.settings')}
               </MenuItem>
               <MenuDivider />
-              <MenuItem icon={<QuestionCircle20Regular />}>{t('topbar.profile.help')}</MenuItem>
-              <MenuItem icon={<Info20Regular />}>{t('topbar.profile.systemInfo')}</MenuItem>
+              <MenuItem className={styles.profileItem} icon={<QuestionCircle20Regular />}>
+                {t('topbar.profile.help')}
+              </MenuItem>
+              <MenuItem className={styles.profileItem} icon={<Info20Regular />}>
+                {t('topbar.profile.systemInfo')}
+              </MenuItem>
               <MenuDivider />
-              <MenuItem icon={<SignOut20Regular />}>{t('topbar.profile.logout')}</MenuItem>
+              <MenuItem className={styles.profileItem} icon={<SignOut20Regular />}>
+                {t('topbar.profile.logout')}
+              </MenuItem>
             </MenuList>
           </MenuPopover>
         </Menu>
