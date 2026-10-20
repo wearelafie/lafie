@@ -135,7 +135,7 @@ clients/lafie-navigator/
 - **`app/nav/navModel.tsx`** = **source de vérité unique** (grands modules + sous-modules : `key`, `to`, `labelKey`, `icon`). Consommé par **`SideNav`**, **`AppLauncherDialog`** et le **routeur** (routes à plat via `flatRoutes`). Helper `findActiveModule(pathname)` = grand module actif (correspondance la plus spécifique ; `/` → Accueil).
 - **Niveau 1 — Lanceur** (`app/layout/AppLauncherDialog.tsx`) : `Dialog` modal ouvert par le **logo** ou l'icône **⊞**. **Grille de tuiles = grands modules uniquement** (icône couleur + nom, **pas** de sous-items) ; **recherche** filtrante (réinitialisée à l'ouverture) ; clic → navigue vers le module + ferme ; plein écran en mobile. Le lanceur est le **commutateur de grands modules**.
 - **Niveau 2 — `SideNav` dynamique** : en-tête = **grand module actif** (icône couleur, lien vers sa racine) + **ses sous-modules uniquement** (icônes mono `@fluentui/react-icons` `*20Regular`). Change selon la route (`useRouterState` + `findActiveModule`). Rail réduit (48px) = icônes + `Tooltip`. Sélection du sous-module pilotée par la route.
-- **Routes** : générées depuis `navModel` → **pages stub** `shared/components/PlaceholderPage` (« Module en cours de construction ») en attendant les vraies features ; `/` reste le dashboard.
+- **Routes** : générées depuis `navModel` → **pages stub** `shared/components/PlaceholderPage` (« Module en cours de construction ») en attendant les vraies features ; `/` = dashboard. Les routes déjà implémentées sont surchargées dans `router.tsx` (`implemented` map) — ex. **`/admin` → `features/organization`** (Établissements : liste + création, TanStack Query + React Hook Form/Zod, API `/api/organizations`).
 
 ### Icônes
 

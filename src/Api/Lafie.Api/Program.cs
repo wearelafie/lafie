@@ -16,7 +16,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 // CQRS via Mediator (source-generated) — découvre les handlers des modules référencés.
-builder.Services.AddMediator();
+// Lifetime scoped : les handlers peuvent consommer des services scoped (repos, current user…).
+builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 
 // Persistance Dapper/Npgsql partagée.
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
@@ -41,6 +42,9 @@ app.UseExceptionHandler();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
+
+// Endpoints des modules.
+app.MapOrganizationEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" }));
 
