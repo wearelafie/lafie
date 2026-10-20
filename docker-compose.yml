@@ -11,7 +11,7 @@ services:
       - "5433:5432"
     volumes:
       - lafie_pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      # Schéma géré par le runner de migrations de l'API (db/migrations, embarqué).
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lafie -d lafie"]
       interval: 5s

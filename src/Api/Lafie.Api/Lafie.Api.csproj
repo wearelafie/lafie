@@ -10,6 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Scripts de migration SQL embarqués (appliqués au démarrage par MigrationRunner). -->
+    <EmbeddedResource Include="..\..\..\db\migrations\*.sql" Link="Migrations\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Modules\Identity\Lafie.Identity.Api\Lafie.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Organization\Lafie.Organization.Api\Lafie.Organization.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Patient\Lafie.Patient.Api\Lafie.Patient.Api.csproj" />
