@@ -17,6 +17,7 @@ import {
   Settings24Regular,
 } from '@fluentui/react-icons'
 import { SettingsDialog } from '@features/settings'
+import { AppLauncherDialog } from './AppLauncherDialog'
 
 const useStyles = makeStyles({
   root: {
@@ -27,6 +28,17 @@ const useStyles = makeStyles({
     padding: `0 ${tokens.spacingHorizontalM}`,
     backgroundColor: tokens.colorBrandBackground,
     color: tokens.colorNeutralForegroundOnBrand,
+  },
+  logoBtn: {
+    padding: 0,
+    minWidth: 0,
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: tokens.borderRadiusMedium,
+    ':hover': { opacity: 0.85 },
   },
   logo: { height: '28px', width: 'auto', display: 'block' },
   searchWrap: { flex: 1, display: 'flex', justifyContent: 'center' },
@@ -42,6 +54,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const styles = useStyles()
   const { t, i18n } = useTranslation()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [launcherOpen, setLauncherOpen] = useState(false)
   const toggleLang = () => i18n.changeLanguage(i18n.language.startsWith('fr') ? 'en' : 'fr')
 
   return (
@@ -57,9 +70,17 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         appearance="transparent"
         className={mergeClasses(styles.onBrand, styles.hideOnMobile)}
         icon={<Apps24Regular />}
-        aria-label="Applications"
+        aria-label={t('launcher.open')}
+        onClick={() => setLauncherOpen(true)}
       />
-      <img src="/logo/lafie-white.svg" alt="Lafie" className={styles.logo} />
+      <button
+        type="button"
+        className={styles.logoBtn}
+        onClick={() => setLauncherOpen(true)}
+        aria-label={t('launcher.open')}
+      >
+        <img src="/logo/lafie-white.svg" alt="Lafie" className={styles.logo} />
+      </button>
 
       <div className={styles.searchWrap}>
         <SearchBox className={styles.search} placeholder={t('search')} />
@@ -97,6 +118,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <AppLauncherDialog open={launcherOpen} onOpenChange={setLauncherOpen} />
     </header>
   )
 }

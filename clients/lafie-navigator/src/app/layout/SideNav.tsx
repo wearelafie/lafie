@@ -1,28 +1,7 @@
-import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Tooltip, makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
-// Icônes colorées Fluent (fluent-color) via unplugin-icons — offline, tree-shakées.
-import HomeIcon from '~icons/fluent-color/home-24'
-import PeopleIcon from '~icons/fluent-color/people-24'
-import CalendarIcon from '~icons/fluent-color/calendar-24'
-import ClinicalIcon from '~icons/fluent-color/person-heart-24'
-import PharmacyIcon from '~icons/fluent-color/molecule-24'
-import LabIcon from '~icons/fluent-color/data-scatter-24'
-import BillingIcon from '~icons/fluent-color/receipt-24'
-import AdminIcon from '~icons/fluent-color/settings-24'
-
-type NavItem = { key: string; icon: ReactElement; labelKey: string }
-
-const items: NavItem[] = [
-  { key: 'home', icon: <HomeIcon />, labelKey: 'nav.home' },
-  { key: 'patients', icon: <PeopleIcon />, labelKey: 'nav.patients' },
-  { key: 'agenda', icon: <CalendarIcon />, labelKey: 'nav.agenda' },
-  { key: 'clinical', icon: <ClinicalIcon />, labelKey: 'nav.clinical' },
-  { key: 'pharmacy', icon: <PharmacyIcon />, labelKey: 'nav.pharmacy' },
-  { key: 'lab', icon: <LabIcon />, labelKey: 'nav.lab' },
-  { key: 'billing', icon: <BillingIcon />, labelKey: 'nav.billing' },
-  { key: 'admin', icon: <AdminIcon />, labelKey: 'nav.admin' },
-]
+import { Link, useRouterState } from '@tanstack/react-router'
+import { Button, Text, Tooltip, makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
+import { findActiveModule } from '@app/nav/navModel'
 
 const useStyles = makeStyles({
   root: {
@@ -35,11 +14,29 @@ const useStyles = makeStyles({
     overflowY: 'auto',
     '& svg': { width: '20px', height: '20px' },
   },
-  item: { justifyContent: 'flex-start', minWidth: 0 },
+  // En-tête = grand module actif.
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    columnGap: tokens.spacingHorizontalS,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalS}`,
+    marginBottom: tokens.spacingVerticalXS,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
+  headerCollapsed: { justifyContent: 'center', padding: tokens.spacingVerticalS },
+  headerIcon: { display: 'flex', '& svg': { width: '24px', height: '24px' } },
+  headerText: { color: tokens.colorNeutralForeground1 },
+  link: { textDecoration: 'none', display: 'block' },
+  item: { justifyContent: 'flex-start', minWidth: 0, width: '100%' },
   itemCollapsed: { justifyContent: 'center' },
   selected: {
     backgroundColor: tokens.colorBrandBackground2,
     color: tokens.colorBrandForeground1,
+  },
+  empty: {
+    padding: tokens.spacingVerticalM,
+    color: tokens.colorNeutralForeground3,
+    textAlign: 'center',
   },
 })
 
@@ -52,37 +49,67 @@ export function SideNav({
 }) {
   const styles = useStyles()
   const { t } = useTranslation()
-  const [selected, setSelected] = useState('home')
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const active = findActiveModule(pathname)
+  const children = active.children ?? []
+  const isActive = (to: string) => pathname === to
+
+  const label = t(active.labelKey)
 
   return (
-    <nav className={styles.root} aria-label="Navigation principale">
-      {items.map((it) => {
-        const label = t(it.labelKey)
+    <nav className={styles.root} aria-label={label}>
+      {/* En-tête : grand module courant (lien vers sa racine) */}
+      {expanded ? (
+        <Link to={active.to} className={styles.link} onClick={onItemClick}>
+          <div className={styles.header}>
+            <span className={styles.headerIcon}>{active.icon}</span>
+            <Text className={styles.headerText} weight="semibold" size={400}>
+              {label}
+            </Text>
+          </div>
+        </Link>
+      ) : (
+        <Tooltip content={label} relationship="label" positioning="after">
+          <Link to={active.to} className={styles.link} onClick={onItemClick}>
+            <div className={mergeClasses(styles.header, styles.headerCollapsed)}>
+              <span className={styles.headerIcon}>{active.icon}</span>
+            </div>
+          </Link>
+        </Tooltip>
+      )}
+
+      {/* Sous-modules du grand module actif */}
+      {children.map((c) => {
+        const childLabel = t(c.labelKey)
         const btn = (
-          <Button
-            appearance="subtle"
-            icon={it.icon}
-            onClick={() => {
-              setSelected(it.key)
-              onItemClick?.()
-            }}
-            className={mergeClasses(
-              expanded ? styles.item : styles.itemCollapsed,
-              selected === it.key && styles.selected,
-            )}
-            aria-current={selected === it.key ? 'page' : undefined}
-          >
-            {expanded ? label : undefined}
-          </Button>
+          <Link to={c.to} className={styles.link} onClick={onItemClick}>
+            <Button
+              appearance="subtle"
+              icon={c.icon}
+              className={mergeClasses(
+                expanded ? styles.item : styles.itemCollapsed,
+                isActive(c.to) && styles.selected,
+              )}
+              aria-current={isActive(c.to) ? 'page' : undefined}
+            >
+              {expanded ? childLabel : undefined}
+            </Button>
+          </Link>
         )
         return expanded ? (
-          <div key={it.key}>{btn}</div>
+          <div key={c.key}>{btn}</div>
         ) : (
-          <Tooltip key={it.key} content={label} relationship="label" positioning="after">
+          <Tooltip key={c.key} content={childLabel} relationship="label" positioning="after">
             {btn}
           </Tooltip>
         )
       })}
+
+      {expanded && children.length === 0 && active.to !== '/' && (
+        <Text className={styles.empty} size={200}>
+          {t('common.comingSoon')}
+        </Text>
+      )}
     </nav>
   )
 }
