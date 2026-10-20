@@ -7,6 +7,9 @@ type AppState = {
   /** Établissement actif (sélection multi-établissement). */
   selectedFacilityId: string | null
   setSelectedFacility: (id: string | null) => void
+  /** Bâtiment actif (navigation vers ses étages). */
+  selectedBuildingId: string | null
+  setSelectedBuilding: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -14,6 +17,8 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       selectedFacilityId: null,
       setSelectedFacility: (id) => set({ selectedFacilityId: id }),
+      selectedBuildingId: null,
+      setSelectedBuilding: (id) => set({ selectedBuildingId: id }),
     }),
     { name: 'lafie.app' },
   ),

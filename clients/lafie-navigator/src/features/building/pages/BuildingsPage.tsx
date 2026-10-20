@@ -20,7 +20,8 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { Add20Regular, ArrowLeft20Regular, Edit20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { Add20Regular, ArrowLeft20Regular, Edit20Regular, Layer20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { useNavigate } from '@tanstack/react-router'
 import { useAppStore } from '@app/store/appStore'
 import { getOrganization } from '@features/organization/api'
 import {
@@ -56,7 +57,10 @@ export function BuildingsPage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const facilityId = useAppStore((s) => s.selectedFacilityId)
+  const setSelectedBuilding = useAppStore((s) => s.setSelectedBuilding)
+  const openFloors = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/floors' }) }
 
   const facility = useQuery({
     queryKey: ['organization', facilityId],
@@ -157,6 +161,8 @@ export function BuildingsPage() {
                   <TableCell><Badge appearance="filled" color={statusColor(b.status)}>{t(`building.status.${b.status}`)}</Badge></TableCell>
                   <TableCell>
                     <div className={styles.actions}>
+                      <Button size="small" appearance="subtle" icon={<Layer20Regular />} aria-label={t('building.floors')}
+                        onClick={() => openFloors(b.id)} />
                       <Button size="small" appearance="subtle" icon={<Edit20Regular />} aria-label={t('building.edit')}
                         onClick={() => { setEditing(b); setFormOpen(true) }} />
                       <Button size="small" appearance="subtle" icon={<Wrench20Regular />} aria-label={t('building.status.Maintenance')}

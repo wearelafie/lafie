@@ -24,6 +24,10 @@ export const buildingKeys = {
   list: (facilityId: string, f: BuildingFilter) => ['buildings', facilityId, 'list', f] as const,
 }
 
+export function getBuilding(id: string): Promise<Building> {
+  return getJson<Building>(`/api/buildings/${id}`)
+}
+
 export function getBuildings(facilityId: string, filter: BuildingFilter): Promise<PagedResult<Building>> {
   const q = new URLSearchParams()
   if (filter.search) q.set('search', filter.search)
