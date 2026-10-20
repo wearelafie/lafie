@@ -50,6 +50,7 @@ app.MapScalarApiReference();
 
 // Endpoints des modules.
 app.MapOrganizationEndpoints();
+app.MapBuildingEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" }));
 

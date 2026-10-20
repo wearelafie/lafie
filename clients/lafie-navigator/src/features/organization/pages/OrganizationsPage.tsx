@@ -20,7 +20,8 @@ import {
   mergeClasses,
   tokens,
 } from '@fluentui/react-components'
-import { Add20Regular, Edit20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { Add20Regular, Building20Regular, Edit20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { useNavigate } from '@tanstack/react-router'
 import { useAppStore } from '@app/store/appStore'
 import {
   ORGANIZATION_STATUSES,
@@ -57,8 +58,10 @@ export function OrganizationsPage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const selectedId = useAppStore((s) => s.selectedFacilityId)
   const setSelected = useAppStore((s) => s.setSelectedFacility)
+  const openBuildings = (id: string) => { setSelected(id); void navigate({ to: '/admin/buildings' }) }
 
   // Saisie des filtres (non appliquée tant qu'on ne clique pas « Rechercher »).
   const [draft, setDraft] = useState<{ search: string; type: string; status: string }>({ search: '', type: ANY, status: ANY })
@@ -170,6 +173,9 @@ export function OrganizationsPage() {
                   <TableCell>{org.city ?? '—'}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className={styles.actions}>
+                      <Button size="small" appearance="subtle" icon={<Building20Regular />}
+                        aria-label={t('organization.buildings')}
+                        onClick={() => openBuildings(org.id)} />
                       <Button size="small" appearance="subtle" icon={<Edit20Regular />}
                         aria-label={t('organization.edit')}
                         onClick={() => { setEditing(org); setFormOpen(true) }} />

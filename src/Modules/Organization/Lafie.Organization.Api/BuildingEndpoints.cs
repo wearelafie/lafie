@@ -1,0 +1,60 @@
+using Lafie.Organization.Application.Buildings;
+using Mediator;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+namespace Lafie.Organization.Api;
+
+public sealed record CreateBuildingRequest(string Code, string Name, string? Description, string? Location);
+public sealed record UpdateBuildingRequest(string Code, string Name, string? Description, string? Location);
+public sealed record SetBuildingStatusRequest(string Status);
+
+/// <summary>Endpoints HTTP des bâtiments.</summary>
+public static class BuildingEndpoints
+{
+    public static IEndpointRouteBuilder MapBuildingEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        // Liste/création rattachées à un établissement.
+        var byFacility = endpoints.MapGroup("/facilities/{facilityId:guid}/buildings").WithTags("Building");
+
+        byFacility.MapGet("", async (
+            Guid facilityId, string? search, string? status, int? page, int? pageSize,
+            IMediator mediator, CancellationToken ct) =>
+        {
+            var filter = new BuildingFilter(search, status, page ?? 1, pageSize ?? 20);
+            return Results.Ok(await mediator.Send(new GetBuildingsQuery(facilityId, filter), ct));
+        });
+
+        byFacility.MapPost("", async (Guid facilityId, CreateBuildingRequest r, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new CreateBuildingCommand(facilityId, r.Code, r.Name, r.Description, r.Location), ct);
+            return result.IsSuccess
+                ? Results.Created($"/buildings/{result.Value}", new { id = result.Value })
+                : Results.BadRequest(new { error = result.Error });
+        });
+
+        // Accès direct par identifiant de bâtiment.
+        var byId = endpoints.MapGroup("/buildings").WithTags("Building");
+
+        byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var dto = await mediator.Send(new GetBuildingByIdQuery(id), ct);
+            return dto is null ? Results.NotFound() : Results.Ok(dto);
+        });
+
+        byId.MapPut("/{id:guid}", async (Guid id, UpdateBuildingRequest r, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new UpdateBuildingCommand(id, r.Code, r.Name, r.Description, r.Location), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        });
+
+        byId.MapPut("/{id:guid}/status", async (Guid id, SetBuildingStatusRequest r, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new SetBuildingStatusCommand(id, r.Status), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        });
+
+        return endpoints;
+    }
+}
