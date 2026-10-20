@@ -163,7 +163,11 @@ Deux familles, deux usages :
 | Pharmacie | `molecule-24` *(le set n'a pas de pilule/gélule)* |
 | Laboratoire | `data-scatter-24` *(pas de bécher/microscope)* |
 | Facturation | `receipt-24` |
+| Ressources humaines | `briefcase-24` |
+| Comptabilité | `savings-24` |
+| Secrétariat | `contact-card-24` |
 | Administration | `settings-24` |
+| Qualité & Vigilance | `shield-checkmark-24` |
 
 > Le set fluent-color (890 icônes) n'a **ni pilule ni bécher** → Pharmacie/Labo utilisent des approximations (`molecule`, `data-scatter`). À réévaluer si un set médical coloré est ajouté.
 
