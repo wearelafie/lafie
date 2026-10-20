@@ -8,6 +8,9 @@ import PharmacyIcon from '~icons/fluent-color/molecule-24'
 import LabIcon from '~icons/fluent-color/data-scatter-24'
 import BillingIcon from '~icons/fluent-color/receipt-24'
 import AdminIcon from '~icons/fluent-color/settings-24'
+import HrIcon from '~icons/fluent-color/briefcase-24'
+import AccountingIcon from '~icons/fluent-color/savings-24'
+import FrontDeskIcon from '~icons/fluent-color/contact-card-24'
 // Icônes mono (fines) pour les sous-items.
 import {
   List20Regular,
@@ -37,6 +40,15 @@ import {
   BookGlobe20Regular,
   ArrowSync20Regular,
   Settings20Regular,
+  People20Regular,
+  CalendarCancel20Regular,
+  Clock20Regular,
+  BookOpen20Regular,
+  Wallet20Regular,
+  DataPie20Regular,
+  ContactCard20Regular,
+  PeopleQueue20Regular,
+  Mail20Regular,
 } from '@fluentui/react-icons'
 
 export type NavSubItem = {
@@ -126,6 +138,46 @@ export const navItems: NavItem[] = [
       { key: 'payments', to: '/billing/payments', labelKey: 'nav.sub.billing.payments', icon: <Money20Regular /> },
       { key: 'insurance', to: '/billing/insurance', labelKey: 'nav.sub.billing.insurance', icon: <ShieldTask20Regular /> },
       { key: 'pricing', to: '/billing/pricing', labelKey: 'nav.sub.billing.pricing', icon: <Tag20Regular /> },
+    ],
+  },
+  {
+    key: 'hr',
+    to: '/hr',
+    labelKey: 'nav.hr',
+    icon: <HrIcon />,
+    children: [
+      { key: 'employees', to: '/hr', labelKey: 'nav.sub.hr.employees', icon: <People20Regular /> },
+      { key: 'contracts', to: '/hr/contracts', labelKey: 'nav.sub.hr.contracts', icon: <DocumentBulletList20Regular /> },
+      { key: 'leave', to: '/hr/leave', labelKey: 'nav.sub.hr.leave', icon: <CalendarCancel20Regular /> },
+      { key: 'attendance', to: '/hr/attendance', labelKey: 'nav.sub.hr.attendance', icon: <Clock20Regular /> },
+      { key: 'planning', to: '/hr/planning', labelKey: 'nav.sub.hr.planning', icon: <CalendarClock20Regular /> },
+      { key: 'payroll', to: '/hr/payroll', labelKey: 'nav.sub.hr.payroll', icon: <Money20Regular /> },
+    ],
+  },
+  {
+    key: 'accounting',
+    to: '/accounting',
+    labelKey: 'nav.accounting',
+    icon: <AccountingIcon />,
+    children: [
+      { key: 'journal', to: '/accounting', labelKey: 'nav.sub.accounting.journal', icon: <BookOpen20Regular /> },
+      { key: 'suppliers', to: '/accounting/suppliers', labelKey: 'nav.sub.accounting.suppliers', icon: <PeopleTeam20Regular /> },
+      { key: 'treasury', to: '/accounting/treasury', labelKey: 'nav.sub.accounting.treasury', icon: <Wallet20Regular /> },
+      { key: 'assets', to: '/accounting/assets', labelKey: 'nav.sub.accounting.assets', icon: <BuildingMultiple20Regular /> },
+      { key: 'reports', to: '/accounting/reports', labelKey: 'nav.sub.accounting.reports', icon: <DataPie20Regular /> },
+    ],
+  },
+  {
+    key: 'frontdesk',
+    to: '/frontdesk',
+    labelKey: 'nav.frontdesk',
+    icon: <FrontDeskIcon />,
+    children: [
+      { key: 'reception', to: '/frontdesk', labelKey: 'nav.sub.frontdesk.reception', icon: <ContactCard20Regular /> },
+      { key: 'queue', to: '/frontdesk/queue', labelKey: 'nav.sub.frontdesk.queue', icon: <PeopleQueue20Regular /> },
+      { key: 'appointments', to: '/frontdesk/appointments', labelKey: 'nav.sub.frontdesk.appointments', icon: <CalendarClock20Regular /> },
+      { key: 'mail', to: '/frontdesk/mail', labelKey: 'nav.sub.frontdesk.mail', icon: <Mail20Regular /> },
+      { key: 'documents', to: '/frontdesk/documents', labelKey: 'nav.sub.frontdesk.documents', icon: <Document20Regular /> },
     ],
   },
   {

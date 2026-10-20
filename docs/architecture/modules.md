@@ -48,6 +48,20 @@ Légende : ✅ déjà validé · ➕ proposé · Phase = jalon de livraison (voi
 | **DataProtection** ➕ | **Consentement** (`Consent` FHIR), droits des personnes (accès/rectification/effacement/portabilité), politique de rétention, pilotage de l'audit d'accès | `Consent`, `AuditEvent` | (transverse) | 1 |
 | **Reporting & Analytics** ➕ | Indicateurs, tableaux de bord, agrégats **SNIS/DHIS2** | `Measure`, `MeasureReport` | Interop | 2 |
 | **Notifications** ➕ | SMS / e-mail / push (rappels de RDV — clé mobile Togo) | `Communication`, `CommunicationRequest` | Scheduling | 1 |
+| **Quality & Vigilance** ✅ | Déclaration d'incidents, événements indésirables, **pharmaco/matériovigilance**, actions correctives/préventives (CAPA) | `AdverseEvent`, `DetectedIssue` | (transverse) | 3 |
+
+## F. Back-office & gestion administrative (non-clinique)
+
+| Module | Périmètre | Ressources FHIR clés | Dépend de | Phase |
+| --- | --- | --- | --- | --- |
+| **HumanResources (RH)** ➕ | Dossier agent (employés), contrats, congés/absences, présence & pointage, **planning du personnel** (gardes/roulements), paie | `Practitioner` *(lien)* | Organization, Identity | 1 |
+| **Accounting (Comptabilité)** ➕ | Comptabilité générale (grand livre, écritures en partie double), **tiers fournisseurs**, trésorerie/banque/caisse, immobilisations, clôtures & **états financiers** ; consomme les flux **Billing** (factures / encaissements) | — | Billing | 1 |
+| **FrontDesk (Secrétariat / Accueil)** ➕ | Accueil & enregistrement, **check-in**, **file d'attente**/guichets, prise de RDV au comptoir, courrier entrant/sortant, **édition de documents administratifs** (attestations, certificats) | `Appointment`, `Task` | Patient, Scheduling, Encounter | 1 |
+
+**Frontières (éviter les doublons) :**
+- **HR vs Identity** : `HumanResources` = cycle de vie de l'agent (RH) et source du **dossier employé** ; `Identity` = comptes/authentification + `Practitioner`/`PractitionerRole` cliniques. Identity **consomme** (par événement) le dossier RH pour provisionner les comptes.
+- **Accounting vs Billing** : `Billing` = facturation **patient** (`ChargeItem`/`Invoice`, recouvrement) ; `Accounting` = comptabilité **de l'établissement** (grand livre, fournisseurs, trésorerie). Accounting **consomme** les événements Billing (facture émise, encaissement) pour générer les écritures.
+- **FrontDesk** **réutilise** `Scheduling` (RDV), `Encounter` (check-in) et `Documents` (édition) ; il **orchestre** l'accueil, il ne duplique pas ces domaines.
 
 ## Transverse (BuildingBlocks, pas des modules)
 
@@ -60,14 +74,27 @@ Légende : ✅ déjà validé · ➕ proposé · Phase = jalon de livraison (voi
 
 Candidats phase 3, pertinents selon la cible : **Emergency/Triage**, **Surgery / Bloc opératoire**, **Maternité/Obstétrique** (santé maternelle Togo), **Immunisation/PEV** (vaccination OMS), **Banque du sang**.
 
+## Candidats supplémentaires (revue des docs — à valider)
+
+Issus d'une revue des docs (back-office ci-dessus, logistique, mobile/Togo, conformité, SAMD). **Non figés** — à retenir selon la cible.
+
+| Module | Périmètre | Ressources FHIR clés | Complète | Phase proposée |
+| --- | --- | --- | --- | --- |
+| **Procurement / Achats** ➕ | Demandes d'achat, fournisseurs, appels d'offres, bons de commande, réception | `SupplyRequest`, `SupplyDelivery` | Inventory, Accounting | 2 |
+| **FixedAssets / Immobilisations** ➕ | Parc d'équipements, amortissements, inventaire physique *(peut être un sous-domaine d'Accounting)* | `Device` | Accounting, Biomedical | 2 |
+| **Biomedical / GMAO** ➕ | Maintenance des équipements médicaux (préventive/curative), étalonnage, matériovigilance | `Device`, `Task` | Organization, Inventory | 2 |
+| **Teleconsultation** ➕ | Téléconsultation / télé-expertise (pertinence rurale **Togo**), RDV & rencontres virtuelles | `Appointment` *(virtual)*, `Encounter` | Scheduling, Clinical | 2 |
+| **PatientPortal / Engagement** ➕ | Portail/app patient : RDV en ligne, résultats, rappels, **USSD/SMS** (mobile Togo) | `Patient`, `Communication` | Scheduling, Notifications | 2–3 |
+| **Services hôteliers** ➕ | Diététique/Restauration, Lingerie/Hygiène, **Morgue/Mortuaire**, Transport/Ambulance, Brancardage | `NutritionOrder`, `Task` | Organization | 3 |
+
 ## Roadmap de livraison (Togo d'abord)
 
 | Phase | Modules | Objectif |
 | --- | --- | --- |
 | **0 — Socle** | BuildingBlocks + Identity, Organization, Patient, Terminology, Interop | Fondations + interop/identité. Cible du **squelette**. |
-| **1 — MVP soins (Togo)** | Scheduling, Encounter (ADT), Clinical, Orders, Pharmacy, Laboratory, Billing, DataProtection, Notifications | **Périmètre MVP confirmé.** Parcours de soins de bout en bout + facturation de base + conformité données. |
+| **1 — MVP soins (Togo)** | Scheduling, Encounter (ADT), Clinical, Orders, Pharmacy, Laboratory, Billing, DataProtection, Notifications, **HumanResources, Accounting, FrontDesk** | **Périmètre MVP confirmé.** Parcours de soins de bout en bout + facturation + conformité données + **back-office** (RH, comptabilité, secrétariat). |
 | **2 — Extension** | Radiology, Nursing, Inventory, Documents, Insurance, Reporting | Ancillaires, logistique, couverture AMU, reporting SNIS. |
-| **3 — Spécialités** | Emergency, Surgery, Maternité, Immunisation, Banque du sang | Services spécialisés. |
+| **3 — Spécialités & qualité** | Emergency, Surgery, Maternité, Immunisation, Banque du sang, **Quality & Vigilance** | Services spécialisés + gestion de la qualité / vigilance. |
 
 ## Règles de dépendances
 
@@ -83,11 +110,17 @@ Candidats phase 3, pertinents selon la cible : **Emergency/Triage**, **Surgery /
 - **Insurance / Coverage** : ✅ module séparé de `Billing` (Phase 2).
 - **Périmètre MVP Togo** : ✅ = **Phase 1** (Scheduling, Encounter, Clinical, Orders, Pharmacy, Laboratory, Billing, DataProtection, Notifications), sur socle Phase 0.
 
+## Décisions actées (2026-10-20)
+
+- **Ajout au MVP (Phase 1)** : **HumanResources (RH)**, **Accounting (Comptabilité)**, **FrontDesk (Secrétariat/Accueil)** — demande utilisateur. Nouvelle catégorie **F. Back-office** (non-clinique).
+- **Quality & Vigilance** : ✅ module retenu (transverse, Phase 3) — demande utilisateur.
+- **Autres candidats** (revue docs, **à valider plus tard**) : Procurement/Achats, FixedAssets/Immobilisations, Biomedical/GMAO, Teleconsultation, PatientPortal, Services hôteliers.
+
 ## Catalogue figé
 
 **Phase 0 (5)** : Identity, Organization, Patient, Terminology, Interop.
-**Phase 1 (9)** : Scheduling, Encounter, Clinical, Orders, Pharmacy, Laboratory, Billing, DataProtection, Notifications.
+**Phase 1 (12)** : Scheduling, Encounter, Clinical, Orders, Pharmacy, Laboratory, Billing, DataProtection, Notifications, **HumanResources, Accounting, FrontDesk**.
 **Phase 2 (6)** : Radiology, Nursing, Inventory, Documents, Insurance, Reporting.
-**Phase 3** : Emergency, Surgery, Maternité, Immunisation/PEV, Banque du sang.
+**Phase 3** : Emergency, Surgery, Maternité, Immunisation/PEV, Banque du sang, **Quality & Vigilance**.
 
-→ **20 modules** cadrés (Phases 0–2) + spécialités Phase 3.
+→ **23 modules** cadrés (Phases 0–2) + **6** en Phase 3 + **candidats à valider** (voir section dédiée).
