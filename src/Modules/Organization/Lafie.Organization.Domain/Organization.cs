@@ -15,53 +15,72 @@ public sealed class Organization : AggregateRoot<Guid>
     public string Name { get; private set; }
     public OrganizationType Type { get; private set; }
     public string? Code { get; private set; }
-    public bool Active { get; private set; }
+    public OrganizationStatus Status { get; private set; }
+    public string? ShortName { get; private set; }
+    public string? Description { get; private set; }
+    public string? Phone { get; private set; }
+    public string? Email { get; private set; }
+    public string Timezone { get; private set; }
+    public string? City { get; private set; }
+    public string? Country { get; private set; }
     public Guid? ParentId { get; private set; }
     public DateTimeOffset CreatedOnUtc { get; private set; }
+    public DateTimeOffset? UpdatedOnUtc { get; private set; }
 
     private Organization(
         Guid id,
         string name,
         OrganizationType type,
         string? code,
-        bool active,
+        OrganizationStatus status,
+        OrganizationProfile profile,
         Guid? parentId,
-        DateTimeOffset createdOnUtc)
+        DateTimeOffset createdOnUtc,
+        DateTimeOffset? updatedOnUtc)
     {
         Id = id;
         Name = name;
         Type = type;
         Code = code;
-        Active = active;
+        Status = status;
+        ShortName = profile.ShortName;
+        Description = profile.Description;
+        Phone = profile.Phone;
+        Email = profile.Email;
+        Timezone = profile.Timezone;
+        City = profile.City;
+        Country = profile.Country;
         ParentId = parentId;
         CreatedOnUtc = createdOnUtc;
+        UpdatedOnUtc = updatedOnUtc;
     }
 
-    /// <summary>Crée une nouvelle organisation (règles métier + événement).</summary>
+    /// <summary>Crée une nouvelle organisation (statut Active par défaut).</summary>
     public static Result<Organization> Create(
         string name,
         OrganizationType type,
         string? code = null,
+        OrganizationProfile? profile = null,
         Guid? parentId = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return Result.Failure<Organization>("Le nom de l'organisation est obligatoire.");
-
-        name = name.Trim();
-        if (name.Length > NameMaxLength)
-            return Result.Failure<Organization>($"Le nom dépasse {NameMaxLength} caractères.");
+        var normalized = Normalize(name);
+        if (normalized.IsFailure) return Result.Failure<Organization>(normalized.Error!);
 
         if (!Enum.IsDefined(type))
             return Result.Failure<Organization>("Type d'organisation invalide.");
 
+        var cleanProfile = CleanProfile(profile ?? new OrganizationProfile());
+
         var org = new Organization(
             Guid.NewGuid(),
-            name,
+            normalized.Value,
             type,
-            string.IsNullOrWhiteSpace(code) ? null : code.Trim(),
-            active: true,
+            CleanCode(code),
+            OrganizationStatus.Active,
+            cleanProfile,
             parentId,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            updatedOnUtc: null);
 
         org.AddDomainEvent(DomainEvent.Create((id, on) =>
             new OrganizationCreated(id, on, org.Id, org.Name, org.Type)));
@@ -75,22 +94,68 @@ public sealed class Organization : AggregateRoot<Guid>
         string name,
         OrganizationType type,
         string? code,
-        bool active,
+        OrganizationStatus status,
+        OrganizationProfile profile,
         Guid? parentId,
-        DateTimeOffset createdOnUtc)
-        => new(id, name, type, code, active, parentId, createdOnUtc);
+        DateTimeOffset createdOnUtc,
+        DateTimeOffset? updatedOnUtc)
+        => new(id, name, type, code, status, profile, parentId, createdOnUtc, updatedOnUtc);
 
-    public Result Rename(string name)
+    /// <summary>Met à jour le nom et le profil descriptif.</summary>
+    public Result Update(string name, OrganizationProfile profile)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return Result.Failure("Le nom de l'organisation est obligatoire.");
-        name = name.Trim();
-        if (name.Length > NameMaxLength)
-            return Result.Failure($"Le nom dépasse {NameMaxLength} caractères.");
-        Name = name;
+        var normalized = Normalize(name);
+        if (normalized.IsFailure) return normalized;
+
+        var clean = CleanProfile(profile);
+        Name = normalized.Value;
+        ShortName = clean.ShortName;
+        Description = clean.Description;
+        Phone = clean.Phone;
+        Email = clean.Email;
+        Timezone = clean.Timezone;
+        City = clean.City;
+        Country = clean.Country;
+        Touch();
         return Result.Success();
     }
 
-    public void Activate() => Active = true;
-    public void Deactivate() => Active = false;
+    public void Activate()
+    {
+        Status = OrganizationStatus.Active;
+        Touch();
+    }
+
+    public void Deactivate()
+    {
+        Status = OrganizationStatus.Inactive;
+        Touch();
+    }
+
+    private void Touch() => UpdatedOnUtc = DateTimeOffset.UtcNow;
+
+    private static Result<string> Normalize(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure<string>("Le nom de l'organisation est obligatoire.");
+        name = name.Trim();
+        return name.Length > NameMaxLength
+            ? Result.Failure<string>($"Le nom dépasse {NameMaxLength} caractères.")
+            : Result.Success(name);
+    }
+
+    private static string? CleanCode(string? code)
+        => string.IsNullOrWhiteSpace(code) ? null : code.Trim();
+
+    private static OrganizationProfile CleanProfile(OrganizationProfile p)
+        => new(
+            Blank(p.ShortName),
+            Blank(p.Description),
+            Blank(p.Phone),
+            Blank(p.Email),
+            string.IsNullOrWhiteSpace(p.Timezone) ? "Africa/Lome" : p.Timezone.Trim(),
+            Blank(p.City),
+            Blank(p.Country));
+
+    private static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

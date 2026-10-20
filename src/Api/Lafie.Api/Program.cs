@@ -10,8 +10,9 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Erreurs HTTP normalisées (RFC 9457 ProblemDetails).
+// Erreurs HTTP normalisées (RFC 9457 ProblemDetails) + mapping des exceptions applicatives.
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<Lafie.Api.CustomExceptionHandler>();
 
 // Documentation d'API (OpenAPI) + UI de référence Scalar.
 builder.Services.AddOpenApi();

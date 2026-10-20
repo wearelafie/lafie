@@ -1,15 +1,17 @@
+using Lafie.Core.Common;
 using Mediator;
 
 namespace Lafie.Organization.Application.Organizations;
 
-/// <summary>Liste toutes les organisations.</summary>
-public sealed record GetOrganizationsQuery : IRequest<IReadOnlyList<OrganizationDto>>;
+/// <summary>Liste paginée/filtrée des organisations.</summary>
+public sealed record GetOrganizationsQuery(OrganizationFilter Filter)
+    : IRequest<PagedResult<OrganizationDto>>;
 
 public sealed class GetOrganizationsHandler(IOrganizationRepository repository)
-    : IRequestHandler<GetOrganizationsQuery, IReadOnlyList<OrganizationDto>>
+    : IRequestHandler<GetOrganizationsQuery, PagedResult<OrganizationDto>>
 {
-    public async ValueTask<IReadOnlyList<OrganizationDto>> Handle(
+    public async ValueTask<PagedResult<OrganizationDto>> Handle(
         GetOrganizationsQuery query,
         CancellationToken cancellationToken)
-        => await repository.GetAllAsync(cancellationToken);
+        => await repository.SearchAsync(query.Filter, cancellationToken);
 }

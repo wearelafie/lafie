@@ -47,5 +47,6 @@
     <Project Path="tests/Lafie.ArchitectureTests/Lafie.ArchitectureTests.csproj" />
     <Project Path="tests/Lafie.Framework.Tests/Lafie.Framework.Tests.csproj" />
     <Project Path="tests/Lafie.Organization.Tests/Lafie.Organization.Tests.csproj" />
+    <Project Path="tests/Lafie.Organization.IntegrationTests/Lafie.Organization.IntegrationTests.csproj" />
   </Folder>
 </Solution>
