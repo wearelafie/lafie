@@ -1,6 +1,7 @@
 using Lafie.Eventing;
 using Lafie.Identity.Api;
 using Lafie.Persistence;
+using Lafie.Persistence.Migrations;
 using Lafie.Interop.Api;
 using Lafie.Organization.Api;
 using Lafie.Patient.Api;
@@ -23,6 +24,9 @@ builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetim
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? "Host=localhost;Port=5433;Database=lafie;Username=lafie;Password=lafie";
 builder.Services.AddLafiePersistence(connectionString);
+
+// Migrations SQL versionnées appliquées au démarrage (scripts embarqués dans cet assembly).
+builder.Services.AddLafieMigrations(typeof(Program).Assembly);
 
 // Eventing (bus in-process ; Outbox/broker à venir).
 builder.Services.AddLafieEventing();

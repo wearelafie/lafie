@@ -85,6 +85,12 @@ Décisions structurantes de Lafie. Format léger. Statut au 2026-07-21 : **valid
 **Pourquoi.** Demande utilisateur (2026-07-24) : aligner la base sur un kit éprouvé, tout en conservant NOS choix de packages (Dapper≠EF Core, Mediator≠MediatR, pas de migrations EF, HybridCache/Valkey, Finbuckle).
 **Conséquence.** Renommages : SharedKernel→Core, Infrastructure→Persistence+Eventing (split). Web ajouté (`IModule`). Tests d'archi mis à jour (préfixes Core/Persistence/Eventing/Web). Build 28 projets, 0/0. Conventions dans `.agents/rules/*` (stack, architecture, buildingblocks-protection, persistence-dapper, mediator) ; procédures `.agents/skills/*` (add-module, query-patterns-dapper, add-sql-migration).
 
+## ADR-014 — Runner de migrations SQL maison (Dapper) ✅ validé
+
+**Décision.** Gérer le schéma PostgreSQL via un **runner de migrations maison** dans `Lafie.Persistence` : scripts `.sql` **versionnés** (`db/migrations/NNNN_*.sql`), **embarqués** (`EmbeddedResource`) dans l'assembly API, appliqués **au démarrage** par un `IHostedService` (`MigrationHostedService` → `MigrationRunner`), suivis dans `public.schema_migrations`, chaque script dans une **transaction**, **idempotent**.
+**Pourquoi.** `db/init` (docker-entrypoint-initdb.d) ne s'exécute **qu'au premier init** du volume → non reproductible (gotcha rencontré). Pas d'EF/migrations (ADR-009). Démarrage simple, un seul chemin d'exécution (API), fonctionne en conteneur (scripts embarqués).
+**Conséquence.** Mount `db/init` retiré du compose ; `db/init/*` déplacés en `db/migrations/0001_schemas.sql` + `0002_organization.sql`. `AddLafieMigrations(assembly)` appelé dans `Program.cs`. Vérifié : volume neuf → 2 scripts appliqués ; redémarrage → « base à jour ». Test d'intégration **Testcontainers** à ajouter avec `Lafie.*.IntegrationTests`.
+
 ## Stack retenue
 
 .NET 10 · ASP.NET Core · Firely `Hl7.Fhir.R4` · **Dapper + Npgsql** · FluentValidation · Outbox/bus in-process · Docker Compose (Postgres + web) · **React + TypeScript + Vite** (frontend, nginx) · NetArchTest/ArchUnitNET · OpenTelemetry.
