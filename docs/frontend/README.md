@@ -26,7 +26,11 @@ Client **fin** : consomme l'API .NET par HTTP via **`/api`** (proxy nginx en con
 | Charts | **`@fluentui/react-charting`** (défaut) + **Recharts** (secours) | ⏸️ différé (à `npm install` au 1er graphe) |
 | Lint | **oxlint** | ✅ |
 
-**Non retenu au départ :** Zustand (TanStack Query + état d'URL suffisent), offline-data (cf. §PWA), client OpenAPI généré (recommandé — voir §À venir).
+**Gestion d'état :** frontière nette — **TanStack Query** = état **serveur** (cache/fetch/mutations) ; **Zustand** (`app/store/appStore.ts`, `persist`) = état **client global** (ex. `selectedFacilityId`) ; **Context** = thème (`ThemeModeProvider`). On ne duplique **jamais** des données serveur dans le store.
+
+**Tests :** Vitest + Testing Library (`*.test.tsx`), couverture **`@vitest/coverage-v8`** (`npm test -- --coverage`).
+
+**À venir :** offline-data (cf. §PWA), client OpenAPI généré (recommandé — voir §À venir).
 
 ### Génération depuis OpenAPI (recommandé, à venir)
 

@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- SSH.NET (advisory) est transitif via Testcontainers, dépendance de test uniquement, non embarquée. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Scripts de migration réels, embarqués pour alimenter le MigrationRunner dans les tests. -->
+    <EmbeddedResource Include="..\..\db\migrations\*.sql" Link="Migrations\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Organization\Lafie.Organization.Domain\Lafie.Organization.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Organization\Lafie.Organization.Application\Lafie.Organization.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Organization\Lafie.Organization.Infrastructure\Lafie.Organization.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Lafie.Persistence\Lafie.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

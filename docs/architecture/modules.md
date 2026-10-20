@@ -121,10 +121,10 @@ Issus d'une revue des docs (back-office ci-dessus, logistique, mobile/Togo, conf
 
 | Module | Statut | Détail |
 | --- | --- | --- |
-| **Organization** | 🏗️ MVP vertical slice | Domaine (`Organization` + event), SQL Dapper (`organization.organizations`), CQRS Mediator (`CreateOrganization`, `GetOrganizations`, `GetOrganizationById`), endpoints `/organizations`, feature frontend **Administration → Établissements** (`/admin`), tests 8/8. |
+| **Organization** | 🏗️ Facilities (F1) | Agrégat enrichi (**statut** Draft/Active/Inactive, nom court, contact, ville/pays, timezone, `UpdatedOnUtc`), CQRS Create/Update/Activate/Deactivate + **liste paginée/filtrée** (`GetOrganizations`), endpoints `/organizations` (GET liste+`{id}`, POST, PUT, POST activate/deactivate), **désactivation logique**. Frontend **Administration → Établissements** : recherche+filtres (type/statut) + bouton Rechercher, table (badge statut), création/édition, activer/désactiver, pagination, sélection (Zustand). Tests : **unit 12/12**, **intégration Testcontainers 5/5**. |
 | Identity, Patient, Terminology, Interop | ⬜ squelette | 4 couches câblées, pas encore de feature. |
 
-> **Décision technique** : `AddMediator(o => o.ServiceLifetime = ServiceLifetime.Scoped)` — les handlers consomment des services scoped (repositories Dapper, current user…). Endpoints exposés via `Map<Module>Endpoints(IEndpointRouteBuilder)` appelés dans `Program.cs`.
+> **Décisions techniques** : `AddMediator(o => o.ServiceLifetime = ServiceLifetime.Scoped)` (handlers ↔ services scoped). Endpoints via `Map<Module>Endpoints(IEndpointRouteBuilder)` dans `Program.cs`. **Migrations SQL** versionnées (runner maison, ADR-014). **`CustomExceptionHandler`** mappe `CustomException` (NotFound…) → code HTTP + ProblemDetails. Pagination générique via `Core.Common.PagedResult<T>`.
 
 ## Catalogue figé
 
