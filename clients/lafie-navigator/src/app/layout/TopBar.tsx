@@ -61,7 +61,17 @@ const useStyles = makeStyles({
   searchWrap: { flex: 1, display: 'flex', justifyContent: 'center' },
   search: { width: '100%', maxWidth: '480px' },
   right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS },
-  onBrand: { color: tokens.colorNeutralForegroundOnBrand },
+  onBrand: {
+    color: tokens.colorNeutralForegroundOnBrand,
+    ':hover': {
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      color: tokens.colorNeutralForegroundOnBrand,
+    },
+    ':hover:active': {
+      backgroundColor: 'rgba(255,255,255,0.28)',
+      color: tokens.colorNeutralForegroundOnBrand,
+    },
+  },
   bell: { position: 'relative' },
   badge: { position: 'absolute', top: '4px', right: '4px' },
   hideOnMobile: { '@media (max-width: 768px)': { display: 'none' } },
