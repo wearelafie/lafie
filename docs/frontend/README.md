@@ -120,7 +120,7 @@ clients/lafie-navigator/
 
 | Région | Fichier | Contenu |
 | --- | --- | --- |
-| Barre haute (brand) | `TopBar.tsx` | **lanceur de modules** (icône ⊞ **et** logo **Lafie** cliquables), `SearchBox`, bascule langue, notifications (`CounterBadge`), réglages, `Avatar` |
+| Barre haute (brand) | `TopBar.tsx` | **lanceur de modules** (icône ⊞ **et** logo **Lafie** cliquables), `SearchBox`, **badge de statut de connexion** (`useConnectionStatus` → ping `/api/health`), **menu langue** (globe FR/EN), notifications (`CounterBadge`), **menu profil** (`Avatar` + présence : nom/username, Mon profil, Sécurité du compte, Paramètres, Aide, Infos système, Déconnexion) |
 | Ruban d'actions | `CommandBar.tsx` | `Toolbar` (Nouveau patient, Actualiser…) |
 | Navigation latérale | `SideNav.tsx` | **dynamique** : affiche l'en-tête du **grand module actif** + **ses sous-modules uniquement** (selon la route) ; rail collapsible ↔ drawer |
 | Contenu | `<Outlet/>` | route active |
