@@ -23,6 +23,7 @@ const resources = {
         hr: 'Ressources humaines',
         accounting: 'Comptabilité',
         frontdesk: 'Secrétariat',
+        quality: 'Qualité & Vigilance',
         sub: {
           patients: {
             list: 'Liste des patients',
@@ -88,6 +89,13 @@ const resources = {
             appointments: 'Rendez-vous',
             mail: 'Courrier',
             documents: 'Documents administratifs',
+          },
+          quality: {
+            incidents: 'Déclaration d\'incidents',
+            adverse: 'Événements indésirables',
+            pharmacovigilance: 'Pharmacovigilance',
+            materiovigilance: 'Matériovigilance',
+            capa: 'Actions correctives (CAPA)',
           },
         },
       },
@@ -160,6 +168,7 @@ const resources = {
         hr: 'Human resources',
         accounting: 'Accounting',
         frontdesk: 'Front desk',
+        quality: 'Quality & Vigilance',
         sub: {
           patients: {
             list: 'Patient list',
@@ -225,6 +234,13 @@ const resources = {
             appointments: 'Appointments',
             mail: 'Mail',
             documents: 'Administrative documents',
+          },
+          quality: {
+            incidents: 'Incident reports',
+            adverse: 'Adverse events',
+            pharmacovigilance: 'Pharmacovigilance',
+            materiovigilance: 'Device vigilance',
+            capa: 'Corrective actions (CAPA)',
           },
         },
       },

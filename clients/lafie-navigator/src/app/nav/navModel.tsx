@@ -11,6 +11,7 @@ import AdminIcon from '~icons/fluent-color/settings-24'
 import HrIcon from '~icons/fluent-color/briefcase-24'
 import AccountingIcon from '~icons/fluent-color/savings-24'
 import FrontDeskIcon from '~icons/fluent-color/contact-card-24'
+import QualityIcon from '~icons/fluent-color/shield-checkmark-24'
 // Icônes mono (fines) pour les sous-items.
 import {
   List20Regular,
@@ -49,6 +50,8 @@ import {
   ContactCard20Regular,
   PeopleQueue20Regular,
   Mail20Regular,
+  ErrorCircle20Regular,
+  CheckmarkCircle20Regular,
 } from '@fluentui/react-icons'
 
 export type NavSubItem = {
@@ -192,6 +195,19 @@ export const navItems: NavItem[] = [
       { key: 'interop', to: '/admin/interop', labelKey: 'nav.sub.admin.interop', icon: <ArrowSync20Regular /> },
       { key: 'audit', to: '/admin/audit', labelKey: 'nav.sub.admin.audit', icon: <History20Regular /> },
       { key: 'settings', to: '/admin/settings', labelKey: 'nav.sub.admin.settings', icon: <Settings20Regular /> },
+    ],
+  },
+  {
+    key: 'quality',
+    to: '/quality',
+    labelKey: 'nav.quality',
+    icon: <QualityIcon />,
+    children: [
+      { key: 'incidents', to: '/quality', labelKey: 'nav.sub.quality.incidents', icon: <Warning20Regular /> },
+      { key: 'adverse', to: '/quality/adverse-events', labelKey: 'nav.sub.quality.adverse', icon: <ErrorCircle20Regular /> },
+      { key: 'pharmacovigilance', to: '/quality/pharmacovigilance', labelKey: 'nav.sub.quality.pharmacovigilance', icon: <Pill20Regular /> },
+      { key: 'materiovigilance', to: '/quality/materiovigilance', labelKey: 'nav.sub.quality.materiovigilance', icon: <Box20Regular /> },
+      { key: 'capa', to: '/quality/capa', labelKey: 'nav.sub.quality.capa', icon: <CheckmarkCircle20Regular /> },
     ],
   },
 ]
