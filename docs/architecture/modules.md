@@ -115,6 +115,16 @@ Issus d'une revue des docs (back-office ci-dessus, logistique, mobile/Togo, conf
 - **Ajout au MVP (Phase 1)** : **HumanResources (RH)**, **Accounting (Comptabilité)**, **FrontDesk (Secrétariat/Accueil)** — demande utilisateur. Nouvelle catégorie **F. Back-office** (non-clinique).
 - **Quality & Vigilance** : ✅ module retenu (transverse, Phase 3) — demande utilisateur.
 - **Autres candidats** (revue docs, **à valider plus tard**) : Procurement/Achats, FixedAssets/Immobilisations, Biomedical/GMAO, Teleconsultation, PatientPortal, Services hôteliers.
+- **Organization** : 🏗️ **premier module implémenté** en vertical slice (voir ci-dessous).
+
+## État d'implémentation
+
+| Module | Statut | Détail |
+| --- | --- | --- |
+| **Organization** | 🏗️ MVP vertical slice | Domaine (`Organization` + event), SQL Dapper (`organization.organizations`), CQRS Mediator (`CreateOrganization`, `GetOrganizations`, `GetOrganizationById`), endpoints `/organizations`, feature frontend **Administration → Établissements** (`/admin`), tests 8/8. |
+| Identity, Patient, Terminology, Interop | ⬜ squelette | 4 couches câblées, pas encore de feature. |
+
+> **Décision technique** : `AddMediator(o => o.ServiceLifetime = ServiceLifetime.Scoped)` — les handlers consomment des services scoped (repositories Dapper, current user…). Endpoints exposés via `Map<Module>Endpoints(IEndpointRouteBuilder)` appelés dans `Program.cs`.
 
 ## Catalogue figé
 
