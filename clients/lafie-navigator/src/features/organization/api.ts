@@ -1,64 +1,103 @@
 import { getJson, postJson } from '@shared/api/http'
 
-export const ORGANIZATION_TYPES = [
-  'Hospital',
-  'Clinic',
-  'HealthCenter',
-  'Department',
-  'Unit',
-  'Pharmacy',
-  'Laboratory',
+// Codes "suggérés" (deviendront des référentiels configurables). Le backend stocke du texte.
+export const FACILITY_TYPES = [
+  'HOSPITAL', 'UNIVERSITY_HOSPITAL', 'REGIONAL_HOSPITAL', 'DISTRICT_HOSPITAL',
+  'CLINIC', 'MEDICAL_SOCIAL_CENTER', 'HEALTH_CENTER', 'DISPENSARY', 'SPECIALIZED', 'OTHER',
 ] as const
-
-export type OrganizationType = (typeof ORGANIZATION_TYPES)[number]
-
-export const ORGANIZATION_STATUSES = ['Draft', 'Active', 'Inactive'] as const
-export type OrganizationStatus = (typeof ORGANIZATION_STATUSES)[number]
+export const OWNERSHIP_TYPES = ['PUBLIC', 'PRIVATE_FOR_PROFIT', 'PRIVATE_NON_PROFIT', 'FAITH_BASED', 'OTHER'] as const
+export const OPERATIONAL_STATUSES = ['Setup', 'Active', 'TemporarilyClosed', 'Suspended', 'PermanentlyClosed'] as const
+export type OperationalStatus = (typeof OPERATIONAL_STATUSES)[number]
 
 export type Organization = {
   id: string
-  name: string
-  type: OrganizationType
-  code: string | null
-  status: OrganizationStatus
-  shortName: string | null
+  code: string
+  officialName: string
+  displayName: string | null
+  abbreviation: string | null
   description: string | null
+  facilityTypeCode: string
+  ownershipTypeCode: string
+  logoUrl: string | null
+  websiteUrl: string | null
+  establishedOn: string | null
+  parentOrganizationId: string | null
+  legalName: string | null
+  legalEntityTypeCode: string | null
+  registrationNumber: string | null
+  nationalFacilityCode: string | null
+  licenseNumber: string | null
+  licenseIssuedOn: string | null
+  licenseExpiresOn: string | null
+  accreditationStatusCode: string | null
+  taxIdentificationNumber: string | null
+  countryCode: string
+  regionCode: string | null
+  prefectureCode: string | null
+  communeCode: string | null
+  locality: string | null
+  districtOrNeighborhood: string | null
+  streetAddress: string | null
+  postalCode: string | null
+  latitude: number | null
+  longitude: number | null
+  altitudeMeters: number | null
+  locationAccuracy: string | null
+  timeZoneId: string
+  openingDate: string | null
+  defaultCurrencyCode: string
+  defaultLanguageCode: string
+  emergencyServicesAvailable: boolean
+  publicFacing: boolean
+  operationalStatus: OperationalStatus
+  configurationStatus: string
   phone: string | null
   email: string | null
-  timezone: string
-  city: string | null
-  country: string | null
-  parentId: string | null
   createdOnUtc: string
   updatedOnUtc: string | null
 }
 
-export type PagedResult<T> = {
-  items: T[]
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-}
+export type PagedResult<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
+export type OrganizationFilter = { search?: string; facilityTypeCode?: string; operationalStatus?: string; page?: number; pageSize?: number }
 
-export type OrganizationFilter = {
-  search?: string
-  type?: string
-  status?: string
-  page?: number
-  pageSize?: number
-}
-
+// Modèle d'écriture (aligné sur l'API). Champs optionnels à null/omission.
 export type OrganizationInput = {
-  name: string
-  type: OrganizationType
-  code?: string | null
-  shortName?: string | null
+  code: string
+  officialName: string
+  facilityTypeCode: string
+  ownershipTypeCode: string
+  countryCode: string
+  displayName?: string | null
+  abbreviation?: string | null
+  description?: string | null
+  websiteUrl?: string | null
+  establishedOn?: string | null
+  legalName?: string | null
+  legalEntityTypeCode?: string | null
+  registrationNumber?: string | null
+  nationalFacilityCode?: string | null
+  licenseNumber?: string | null
+  licenseIssuedOn?: string | null
+  licenseExpiresOn?: string | null
+  accreditationStatusCode?: string | null
+  taxIdentificationNumber?: string | null
+  regionCode?: string | null
+  prefectureCode?: string | null
+  communeCode?: string | null
+  locality?: string | null
+  districtOrNeighborhood?: string | null
+  streetAddress?: string | null
+  postalCode?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  timeZoneId?: string | null
+  openingDate?: string | null
+  defaultCurrencyCode?: string | null
+  defaultLanguageCode?: string | null
+  emergencyServicesAvailable: boolean
+  publicFacing: boolean
   phone?: string | null
   email?: string | null
-  city?: string | null
-  country?: string | null
-  description?: string | null
 }
 
 export const organizationKeys = {
@@ -69,8 +108,8 @@ export const organizationKeys = {
 export function getOrganizations(filter: OrganizationFilter): Promise<PagedResult<Organization>> {
   const q = new URLSearchParams()
   if (filter.search) q.set('search', filter.search)
-  if (filter.type) q.set('type', filter.type)
-  if (filter.status) q.set('status', filter.status)
+  if (filter.facilityTypeCode) q.set('type', filter.facilityTypeCode)
+  if (filter.operationalStatus) q.set('status', filter.operationalStatus)
   q.set('page', String(filter.page ?? 1))
   q.set('pageSize', String(filter.pageSize ?? 20))
   return getJson<PagedResult<Organization>>(`/api/organizations?${q.toString()}`)
@@ -85,24 +124,21 @@ export function createOrganization(input: OrganizationInput): Promise<{ id: stri
 }
 
 export async function updateOrganization(id: string, input: OrganizationInput): Promise<void> {
-  const res = await fetch(`/api/organizations/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  })
-  if (!res.ok) throw new Error(await errorMessage(res))
+  await send(`/api/organizations/${id}`, 'PUT', input)
 }
 
-export async function setOrganizationActive(id: string, active: boolean): Promise<void> {
-  const res = await fetch(`/api/organizations/${id}/${active ? 'activate' : 'deactivate'}`, { method: 'POST' })
-  if (!res.ok) throw new Error(await errorMessage(res))
+export async function setOrganizationStatus(id: string, operationalStatus: OperationalStatus): Promise<void> {
+  await send(`/api/organizations/${id}/status`, 'PUT', { operationalStatus })
 }
 
-async function errorMessage(res: Response): Promise<string> {
-  try {
-    const d = (await res.json()) as { error?: string; title?: string }
-    return d.error ?? d.title ?? `HTTP ${res.status}`
-  } catch {
-    return `HTTP ${res.status}`
+async function send(url: string, method: string, body: unknown): Promise<void> {
+  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`
+    try {
+      const d = (await res.json()) as { error?: string; title?: string }
+      message = d.error ?? d.title ?? message
+    } catch { /* keep http code */ }
+    throw new Error(message)
   }
 }

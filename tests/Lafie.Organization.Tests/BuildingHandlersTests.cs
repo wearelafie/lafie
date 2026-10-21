@@ -35,7 +35,8 @@ public class BuildingHandlersTests
         public Task<PagedResult<OrganizationDto>> SearchAsync(OrganizationFilter f, CancellationToken ct = default)
             => Task.FromResult(new PagedResult<OrganizationDto>([], 1, 20, 0));
         public Task<OrganizationDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => Task.FromResult(exists ? new OrganizationDto { Id = id, Name = "F", Type = "Hospital", Status = "Active", Timezone = "Africa/Lome" } : null);
+            => Task.FromResult(exists ? new OrganizationDto { Id = id, Code = "F", OfficialName = "F", FacilityTypeCode = "HOSPITAL", OwnershipTypeCode = "PUBLIC", CountryCode = "TG", OperationalStatus = "Active", ConfigurationStatus = "Draft", TimeZoneId = "Africa/Lome" } : null);
+        public Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken ct = default) => Task.FromResult(false);
     }
 
     [Fact]

@@ -109,7 +109,7 @@ export function BuildingsPage() {
       <div className={styles.top}>
         <Link to={"/admin" as never} className={styles.back}><ArrowLeft20Regular />{t('building.goFacilities')}</Link>
         <div className={styles.header}>
-          <Title3>{t('building.titleFor', { facility: facility.data?.name ?? '…' })}</Title3>
+          <Title3>{t('building.titleFor', { facility: facility.data?.officialName ?? '…' })}</Title3>
           <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>
             {t('building.new')}
           </Button>

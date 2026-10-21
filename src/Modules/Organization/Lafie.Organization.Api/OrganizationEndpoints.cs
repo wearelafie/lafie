@@ -7,17 +7,9 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Lafie.Organization.Api;
 
-/// <summary>Requête de création d'organisation.</summary>
-public sealed record CreateOrganizationRequest(
-    string Name, string Type, string? Code, string? ShortName, string? Description,
-    string? Phone, string? Email, string? Timezone, string? City, string? Country, Guid? ParentId);
+public sealed record ChangeFacilityStatusRequest(string OperationalStatus);
 
-/// <summary>Requête de mise à jour d'organisation.</summary>
-public sealed record UpdateOrganizationRequest(
-    string Name, string? ShortName, string? Description,
-    string? Phone, string? Email, string? Timezone, string? City, string? Country);
-
-/// <summary>Endpoints HTTP du module Organization (minimal API).</summary>
+/// <summary>Endpoints HTTP du module Organization (établissements).</summary>
 public static class OrganizationEndpoints
 {
     public static IEndpointRouteBuilder MapOrganizationEndpoints(this IEndpointRouteBuilder endpoints)
@@ -38,31 +30,23 @@ public static class OrganizationEndpoints
             return dto is null ? Results.NotFound() : Results.Ok(dto);
         });
 
-        group.MapPost("", async (CreateOrganizationRequest r, IMediator mediator, CancellationToken ct) =>
+        group.MapPost("", async (OrganizationWriteModel model, IMediator mediator, CancellationToken ct) =>
         {
-            var result = await mediator.Send(new CreateOrganizationCommand(
-                r.Name, r.Type, r.Code, r.ShortName, r.Description, r.Phone, r.Email, r.Timezone, r.City, r.Country, r.ParentId), ct);
+            var result = await mediator.Send(new CreateOrganizationCommand(model), ct);
             return result.IsSuccess
                 ? Results.Created($"/organizations/{result.Value}", new { id = result.Value })
                 : Results.BadRequest(new { error = result.Error });
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, UpdateOrganizationRequest r, IMediator mediator, CancellationToken ct) =>
+        group.MapPut("/{id:guid}", async (Guid id, OrganizationWriteModel model, IMediator mediator, CancellationToken ct) =>
         {
-            var result = await mediator.Send(new UpdateOrganizationCommand(
-                id, r.Name, r.ShortName, r.Description, r.Phone, r.Email, r.Timezone, r.City, r.Country), ct);
+            var result = await mediator.Send(new UpdateOrganizationCommand(id, model), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
         });
 
-        group.MapPost("/{id:guid}/deactivate", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        group.MapPut("/{id:guid}/status", async (Guid id, ChangeFacilityStatusRequest r, IMediator mediator, CancellationToken ct) =>
         {
-            var result = await mediator.Send(new DeactivateOrganizationCommand(id), ct);
-            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        });
-
-        group.MapPost("/{id:guid}/activate", async (Guid id, IMediator mediator, CancellationToken ct) =>
-        {
-            var result = await mediator.Send(new ActivateOrganizationCommand(id), ct);
+            var result = await mediator.Send(new ChangeOrganizationStatusCommand(id, r.OperationalStatus), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
         });
 

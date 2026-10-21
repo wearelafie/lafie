@@ -12,7 +12,7 @@ public class BuildingRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
 
     private async Task<Guid> NewFacilityAsync()
     {
-        var facility = DomainOrganization.Create($"F{Guid.NewGuid():N}", OrganizationType.Hospital).Value;
+        var facility = DomainOrganization.Create($"F{Guid.NewGuid():N}", "Facility", "HOSPITAL", "PUBLIC", "TG").Value;
         await Facilities().AddAsync(facility);
         return facility.Id;
     }
