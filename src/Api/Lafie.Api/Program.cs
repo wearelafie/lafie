@@ -52,6 +52,7 @@ app.MapScalarApiReference();
 app.MapOrganizationEndpoints();
 app.MapBuildingEndpoints();
 app.MapFloorEndpoints();
+app.MapSpaceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" }));
 

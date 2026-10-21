@@ -31,6 +31,10 @@ export const floorKeys = {
   list: (buildingId: string, f: FloorFilter) => ['floors', buildingId, 'list', f] as const,
 }
 
+export function getFloor(id: string): Promise<Floor> {
+  return getJson<Floor>(`/api/floors/${id}`)
+}
+
 export function getFloors(buildingId: string, filter: FloorFilter): Promise<PagedResult<Floor>> {
   const q = new URLSearchParams()
   if (filter.search) q.set('search', filter.search)

@@ -20,7 +20,8 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { Add20Regular, ArrowLeft20Regular, Edit20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { Add20Regular, ArrowLeft20Regular, Edit20Regular, Grid20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { useNavigate } from '@tanstack/react-router'
 import { useAppStore } from '@app/store/appStore'
 import { getBuilding } from '@features/building/api'
 import { FLOOR_STATUSES, floorKeys, getFloors, setFloorStatus, type Floor, type FloorFilter, type FloorStatus } from '../api'
@@ -48,7 +49,10 @@ export function FloorsPage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const buildingId = useAppStore((s) => s.selectedBuildingId)
+  const setSelectedFloor = useAppStore((s) => s.setSelectedFloor)
+  const openSpaces = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/spaces' }) }
 
   const building = useQuery({
     queryKey: ['building', buildingId],
@@ -148,6 +152,8 @@ export function FloorsPage() {
                   <TableCell><Badge appearance="filled" color={statusColor(f.status)}>{t(`floor.status.${f.status}`)}</Badge></TableCell>
                   <TableCell>
                     <div className={styles.actions}>
+                      <Button size="small" appearance="subtle" icon={<Grid20Regular />} aria-label={t('floor.spaces')}
+                        onClick={() => openSpaces(f.id)} />
                       <Button size="small" appearance="subtle" icon={<Edit20Regular />} aria-label={t('floor.edit')}
                         onClick={() => { setEditing(f); setFormOpen(true) }} />
                       <Button size="small" appearance="subtle" icon={<Wrench20Regular />} aria-label={t('floor.status.Maintenance')}
