@@ -9,91 +9,99 @@ public class OrganizationRepositoryTests(PostgresFixture fixture) : IClassFixtur
 {
     private OrganizationRepository NewRepo() => new(fixture.ConnectionFactory);
 
+    private static DomainOrganization Facility(string code, string name, string type = "HOSPITAL",
+        FacilityAddress? address = null, FacilityLegal? legal = null)
+        => DomainOrganization.Create(code, name, type, "PUBLIC", "TG", address: address, legal: legal).Value;
+
     [Fact]
-    public async Task Add_then_GetById_roundtrips()
+    public async Task Add_then_GetById_roundtrips_rich_fields()
     {
         var repo = NewRepo();
-        var org = DomainOrganization.Create(
-            "CHU Test", OrganizationType.Hospital, "CHU-T",
-            new OrganizationProfile(ShortName: "CHU", City: "Lomé", Country: "Togo")).Value;
-        await repo.AddAsync(org);
+        var o = Facility($"CHU-{Guid.NewGuid():N}", "CHU Test",
+            address: new FacilityAddress(Locality: "Lomé", Latitude: 6.13m, Longitude: 1.22m, TimeZoneId: "Africa/Lome"),
+            legal: new FacilityLegal(LicenseNumber: "LIC-1", LicenseIssuedOn: new DateOnly(2024, 1, 1)));
+        await repo.AddAsync(o);
 
-        var dto = await repo.GetByIdAsync(org.Id);
-
+        var dto = await repo.GetByIdAsync(o.Id);
         Assert.NotNull(dto);
-        Assert.Equal("CHU Test", dto!.Name);
-        Assert.Equal("Hospital", dto.Type);
-        Assert.Equal("Active", dto.Status);
-        Assert.Equal("CHU", dto.ShortName);
-        Assert.Equal("Togo", dto.Country);
+        Assert.Equal("CHU Test", dto!.OfficialName);
+        Assert.Equal("HOSPITAL", dto.FacilityTypeCode);
+        Assert.Equal("Active", dto.OperationalStatus);
+        Assert.Equal("Lomé", dto.Locality);
+        Assert.Equal(6.13m, dto.Latitude);
+        Assert.Equal("LIC-1", dto.LicenseNumber);
+        Assert.Equal(new DateOnly(2024, 1, 1), dto.LicenseIssuedOn);
     }
 
     [Fact]
-    public async Task Update_persists_changes()
+    public async Task Update_and_ChangeStatus_persist()
     {
         var repo = NewRepo();
-        var org = DomainOrganization.Create("Avant", OrganizationType.Clinic).Value;
-        await repo.AddAsync(org);
+        var o = Facility($"F-{Guid.NewGuid():N}", "Avant");
+        await repo.AddAsync(o);
 
-        var loaded = await repo.FindAsync(org.Id);
+        var loaded = await repo.FindAsync(o.Id);
         Assert.NotNull(loaded);
-        loaded!.Update("Après", new OrganizationProfile(Phone: "90000000"));
+        loaded!.Update(loaded.Code, "Après", "CLINIC", "PRIVATE_FOR_PROFIT", "TG",
+            new FacilityIdentity(DisplayName: "AP"), new FacilityAddress(Locality: "Kara"),
+            new FacilityLegal(), new FacilityOperations(EmergencyServicesAvailable: true), new FacilityPrimaryContact(Email: "x@y.tg"));
+        loaded.ChangeOperationalStatus(OperationalStatus.Suspended);
         await repo.UpdateAsync(loaded);
 
-        var dto = await repo.GetByIdAsync(org.Id);
-        Assert.Equal("Après", dto!.Name);
-        Assert.Equal("90000000", dto.Phone);
-        Assert.NotNull(dto.UpdatedOnUtc);
+        var dto = await repo.GetByIdAsync(o.Id);
+        Assert.Equal("Après", dto!.OfficialName);
+        Assert.Equal("CLINIC", dto.FacilityTypeCode);
+        Assert.Equal("Kara", dto.Locality);
+        Assert.True(dto.EmergencyServicesAvailable);
+        Assert.Equal("Suspended", dto.OperationalStatus);
     }
 
     [Fact]
-    public async Task Deactivate_persists_status()
+    public async Task CodeExists_is_case_insensitive_and_scoped()
     {
         var repo = NewRepo();
-        var org = DomainOrganization.Create("À désactiver", OrganizationType.Unit).Value;
-        await repo.AddAsync(org);
+        var code = $"DUP-{Guid.NewGuid():N}";
+        await repo.AddAsync(Facility(code, "A"));
 
-        var loaded = await repo.FindAsync(org.Id);
-        loaded!.Deactivate();
-        await repo.UpdateAsync(loaded);
-
-        var dto = await repo.GetByIdAsync(org.Id);
-        Assert.Equal("Inactive", dto!.Status);
+        Assert.True(await repo.CodeExistsAsync(code.ToLowerInvariant()));
+        Assert.False(await repo.CodeExistsAsync($"OTHER-{Guid.NewGuid():N}"));
     }
 
     [Fact]
-    public async Task Search_filters_by_status_and_search_term()
+    public async Task Archive_excludes_from_search_then_restore_and_delete()
+    {
+        var repo = NewRepo();
+        var marker = $"A{Guid.NewGuid():N}";
+        var o = Facility($"{marker}-C", $"{marker} Name");
+        await repo.AddAsync(o);
+
+        var loaded = await repo.FindAsync(o.Id);
+        loaded!.Archive();
+        await repo.UpdateAsync(loaded);
+        Assert.Equal(0, (await repo.SearchAsync(new OrganizationFilter(Search: marker))).Total);
+        Assert.Equal(1, (await repo.SearchAsync(new OrganizationFilter(Search: marker, IncludeArchived: true))).Total);
+
+        loaded.Restore();
+        await repo.UpdateAsync(loaded);
+        Assert.Equal(1, (await repo.SearchAsync(new OrganizationFilter(Search: marker))).Total);
+
+        await repo.DeleteAsync(o.Id);
+        Assert.Null(await repo.GetByIdAsync(o.Id));
+    }
+
+    [Fact]
+    public async Task Search_filters_by_type_and_search()
     {
         var repo = NewRepo();
         var marker = $"Z{Guid.NewGuid():N}";
-        var a = DomainOrganization.Create($"{marker} Active", OrganizationType.Hospital).Value;
-        var b = DomainOrganization.Create($"{marker} Inactive", OrganizationType.Hospital).Value;
-        b.Deactivate();
-        await repo.AddAsync(a);
-        await repo.AddAsync(b);
-
-        var active = await repo.SearchAsync(new OrganizationFilter(Search: marker, Status: "Active"));
-        Assert.Equal(1, active.Total);
-        Assert.Equal($"{marker} Active", active.Items[0].Name);
+        await repo.AddAsync(Facility($"{marker}-H", $"{marker} Hosp", "HOSPITAL"));
+        await repo.AddAsync(Facility($"{marker}-C", $"{marker} Clin", "CLINIC"));
 
         var all = await repo.SearchAsync(new OrganizationFilter(Search: marker));
         Assert.Equal(2, all.Total);
-    }
 
-    [Fact]
-    public async Task Search_paginates()
-    {
-        var repo = NewRepo();
-        var marker = $"P{Guid.NewGuid():N}";
-        for (var i = 0; i < 3; i++)
-            await repo.AddAsync(DomainOrganization.Create($"{marker} {i}", OrganizationType.Department).Value);
-
-        var page1 = await repo.SearchAsync(new OrganizationFilter(Search: marker, Page: 1, PageSize: 2));
-        Assert.Equal(3, page1.Total);
-        Assert.Equal(2, page1.Items.Count);
-        Assert.Equal(2, page1.TotalPages);
-
-        var page2 = await repo.SearchAsync(new OrganizationFilter(Search: marker, Page: 2, PageSize: 2));
-        Assert.Single(page2.Items);
+        var hosp = await repo.SearchAsync(new OrganizationFilter(Search: marker, FacilityTypeCode: "HOSPITAL"));
+        Assert.Equal(1, hosp.Total);
+        Assert.Equal($"{marker} Hosp", hosp.Items[0].OfficialName);
     }
 }

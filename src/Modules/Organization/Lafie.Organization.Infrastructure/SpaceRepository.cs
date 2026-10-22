@@ -14,16 +14,16 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         id as "Id", facility_id as "FacilityId", building_id as "BuildingId", floor_id as "FloorId",
         code as "Code", name as "Name", type as "Type", description as "Description",
         area as "Area", max_capacity as "MaxCapacity", accessible as "Accessible",
-        status as "Status", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc"
+        status as "Status", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc", archived_on_utc as "ArchivedOnUtc"
         """;
 
     public async Task AddAsync(Space s, CancellationToken cancellationToken = default)
     {
         const string sql = """
             insert into organization.spaces
-                (id, facility_id, building_id, floor_id, code, name, type, description, area, max_capacity, accessible, status, created_on_utc, updated_on_utc)
+                (id, facility_id, building_id, floor_id, code, name, type, description, area, max_capacity, accessible, status, created_on_utc, updated_on_utc, archived_on_utc)
             values
-                (@Id, @FacilityId, @BuildingId, @FloorId, @Code, @Name, @Type, @Description, @Area, @MaxCapacity, @Accessible, @Status, @CreatedOnUtc, @UpdatedOnUtc)
+                (@Id, @FacilityId, @BuildingId, @FloorId, @Code, @Name, @Type, @Description, @Area, @MaxCapacity, @Accessible, @Status, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(s), cancellationToken: cancellationToken));
@@ -35,7 +35,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
             update organization.spaces set
                 code = @Code, name = @Name, type = @Type, description = @Description,
                 area = @Area, max_capacity = @MaxCapacity, accessible = @Accessible,
-                status = @Status, updated_on_utc = @UpdatedOnUtc
+                status = @Status, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
@@ -51,7 +51,8 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
             Enum.Parse<SpaceType>(dto.Type), dto.Description, dto.Area, dto.MaxCapacity, dto.Accessible,
             Enum.Parse<SpaceStatus>(dto.Status),
             new DateTimeOffset(dto.CreatedOnUtc, TimeSpan.Zero),
-            dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null);
+            dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null,
+            dto.ArchivedOnUtc is { } a ? new DateTimeOffset(a, TimeSpan.Zero) : null);
     }
 
     public async Task<SpaceDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -65,6 +66,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
     public async Task<PagedResult<SpaceDto>> SearchByFloorAsync(Guid floorId, SpaceFilter filter, CancellationToken cancellationToken = default)
     {
         var where = new StringBuilder("where floor_id = @floorId");
+        if (!filter.IncludeArchived) where.Append(" and archived_on_utc is null");
         var p = new DynamicParameters();
         p.Add("floorId", floorId);
 
@@ -96,6 +98,13 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         return new PagedResult<SpaceDto>(items, filter.SafePage, filter.SafePageSize, total);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "delete from organization.spaces where id = @id", new { id }, cancellationToken: cancellationToken));
+    }
+
     public async Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from organization.spaces where facility_id = @facilityId and lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
@@ -120,5 +129,6 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         Status = s.Status.ToString(),
         s.CreatedOnUtc,
         s.UpdatedOnUtc,
+        s.ArchivedOnUtc,
     };
 }

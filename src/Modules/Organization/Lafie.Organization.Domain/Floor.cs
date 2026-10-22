@@ -22,10 +22,12 @@ public sealed class Floor : AggregateRoot<Guid>
     public FloorStatus Status { get; private set; }
     public DateTimeOffset CreatedOnUtc { get; private set; }
     public DateTimeOffset? UpdatedOnUtc { get; private set; }
+    public DateTimeOffset? ArchivedOnUtc { get; private set; }
+    public bool IsArchived => ArchivedOnUtc is not null;
 
     private Floor(
         Guid id, Guid buildingId, string code, string name, int? level, int displayOrder, string? description,
-        FloorStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
+        FloorStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
     {
         Id = id;
         BuildingId = buildingId;
@@ -37,6 +39,7 @@ public sealed class Floor : AggregateRoot<Guid>
         Status = status;
         CreatedOnUtc = createdOnUtc;
         UpdatedOnUtc = updatedOnUtc;
+        ArchivedOnUtc = archivedOnUtc;
     }
 
     public static Result<Floor> Create(
@@ -52,7 +55,7 @@ public sealed class Floor : AggregateRoot<Guid>
 
         var f = new Floor(
             Guid.NewGuid(), buildingId, vCode.Value, vName.Value, level, displayOrder,
-            Blank(description), FloorStatus.Active, DateTimeOffset.UtcNow, null);
+            Blank(description), FloorStatus.Active, DateTimeOffset.UtcNow, null, null);
 
         f.AddDomainEvent(DomainEvent.Create((id, on) => new FloorCreated(id, on, f.Id, f.BuildingId, f.Name)));
         return Result.Success(f);
@@ -60,8 +63,8 @@ public sealed class Floor : AggregateRoot<Guid>
 
     public static Floor Rehydrate(
         Guid id, Guid buildingId, string code, string name, int? level, int displayOrder, string? description,
-        FloorStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
-        => new(id, buildingId, code, name, level, displayOrder, description, status, createdOnUtc, updatedOnUtc);
+        FloorStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
+        => new(id, buildingId, code, name, level, displayOrder, description, status, createdOnUtc, updatedOnUtc, archivedOnUtc);
 
     public Result Update(string code, string name, int? level, int displayOrder, string? description)
     {
@@ -84,6 +87,9 @@ public sealed class Floor : AggregateRoot<Guid>
         Status = status;
         Touch();
     }
+
+    public void Archive() { ArchivedOnUtc ??= DateTimeOffset.UtcNow; Touch(); }
+    public void Restore() { ArchivedOnUtc = null; Touch(); }
 
     private void Touch() => UpdatedOnUtc = DateTimeOffset.UtcNow;
 
