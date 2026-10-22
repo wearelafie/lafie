@@ -22,6 +22,7 @@ public class OrganizationHandlersTests
         public Task<OrganizationDto?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult<OrganizationDto?>(null);
         public Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(ExistingCodes.Contains(code));
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private static OrganizationWriteModel Model(string code = "CHU", string name = "CHU") =>

@@ -4,7 +4,7 @@ using Lafie.Organization.Domain;
 namespace Lafie.Organization.Application.Buildings;
 
 /// <summary>Critères de recherche/pagination des bâtiments (au sein d'un établissement).</summary>
-public sealed record BuildingFilter(string? Search = null, string? Status = null, int Page = 1, int PageSize = 20)
+public sealed record BuildingFilter(string? Search = null, string? Status = null, bool IncludeArchived = false, int Page = 1, int PageSize = 20)
 {
     public const int MaxPageSize = 100;
     public int SafePage => Page < 1 ? 1 : Page;
@@ -23,4 +23,5 @@ public interface IBuildingRepository
 
     /// <summary>Vrai si un code existe déjà dans l'établissement (hors bâtiment <paramref name="excludeId"/>).</summary>
     Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

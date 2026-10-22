@@ -2,10 +2,10 @@ import type { ReactElement } from 'react'
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { AppShell } from '@app/layout/AppShell'
 import { DashboardPage } from '@features/dashboard'
-import { OrganizationsPage } from '@features/organization'
-import { BuildingsPage } from '@features/building'
-import { FloorsPage } from '@features/floor'
-import { SpacesPage } from '@features/space'
+import { OrganizationsPage, FacilityDetailPage } from '@features/organization'
+import { BuildingsPage, BuildingDetailPage } from '@features/building'
+import { FloorsPage, FloorDetailPage } from '@features/floor'
+import { SpacesPage, SpaceDetailPage } from '@features/space'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -41,6 +41,10 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/buildings', component: BuildingsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/floors', component: FloorsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/spaces', component: SpacesPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/facility', component: FacilityDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/building', component: BuildingDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/floor', component: FloorDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
 ]
 
 const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes, ...extraRoutes])

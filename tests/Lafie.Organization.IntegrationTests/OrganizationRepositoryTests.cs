@@ -68,6 +68,28 @@ public class OrganizationRepositoryTests(PostgresFixture fixture) : IClassFixtur
     }
 
     [Fact]
+    public async Task Archive_excludes_from_search_then_restore_and_delete()
+    {
+        var repo = NewRepo();
+        var marker = $"A{Guid.NewGuid():N}";
+        var o = Facility($"{marker}-C", $"{marker} Name");
+        await repo.AddAsync(o);
+
+        var loaded = await repo.FindAsync(o.Id);
+        loaded!.Archive();
+        await repo.UpdateAsync(loaded);
+        Assert.Equal(0, (await repo.SearchAsync(new OrganizationFilter(Search: marker))).Total);
+        Assert.Equal(1, (await repo.SearchAsync(new OrganizationFilter(Search: marker, IncludeArchived: true))).Total);
+
+        loaded.Restore();
+        await repo.UpdateAsync(loaded);
+        Assert.Equal(1, (await repo.SearchAsync(new OrganizationFilter(Search: marker))).Total);
+
+        await repo.DeleteAsync(o.Id);
+        Assert.Null(await repo.GetByIdAsync(o.Id));
+    }
+
+    [Fact]
     public async Task Search_filters_by_type_and_search()
     {
         var repo = NewRepo();

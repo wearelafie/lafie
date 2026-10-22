@@ -23,6 +23,7 @@ public class BuildingHandlersTests
             => Task.FromResult(new PagedResult<BuildingDto>([], filter.SafePage, filter.SafePageSize, 0));
         public Task<bool> CodeExistsAsync(Guid f, string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(ExistingCodes.Contains(code));
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     // Établissement : on simule l'existence via GetByIdAsync.
@@ -37,6 +38,7 @@ public class BuildingHandlersTests
         public Task<OrganizationDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => Task.FromResult(exists ? new OrganizationDto { Id = id, Code = "F", OfficialName = "F", FacilityTypeCode = "HOSPITAL", OwnershipTypeCode = "PUBLIC", CountryCode = "TG", OperationalStatus = "Active", ConfigurationStatus = "Draft", TimeZoneId = "Africa/Lome" } : null);
         public Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken ct = default) => Task.FromResult(false);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     [Fact]

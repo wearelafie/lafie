@@ -5,6 +5,7 @@ public sealed record OrganizationFilter(
     string? Search = null,
     string? FacilityTypeCode = null,
     string? OperationalStatus = null,
+    bool IncludeArchived = false,
     int Page = 1,
     int PageSize = 20)
 {

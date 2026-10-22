@@ -68,6 +68,8 @@ public sealed class Organization : AggregateRoot<Guid>
 
     public DateTimeOffset CreatedOnUtc { get; private set; }
     public DateTimeOffset? UpdatedOnUtc { get; private set; }
+    public DateTimeOffset? ArchivedOnUtc { get; private set; }
+    public bool IsArchived => ArchivedOnUtc is not null;
 
     private Organization(Guid id)
     {
@@ -118,6 +120,18 @@ public sealed class Organization : AggregateRoot<Guid>
     public void SetConfigurationStatus(ConfigurationStatus status)
     {
         ConfigurationStatus = status;
+        Touch();
+    }
+
+    public void Archive()
+    {
+        ArchivedOnUtc ??= DateTimeOffset.UtcNow;
+        Touch();
+    }
+
+    public void Restore()
+    {
+        ArchivedOnUtc = null;
         Touch();
     }
 
@@ -223,9 +237,11 @@ public sealed class Organization : AggregateRoot<Guid>
       DistrictOrNeighborhood = district; StreetAddress = streetAddress; PostalCode = postalCode; Latitude = latitude; Longitude = longitude;
       AltitudeMeters = altitude; LocationAccuracy = locationAccuracy; TimeZoneId = timeZoneId; }
     internal void HydrateOperations(DateOnly? openingDate, string currency, string language, bool emergency, bool publicFacing,
-        OperationalStatus operational, ConfigurationStatus configuration, string? phone, string? email, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
+        OperationalStatus operational, ConfigurationStatus configuration, string? phone, string? email,
+        DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
     { OpeningDate = openingDate; DefaultCurrencyCode = currency; DefaultLanguageCode = language; EmergencyServicesAvailable = emergency; PublicFacing = publicFacing;
-      OperationalStatus = operational; ConfigurationStatus = configuration; Phone = phone; Email = email; CreatedOnUtc = createdOnUtc; UpdatedOnUtc = updatedOnUtc; }
+      OperationalStatus = operational; ConfigurationStatus = configuration; Phone = phone; Email = email;
+      CreatedOnUtc = createdOnUtc; UpdatedOnUtc = updatedOnUtc; ArchivedOnUtc = archivedOnUtc; }
 
     private void Touch() => UpdatedOnUtc = DateTimeOffset.UtcNow;
 

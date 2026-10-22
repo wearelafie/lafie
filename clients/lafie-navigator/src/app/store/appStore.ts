@@ -13,6 +13,9 @@ type AppState = {
   /** Étage actif (navigation vers ses espaces). */
   selectedFloorId: string | null
   setSelectedFloor: (id: string | null) => void
+  /** Espace actif (navigation vers son détail). */
+  selectedSpaceId: string | null
+  setSelectedSpace: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -24,6 +27,8 @@ export const useAppStore = create<AppState>()(
       setSelectedBuilding: (id) => set({ selectedBuildingId: id }),
       selectedFloorId: null,
       setSelectedFloor: (id) => set({ selectedFloorId: id }),
+      selectedSpaceId: null,
+      setSelectedSpace: (id) => set({ selectedSpaceId: id }),
     }),
     { name: 'lafie.app' },
   ),

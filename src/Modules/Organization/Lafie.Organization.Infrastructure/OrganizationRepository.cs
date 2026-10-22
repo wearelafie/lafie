@@ -25,7 +25,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
         opening_date as "OpeningDate", default_currency_code as "DefaultCurrencyCode", default_language_code as "DefaultLanguageCode",
         emergency_services_available as "EmergencyServicesAvailable", public_facing as "PublicFacing",
         operational_status as "OperationalStatus", configuration_status as "ConfigurationStatus",
-        phone as "Phone", email as "Email", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc"
+        phone as "Phone", email as "Email", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc", archived_on_utc as "ArchivedOnUtc"
         """;
 
     private const string InsertSql = """
@@ -37,7 +37,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
             country_code, region_code, prefecture_code, commune_code, locality, district_or_neighborhood, street_address, postal_code,
             latitude, longitude, altitude_meters, location_accuracy, time_zone_id,
             opening_date, default_currency_code, default_language_code, emergency_services_available, public_facing,
-            operational_status, configuration_status, phone, email, created_on_utc, updated_on_utc)
+            operational_status, configuration_status, phone, email, created_on_utc, updated_on_utc, archived_on_utc)
         values (
             @Id, @Code, @OfficialName, @DisplayName, @Abbreviation, @Description, @FacilityTypeCode, @OwnershipTypeCode,
             @LogoUrl, @WebsiteUrl, @EstablishedOn, @ParentOrganizationId,
@@ -46,7 +46,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
             @CountryCode, @RegionCode, @PrefectureCode, @CommuneCode, @Locality, @DistrictOrNeighborhood, @StreetAddress, @PostalCode,
             @Latitude, @Longitude, @AltitudeMeters, @LocationAccuracy, @TimeZoneId,
             @OpeningDate, @DefaultCurrencyCode, @DefaultLanguageCode, @EmergencyServicesAvailable, @PublicFacing,
-            @OperationalStatus, @ConfigurationStatus, @Phone, @Email, @CreatedOnUtc, @UpdatedOnUtc)
+            @OperationalStatus, @ConfigurationStatus, @Phone, @Email, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
         """;
 
     private const string UpdateSql = """
@@ -63,7 +63,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
             opening_date = @OpeningDate, default_currency_code = @DefaultCurrencyCode, default_language_code = @DefaultLanguageCode,
             emergency_services_available = @EmergencyServicesAvailable, public_facing = @PublicFacing,
             operational_status = @OperationalStatus, configuration_status = @ConfigurationStatus, phone = @Phone, email = @Email,
-            updated_on_utc = @UpdatedOnUtc
+            updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
         where id = @Id
         """;
 
@@ -103,7 +103,8 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
             o.HydrateOperations(dto.OpeningDate, dto.DefaultCurrencyCode, dto.DefaultLanguageCode, dto.EmergencyServicesAvailable, dto.PublicFacing,
                 Enum.Parse<OperationalStatus>(dto.OperationalStatus), Enum.Parse<ConfigurationStatus>(dto.ConfigurationStatus),
                 dto.Phone, dto.Email, new DateTimeOffset(dto.CreatedOnUtc, TimeSpan.Zero),
-                dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null);
+                dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null,
+                dto.ArchivedOnUtc is { } a ? new DateTimeOffset(a, TimeSpan.Zero) : null);
         });
     }
 
@@ -112,6 +113,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
         var where = new StringBuilder("where 1 = 1");
         var p = new DynamicParameters();
 
+        if (!filter.IncludeArchived) where.Append(" and archived_on_utc is null");
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             where.Append(" and (official_name ilike @search or code ilike @search or display_name ilike @search)");
@@ -140,6 +142,13 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
         return new PagedResult<OrganizationDto>(items, filter.SafePage, filter.SafePageSize, total);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "delete from organization.organizations where id = @id", new { id }, cancellationToken: cancellationToken));
+    }
+
     public async Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from organization.organizations where lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
@@ -158,6 +167,6 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
         o.Latitude, o.Longitude, o.AltitudeMeters, o.LocationAccuracy, o.TimeZoneId,
         o.OpeningDate, o.DefaultCurrencyCode, o.DefaultLanguageCode, o.EmergencyServicesAvailable, o.PublicFacing,
         OperationalStatus = o.OperationalStatus.ToString(), ConfigurationStatus = o.ConfigurationStatus.ToString(),
-        o.Phone, o.Email, o.CreatedOnUtc, o.UpdatedOnUtc,
+        o.Phone, o.Email, o.CreatedOnUtc, o.UpdatedOnUtc, o.ArchivedOnUtc,
     };
 }

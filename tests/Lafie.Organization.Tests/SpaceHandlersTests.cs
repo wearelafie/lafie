@@ -25,6 +25,7 @@ public class SpaceHandlersTests
             => Task.FromResult(new PagedResult<SpaceDto>([], filter.SafePage, filter.SafePageSize, 0));
         public Task<bool> CodeExistsAsync(Guid f, string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(ExistingCodes.Contains(code));
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class FakeFloors(bool exists) : IFloorRepository
@@ -37,6 +38,7 @@ public class SpaceHandlersTests
         public Task<PagedResult<FloorDto>> SearchAsync(Guid b, FloorFilter filter, CancellationToken ct = default)
             => Task.FromResult(new PagedResult<FloorDto>([], 1, 20, 0));
         public Task<bool> CodeExistsAsync(Guid b, string code, Guid? excludeId = null, CancellationToken ct = default) => Task.FromResult(false);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class FakeBuildings : IBuildingRepository
@@ -49,6 +51,7 @@ public class SpaceHandlersTests
         public Task<PagedResult<BuildingDto>> SearchAsync(Guid f, BuildingFilter filter, CancellationToken ct = default)
             => Task.FromResult(new PagedResult<BuildingDto>([], 1, 20, 0));
         public Task<bool> CodeExistsAsync(Guid f, string code, Guid? excludeId = null, CancellationToken ct = default) => Task.FromResult(false);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private static CreateSpaceHandler Handler(FakeSpaces spaces, bool floorExists = true)

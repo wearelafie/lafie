@@ -17,10 +17,10 @@ public static class OrganizationEndpoints
         var group = endpoints.MapGroup("/organizations").WithTags("Organization");
 
         group.MapGet("", async (
-            string? search, string? type, string? status, int? page, int? pageSize,
+            string? search, string? type, string? status, bool? includeArchived, int? page, int? pageSize,
             IMediator mediator, CancellationToken ct) =>
         {
-            var filter = new OrganizationFilter(search, type, status, page ?? 1, pageSize ?? 20);
+            var filter = new OrganizationFilter(search, type, status, includeArchived ?? false, page ?? 1, pageSize ?? 20);
             return Results.Ok(await mediator.Send(new GetOrganizationsQuery(filter), ct));
         });
 
@@ -48,6 +48,20 @@ public static class OrganizationEndpoints
         {
             var result = await mediator.Send(new ChangeOrganizationStatusCommand(id, r.OperationalStatus), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        });
+
+        group.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new ArchiveOrganizationCommand(id), ct) is { IsSuccess: true }
+                ? Results.NoContent() : Results.BadRequest());
+
+        group.MapPost("/{id:guid}/restore", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new RestoreOrganizationCommand(id), ct) is { IsSuccess: true }
+                ? Results.NoContent() : Results.BadRequest());
+
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new DeleteOrganizationCommand(id), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.Conflict(new { error = result.Error });
         });
 
         return endpoints;

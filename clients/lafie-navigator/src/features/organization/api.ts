@@ -55,10 +55,11 @@ export type Organization = {
   email: string | null
   createdOnUtc: string
   updatedOnUtc: string | null
+  archivedOnUtc: string | null
 }
 
 export type PagedResult<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
-export type OrganizationFilter = { search?: string; facilityTypeCode?: string; operationalStatus?: string; page?: number; pageSize?: number }
+export type OrganizationFilter = { search?: string; facilityTypeCode?: string; operationalStatus?: string; includeArchived?: boolean; page?: number; pageSize?: number }
 
 // Modèle d'écriture (aligné sur l'API). Champs optionnels à null/omission.
 export type OrganizationInput = {
@@ -110,6 +111,7 @@ export function getOrganizations(filter: OrganizationFilter): Promise<PagedResul
   if (filter.search) q.set('search', filter.search)
   if (filter.facilityTypeCode) q.set('type', filter.facilityTypeCode)
   if (filter.operationalStatus) q.set('status', filter.operationalStatus)
+  if (filter.includeArchived) q.set('includeArchived', 'true')
   q.set('page', String(filter.page ?? 1))
   q.set('pageSize', String(filter.pageSize ?? 20))
   return getJson<PagedResult<Organization>>(`/api/organizations?${q.toString()}`)
@@ -129,6 +131,17 @@ export async function updateOrganization(id: string, input: OrganizationInput): 
 
 export async function setOrganizationStatus(id: string, operationalStatus: OperationalStatus): Promise<void> {
   await send(`/api/organizations/${id}/status`, 'PUT', { operationalStatus })
+}
+
+export async function archiveOrganization(id: string): Promise<void> { await send(`/api/organizations/${id}/archive`, 'POST', {}) }
+export async function restoreOrganization(id: string): Promise<void> { await send(`/api/organizations/${id}/restore`, 'POST', {}) }
+export async function deleteOrganization(id: string): Promise<void> {
+  const res = await fetch(`/api/organizations/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`
+    try { const d = (await res.json()) as { error?: string }; message = d.error ?? message } catch { /* keep */ }
+    throw new Error(message)
+  }
 }
 
 async function send(url: string, method: string, body: unknown): Promise<void> {

@@ -54,4 +54,5 @@ public sealed class OrganizationDto
 
     public DateTime CreatedOnUtc { get; init; }
     public DateTime? UpdatedOnUtc { get; init; }
+    public DateTime? ArchivedOnUtc { get; init; }
 }
