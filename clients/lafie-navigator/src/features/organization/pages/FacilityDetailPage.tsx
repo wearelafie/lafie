@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { Badge, Spinner, Tab, TabList, makeStyles, tokens } from '@fluentui/react-components'
+import { Badge, Spinner, Subtitle2, Tab, TabList, makeStyles, tokens } from '@fluentui/react-components'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type FieldRow } from '@shared/components'
+import { BuildingsPage } from '@features/building'
+import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
 import { getOrganization } from '../api'
+
+const TABS = ['overview', 'buildings'] as const
+type TabKey = (typeof TABS)[number]
 
 const useStyles = makeStyles({
   root: { padding: tokens.spacingVerticalXL, display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
   state: { padding: tokens.spacingVerticalXXL, textAlign: 'center', color: tokens.colorNeutralForeground3 },
   tabContent: { paddingTop: tokens.spacingVerticalM },
+  sections: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalXL },
+  section: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalS },
 })
 
 const statusColor = (s: string) => (s === 'Active' ? 'success' : s === 'Setup' ? 'brand' : s === 'PermanentlyClosed' ? 'danger' : 'warning')
@@ -18,7 +24,8 @@ export function FacilityDetailPage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const id = useAppStore((s) => s.selectedFacilityId)
-  const [tab, setTab] = useState('overview')
+  const pendingTab = useAppStore((s) => s.infraTab)
+  const [tab, setTab] = useState<TabKey>(() => (TABS.includes(pendingTab as TabKey) ? (pendingTab as TabKey) : 'overview'))
   const typeLabel = (c: string) => { const l = t(`organization.facilityTypes.${c}`); return l.startsWith('organization.') ? c : l }
   const ownLabel = (c: string) => { const l = t(`organization.ownershipTypes.${c}`); return l.startsWith('organization.') ? c : l }
   const b = (v: boolean) => (v ? t('common.yes') : t('common.no'))
@@ -31,7 +38,7 @@ export function FacilityDetailPage() {
   if (q.isError || !q.data) return <div className={styles.root}><div className={styles.state}>{t('organization.loadError')}</div></div>
 
   const o = q.data
-  const overview: FieldRow[] = [
+  const identity: FieldRow[] = [
     { label: t('organization.fields.code'), value: o.code },
     { label: t('organization.fields.officialName'), value: o.officialName },
     { label: t('organization.fields.displayName'), value: o.displayName },
@@ -76,18 +83,35 @@ export function FacilityDetailPage() {
     { label: t('organization.fields.emergencyServices'), value: b(o.emergencyServicesAvailable) },
     { label: t('organization.fields.publicFacing'), value: b(o.publicFacing) },
   ]
-  const rows = tab === 'location' ? location : tab === 'legal' ? legal : tab === 'operations' ? operations : overview
+  const crumbs: Crumb[] = [{ label: t('organization.title'), to: '/admin' }]
+  const sections: { key: string; rows: FieldRow[] }[] = [
+    { key: 'identity', rows: identity },
+    { key: 'location', rows: location },
+    { key: 'legal', rows: legal },
+    { key: 'operations', rows: operations },
+  ]
 
   return (
     <div className={styles.root}>
-      <DetailHeader title={o.officialName} backTo="/admin" backLabel={t('organization.detail.back')} />
-      <TabList selectedValue={tab} onTabSelect={(_, d2) => setTab(d2.value as string)}>
-        <Tab value="overview">{t('organization.sections.identity')}</Tab>
-        <Tab value="location">{t('organization.sections.location')}</Tab>
-        <Tab value="legal">{t('organization.sections.legal')}</Tab>
-        <Tab value="operations">{t('organization.sections.operations')}</Tab>
+      <DetailHeader title={o.officialName} crumbs={crumbs} />
+      <TabList selectedValue={tab} onTabSelect={(_, dt) => setTab(dt.value as TabKey)}>
+        <Tab value="overview">{t('organization.tabs.overview')}</Tab>
+        <Tab value="buildings">{t('organization.tabs.buildings')}</Tab>
       </TabList>
-      <div className={styles.tabContent}><FieldList rows={rows} /></div>
+      <div className={styles.tabContent}>
+        {tab === 'overview' ? (
+          <div className={styles.sections}>
+            {sections.map((s) => (
+              <div key={s.key} className={styles.section}>
+                <Subtitle2>{t(`organization.sections.${s.key}`)}</Subtitle2>
+                <FieldList rows={s.rows} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <BuildingsPage />
+        )}
+      </div>
     </div>
   )
 }

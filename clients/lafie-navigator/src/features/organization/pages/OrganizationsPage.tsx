@@ -50,6 +50,7 @@ export function OrganizationsPage() {
   const navigate = useNavigate()
   const selectedId = useAppStore((s) => s.selectedFacilityId)
   const setSelected = useAppStore((s) => s.setSelectedFacility)
+  const setInfraTab = useAppStore((s) => s.setInfraTab)
 
   const [draft, setDraft] = useState<{ search: string; type: string; status: string; archived: boolean }>({ search: '', type: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<OrganizationFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -62,8 +63,8 @@ export function OrganizationsPage() {
   const archiveMut = useMutation({ mutationFn: archiveOrganization, onSuccess: invalidate })
   const restoreMut = useMutation({ mutationFn: restoreOrganization, onSuccess: invalidate })
 
-  const openBuildings = (id: string) => { setSelected(id); void navigate({ to: '/admin/buildings' as never }) }
-  const openDetail = (id: string) => { setSelected(id); void navigate({ to: '/admin/facility' }) }
+  // Drill vers la fiche établissement, en ouvrant directement l'onglet voulu (aperçu ou bâtiments).
+  const openFacility = (id: string, tab: string) => { setSelected(id); setInfraTab(tab); void navigate({ to: '/admin/facility' }) }
 
   const runSearch = () => setApplied({
     search: draft.search || undefined,
@@ -130,8 +131,8 @@ export function OrganizationsPage() {
             <TableBody>
               {data!.items.map((o) => {
                 const primary: RowAction[] = [
-                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openDetail(o.id) },
-                  { key: 'buildings', label: t('organization.buildings'), icon: <Building20Regular />, color: tokens.colorBrandForeground1, onClick: () => openBuildings(o.id) },
+                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openFacility(o.id, 'overview') },
+                  { key: 'buildings', label: t('organization.buildings'), icon: <Building20Regular />, color: tokens.colorBrandForeground1, onClick: () => openFacility(o.id, 'buildings') },
                   { key: 'edit', label: t('organization.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => { setEditing(o); setFormOpen(true) } },
                 ]
                 const statusItem: RowAction = o.operationalStatus === 'Active'

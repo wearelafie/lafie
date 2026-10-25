@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Badge, Button, Checkbox, Dropdown, Option, SearchBox, Spinner,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
-  Title3, makeStyles, mergeClasses, tokens,
+  makeStyles, mergeClasses, tokens,
 } from '@fluentui/react-components'
 import {
-  Add20Regular, Archive20Regular, ArrowLeft20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
+  Add20Regular, Archive20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
   Layer20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { getOrganization } from '@features/organization/api'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   BUILDING_STATUSES, archiveBuilding, buildingKeys, deleteBuilding, getBuildings, restoreBuilding,
@@ -25,10 +24,8 @@ const ANY = '__any__'
 const statusColor = (s: string) => (s === 'Active' ? 'success' : s === 'Maintenance' ? 'warning' : 'danger')
 
 const useStyles = makeStyles({
-  root: { padding: tokens.spacingVerticalXL, display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
-  top: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
-  back: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', textDecoration: 'none', color: tokens.colorBrandForeground1, fontSize: tokens.fontSizeBase200 },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', columnGap: tokens.spacingHorizontalM },
+  root: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
+  toolbar: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', columnGap: tokens.spacingHorizontalM },
   filters: { display: 'flex', alignItems: 'flex-end', columnGap: tokens.spacingHorizontalM, flexWrap: 'wrap' },
   filterField: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
   label: { fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 },
@@ -45,10 +42,9 @@ export function BuildingsPage() {
   const navigate = useNavigate()
   const facilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedBuilding = useAppStore((s) => s.setSelectedBuilding)
-  const openFloors = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/floors' as never }) }
-  const openDetail = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/building' }) }
-
-  const facility = useQuery({ queryKey: ['organization', facilityId], queryFn: () => getOrganization(facilityId!), enabled: !!facilityId })
+  const setInfraTab = useAppStore((s) => s.setInfraTab)
+  // Drill vers la fiche bâtiment, en ouvrant directement l'onglet voulu (aperçu ou étages).
+  const openBuilding = (id: string, tab: string) => { setSelectedBuilding(id); setInfraTab(tab); void navigate({ to: '/admin/building' }) }
 
   const [draft, setDraft] = useState<{ search: string; status: string; archived: boolean }>({ search: '', status: ANY, archived: false })
   const [applied, setApplied] = useState<BuildingFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -62,12 +58,7 @@ export function BuildingsPage() {
   const restoreMut = useMutation({ mutationFn: restoreBuilding, onSuccess: invalidate })
 
   if (!facilityId) {
-    return (
-      <div className={styles.root}>
-        <Title3>{t('building.title')}</Title3>
-        <div className={styles.state}>{t('building.noFacility')} <Link to={'/admin' as never}>{t('building.goFacilities')}</Link></div>
-      </div>
-    )
+    return <div className={styles.root}><div className={styles.state}>{t('building.noFacility')}</div></div>
   }
 
   const runSearch = () => setApplied({ search: draft.search || undefined, status: draft.status === ANY ? undefined : draft.status, includeArchived: draft.archived, page: 1, pageSize: PAGE_SIZE })
@@ -78,12 +69,8 @@ export function BuildingsPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.top}>
-        <Link to={'/admin' as never} className={styles.back}><ArrowLeft20Regular />{t('building.goFacilities')}</Link>
-        <div className={styles.header}>
-          <Title3>{t('building.titleFor', { facility: facility.data?.officialName ?? '…' })}</Title3>
-          <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('building.new')}</Button>
-        </div>
+      <div className={styles.toolbar}>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('building.new')}</Button>
       </div>
 
       <div className={styles.filters}>
@@ -121,8 +108,8 @@ export function BuildingsPage() {
             <TableBody>
               {data!.items.map((b) => {
                 const primary: RowAction[] = [
-                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openDetail(b.id) },
-                  { key: 'floors', label: t('building.floors'), icon: <Layer20Regular />, color: tokens.colorBrandForeground1, onClick: () => openFloors(b.id) },
+                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openBuilding(b.id, 'overview') },
+                  { key: 'floors', label: t('building.floors'), icon: <Layer20Regular />, color: tokens.colorBrandForeground1, onClick: () => openBuilding(b.id, 'floors') },
                   { key: 'edit', label: t('building.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => { setEditing(b); setFormOpen(true) } },
                 ]
                 const menu: RowAction[] = [

@@ -15,9 +15,6 @@ import QualityIcon from '~icons/fluent-color/shield-checkmark-24'
 import InfraIcon from '~icons/fluent-color/building-24'
 // Icônes mono (fines) pour les sous-items.
 import {
-  Building20Regular,
-  Layer20Regular,
-  Grid20Regular,
   List20Regular,
   PersonAdd20Regular,
   Bed20Regular,
@@ -193,10 +190,9 @@ export const navItems: NavItem[] = [
     labelKey: 'nav.infrastructure',
     icon: <InfraIcon />,
     children: [
+      // Les bâtiments/étages/espaces sont imbriqués dans l'établissement : on y accède
+      // par la fiche établissement (onglets + drill), pas par des entrées plates ici.
       { key: 'facilities', to: '/admin', labelKey: 'nav.sub.infrastructure.facilities', icon: <BuildingMultiple20Regular /> },
-      { key: 'buildings', to: '/admin/buildings', labelKey: 'nav.sub.infrastructure.buildings', icon: <Building20Regular /> },
-      { key: 'floors', to: '/admin/floors', labelKey: 'nav.sub.infrastructure.floors', icon: <Layer20Regular /> },
-      { key: 'spaces', to: '/admin/spaces', labelKey: 'nav.sub.infrastructure.spaces', icon: <Grid20Regular /> },
     ],
   },
   {

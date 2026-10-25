@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Badge, Button, Checkbox, Dropdown, Option, SearchBox, Spinner,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
-  Title3, makeStyles, mergeClasses, tokens,
+  makeStyles, mergeClasses, tokens,
 } from '@fluentui/react-components'
 import {
-  Add20Regular, Archive20Regular, ArrowLeft20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
+  Add20Regular, Archive20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
   Grid20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { getBuilding } from '@features/building/api'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   FLOOR_STATUSES, archiveFloor, deleteFloor, floorKeys, getFloors, restoreFloor, setFloorStatus,
@@ -25,10 +24,8 @@ const ANY = '__any__'
 const statusColor = (s: string) => (s === 'Active' ? 'success' : s === 'Maintenance' ? 'warning' : 'danger')
 
 const useStyles = makeStyles({
-  root: { padding: tokens.spacingVerticalXL, display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
-  top: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
-  back: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', textDecoration: 'none', color: tokens.colorBrandForeground1, fontSize: tokens.fontSizeBase200 },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', columnGap: tokens.spacingHorizontalM },
+  root: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
+  toolbar: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', columnGap: tokens.spacingHorizontalM },
   filters: { display: 'flex', alignItems: 'flex-end', columnGap: tokens.spacingHorizontalM, flexWrap: 'wrap' },
   filterField: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
   label: { fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 },
@@ -45,10 +42,9 @@ export function FloorsPage() {
   const navigate = useNavigate()
   const buildingId = useAppStore((s) => s.selectedBuildingId)
   const setSelectedFloor = useAppStore((s) => s.setSelectedFloor)
-  const openSpaces = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/spaces' as never }) }
-  const openDetail = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/floor' }) }
-
-  const building = useQuery({ queryKey: ['building', buildingId], queryFn: () => getBuilding(buildingId!), enabled: !!buildingId })
+  const setInfraTab = useAppStore((s) => s.setInfraTab)
+  // Drill vers la fiche étage, en ouvrant directement l'onglet voulu (aperçu ou espaces).
+  const openFloor = (id: string, tab: string) => { setSelectedFloor(id); setInfraTab(tab); void navigate({ to: '/admin/floor' }) }
 
   const [draft, setDraft] = useState<{ search: string; status: string; archived: boolean }>({ search: '', status: ANY, archived: false })
   const [applied, setApplied] = useState<FloorFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -62,12 +58,7 @@ export function FloorsPage() {
   const restoreMut = useMutation({ mutationFn: restoreFloor, onSuccess: invalidate })
 
   if (!buildingId) {
-    return (
-      <div className={styles.root}>
-        <Title3>{t('floor.title')}</Title3>
-        <div className={styles.state}>{t('floor.noBuilding')} <Link to={'/admin/buildings' as never}>{t('floor.goBuildings')}</Link></div>
-      </div>
-    )
+    return <div className={styles.root}><div className={styles.state}>{t('floor.noBuilding')}</div></div>
   }
 
   const runSearch = () => setApplied({ search: draft.search || undefined, status: draft.status === ANY ? undefined : draft.status, includeArchived: draft.archived, page: 1, pageSize: PAGE_SIZE })
@@ -78,12 +69,8 @@ export function FloorsPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.top}>
-        <Link to={'/admin/buildings' as never} className={styles.back}><ArrowLeft20Regular />{t('floor.goBuildings')}</Link>
-        <div className={styles.header}>
-          <Title3>{t('floor.titleFor', { building: building.data?.name ?? '…' })}</Title3>
-          <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('floor.new')}</Button>
-        </div>
+      <div className={styles.toolbar}>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('floor.new')}</Button>
       </div>
 
       <div className={styles.filters}>
@@ -121,8 +108,8 @@ export function FloorsPage() {
             <TableBody>
               {data!.items.map((f) => {
                 const primary: RowAction[] = [
-                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openDetail(f.id) },
-                  { key: 'spaces', label: t('floor.spaces'), icon: <Grid20Regular />, color: tokens.colorBrandForeground1, onClick: () => openSpaces(f.id) },
+                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openFloor(f.id, 'overview') },
+                  { key: 'spaces', label: t('floor.spaces'), icon: <Grid20Regular />, color: tokens.colorBrandForeground1, onClick: () => openFloor(f.id, 'spaces') },
                   { key: 'edit', label: t('floor.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => { setEditing(f); setFormOpen(true) } },
                 ]
                 const menu: RowAction[] = [

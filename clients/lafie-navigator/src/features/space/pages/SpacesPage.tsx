@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Badge, Button, Checkbox, Dropdown, Option, SearchBox, Spinner,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
-  Title3, makeStyles, mergeClasses, tokens,
+  makeStyles, mergeClasses, tokens,
 } from '@fluentui/react-components'
 import {
-  Add20Regular, Archive20Regular, ArrowLeft20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
+  Add20Regular, Archive20Regular, ArrowReset20Regular, Eye20Regular, Edit20Regular,
   Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { getFloor } from '@features/floor/api'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   SPACE_STATUSES, SPACE_TYPES, archiveSpace, deleteSpace, getSpaces, restoreSpace, setSpaceStatus, spaceKeys,
@@ -25,10 +24,8 @@ const ANY = '__any__'
 const statusColor = (s: string) => (s === 'Active' ? 'success' : s === 'Maintenance' ? 'warning' : 'danger')
 
 const useStyles = makeStyles({
-  root: { padding: tokens.spacingVerticalXL, display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
-  top: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
-  back: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', textDecoration: 'none', color: tokens.colorBrandForeground1, fontSize: tokens.fontSizeBase200 },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', columnGap: tokens.spacingHorizontalM },
+  root: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
+  toolbar: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', columnGap: tokens.spacingHorizontalM },
   filters: { display: 'flex', alignItems: 'flex-end', columnGap: tokens.spacingHorizontalM, flexWrap: 'wrap' },
   filterField: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
   label: { fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 },
@@ -47,8 +44,6 @@ export function SpacesPage() {
   const setSelectedSpace = useAppStore((s) => s.setSelectedSpace)
   const openDetail = (id: string) => { setSelectedSpace(id); void navigate({ to: '/admin/space' }) }
 
-  const floor = useQuery({ queryKey: ['floor', floorId], queryFn: () => getFloor(floorId!), enabled: !!floorId })
-
   const [draft, setDraft] = useState<{ search: string; type: string; status: string; archived: boolean }>({ search: '', type: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<SpaceFilter>({ page: 1, pageSize: PAGE_SIZE })
   const [formOpen, setFormOpen] = useState(false)
@@ -61,12 +56,7 @@ export function SpacesPage() {
   const restoreMut = useMutation({ mutationFn: restoreSpace, onSuccess: invalidate })
 
   if (!floorId) {
-    return (
-      <div className={styles.root}>
-        <Title3>{t('space.title')}</Title3>
-        <div className={styles.state}>{t('space.noFloor')} <Link to={'/admin/floors' as never}>{t('space.goFloors')}</Link></div>
-      </div>
-    )
+    return <div className={styles.root}><div className={styles.state}>{t('space.noFloor')}</div></div>
   }
 
   const runSearch = () => setApplied({ search: draft.search || undefined, type: draft.type === ANY ? undefined : draft.type, status: draft.status === ANY ? undefined : draft.status, includeArchived: draft.archived, page: 1, pageSize: PAGE_SIZE })
@@ -77,12 +67,8 @@ export function SpacesPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.top}>
-        <Link to={'/admin/floors' as never} className={styles.back}><ArrowLeft20Regular />{t('space.goFloors')}</Link>
-        <div className={styles.header}>
-          <Title3>{t('space.titleFor', { floor: floor.data?.name ?? '…' })}</Title3>
-          <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('space.new')}</Button>
-        </div>
+      <div className={styles.toolbar}>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>{t('space.new')}</Button>
       </div>
 
       <div className={styles.filters}>
