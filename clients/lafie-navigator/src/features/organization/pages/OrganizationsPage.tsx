@@ -62,7 +62,7 @@ export function OrganizationsPage() {
   const archiveMut = useMutation({ mutationFn: archiveOrganization, onSuccess: invalidate })
   const restoreMut = useMutation({ mutationFn: restoreOrganization, onSuccess: invalidate })
 
-  const openBuildings = (id: string) => { setSelected(id); void navigate({ to: '/admin/buildings' }) }
+  const openBuildings = (id: string) => { setSelected(id); void navigate({ to: '/admin/buildings' as never }) }
   const openDetail = (id: string) => { setSelected(id); void navigate({ to: '/admin/facility' }) }
 
   const runSearch = () => setApplied({

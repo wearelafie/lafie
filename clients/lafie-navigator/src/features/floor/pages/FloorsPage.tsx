@@ -45,7 +45,7 @@ export function FloorsPage() {
   const navigate = useNavigate()
   const buildingId = useAppStore((s) => s.selectedBuildingId)
   const setSelectedFloor = useAppStore((s) => s.setSelectedFloor)
-  const openSpaces = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/spaces' }) }
+  const openSpaces = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/spaces' as never }) }
   const openDetail = (id: string) => { setSelectedFloor(id); void navigate({ to: '/admin/floor' }) }
 
   const building = useQuery({ queryKey: ['building', buildingId], queryFn: () => getBuilding(buildingId!), enabled: !!buildingId })

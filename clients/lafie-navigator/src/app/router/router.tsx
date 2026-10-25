@@ -12,6 +12,9 @@ import { flatRoutes } from '@app/nav/navModel'
 // Routes déjà implémentées (vraie feature) — les autres restent des pages stub.
 const implemented: Record<string, () => ReactElement> = {
   '/admin': OrganizationsPage,
+  '/admin/buildings': BuildingsPage,
+  '/admin/floors': FloorsPage,
+  '/admin/spaces': SpacesPage,
 }
 
 // Routage code-based. Les routes modules sont générées depuis le modèle de nav
@@ -38,9 +41,6 @@ const moduleRoutes = flatRoutes
 
 // Routes additionnelles (hors navModel) : écrans de détail/sous-ressources.
 const extraRoutes = [
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/buildings', component: BuildingsPage }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/floors', component: FloorsPage }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/spaces', component: SpacesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/facility', component: FacilityDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/building', component: BuildingDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/floor', component: FloorDetailPage }),

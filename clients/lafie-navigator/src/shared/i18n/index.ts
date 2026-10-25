@@ -32,6 +32,7 @@ const resources = {
         lab: 'Laboratoire',
         billing: 'Facturation',
         admin: 'Administration',
+        infrastructure: 'Infrastructure',
         hr: 'Ressources humaines',
         accounting: 'Comptabilité',
         frontdesk: 'Secrétariat',
@@ -79,6 +80,12 @@ const resources = {
             interop: 'Interop / FHIR',
             audit: 'Audit',
             settings: 'Paramètres',
+          },
+          infrastructure: {
+            facilities: 'Établissements',
+            buildings: 'Bâtiments',
+            floors: 'Étages',
+            spaces: 'Espaces',
           },
           hr: {
             employees: 'Employés',
@@ -352,6 +359,7 @@ const resources = {
         lab: 'Laboratory',
         billing: 'Billing',
         admin: 'Administration',
+        infrastructure: 'Infrastructure',
         hr: 'Human resources',
         accounting: 'Accounting',
         frontdesk: 'Front desk',
@@ -399,6 +407,12 @@ const resources = {
             interop: 'Interop / FHIR',
             audit: 'Audit',
             settings: 'Settings',
+          },
+          infrastructure: {
+            facilities: 'Facilities',
+            buildings: 'Buildings',
+            floors: 'Floors',
+            spaces: 'Spaces',
           },
           hr: {
             employees: 'Employees',

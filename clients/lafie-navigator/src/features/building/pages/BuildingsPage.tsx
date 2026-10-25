@@ -45,7 +45,7 @@ export function BuildingsPage() {
   const navigate = useNavigate()
   const facilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedBuilding = useAppStore((s) => s.setSelectedBuilding)
-  const openFloors = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/floors' }) }
+  const openFloors = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/floors' as never }) }
   const openDetail = (id: string) => { setSelectedBuilding(id); void navigate({ to: '/admin/building' }) }
 
   const facility = useQuery({ queryKey: ['organization', facilityId], queryFn: () => getOrganization(facilityId!), enabled: !!facilityId })
