@@ -13,16 +13,16 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
     private const string Columns = """
         id as "Id", facility_id as "FacilityId", code as "Code", name as "Name",
         description as "Description", location as "Location", status as "Status",
-        created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc"
+        created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc", archived_on_utc as "ArchivedOnUtc"
         """;
 
     public async Task AddAsync(Building b, CancellationToken cancellationToken = default)
     {
         const string sql = """
             insert into organization.buildings
-                (id, facility_id, code, name, description, location, status, created_on_utc, updated_on_utc)
+                (id, facility_id, code, name, description, location, status, created_on_utc, updated_on_utc, archived_on_utc)
             values
-                (@Id, @FacilityId, @Code, @Name, @Description, @Location, @Status, @CreatedOnUtc, @UpdatedOnUtc)
+                (@Id, @FacilityId, @Code, @Name, @Description, @Location, @Status, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(b), cancellationToken: cancellationToken));
@@ -33,7 +33,7 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
         const string sql = """
             update organization.buildings set
                 code = @Code, name = @Name, description = @Description, location = @Location,
-                status = @Status, updated_on_utc = @UpdatedOnUtc
+                status = @Status, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
@@ -48,7 +48,8 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
             dto.Id, dto.FacilityId, dto.Code, dto.Name, dto.Description, dto.Location,
             Enum.Parse<BuildingStatus>(dto.Status),
             new DateTimeOffset(dto.CreatedOnUtc, TimeSpan.Zero),
-            dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null);
+            dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null,
+            dto.ArchivedOnUtc is { } a ? new DateTimeOffset(a, TimeSpan.Zero) : null);
     }
 
     public async Task<BuildingDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -62,6 +63,7 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
     public async Task<PagedResult<BuildingDto>> SearchAsync(Guid facilityId, BuildingFilter filter, CancellationToken cancellationToken = default)
     {
         var where = new StringBuilder("where facility_id = @facilityId");
+        if (!filter.IncludeArchived) where.Append(" and archived_on_utc is null");
         var p = new DynamicParameters();
         p.Add("facilityId", facilityId);
 
@@ -88,6 +90,13 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
         return new PagedResult<BuildingDto>(items, filter.SafePage, filter.SafePageSize, total);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "delete from organization.buildings where id = @id", new { id }, cancellationToken: cancellationToken));
+    }
+
     public async Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         var sql = "select exists(select 1 from organization.buildings where facility_id = @facilityId and lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
@@ -107,5 +116,6 @@ public sealed class BuildingRepository(IDbConnectionFactory connectionFactory) :
         Status = b.Status.ToString(),
         b.CreatedOnUtc,
         b.UpdatedOnUtc,
+        b.ArchivedOnUtc,
     };
 }

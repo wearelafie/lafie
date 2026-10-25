@@ -18,10 +18,10 @@ public static class SpaceEndpoints
         var byFloor = endpoints.MapGroup("/floors/{floorId:guid}/spaces").WithTags("Space");
 
         byFloor.MapGet("", async (
-            Guid floorId, string? search, string? type, string? status, int? page, int? pageSize,
+            Guid floorId, string? search, string? type, string? status, bool? includeArchived, int? page, int? pageSize,
             IMediator mediator, CancellationToken ct) =>
         {
-            var filter = new SpaceFilter(search, type, status, page ?? 1, pageSize ?? 20);
+            var filter = new SpaceFilter(search, type, status, includeArchived ?? false, page ?? 1, pageSize ?? 20);
             return Results.Ok(await mediator.Send(new GetSpacesQuery(floorId, filter), ct));
         });
 
@@ -51,6 +51,16 @@ public static class SpaceEndpoints
         {
             var result = await mediator.Send(new SetSpaceStatusCommand(id, r.Status), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        });
+
+        byId.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new ArchiveSpaceCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+        byId.MapPost("/{id:guid}/restore", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new RestoreSpaceCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+        byId.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new DeleteSpaceCommand(id), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.Conflict(new { error = result.Error });
         });
 
         return endpoints;

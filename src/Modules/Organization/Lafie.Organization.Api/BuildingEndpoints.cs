@@ -19,10 +19,10 @@ public static class BuildingEndpoints
         var byFacility = endpoints.MapGroup("/facilities/{facilityId:guid}/buildings").WithTags("Building");
 
         byFacility.MapGet("", async (
-            Guid facilityId, string? search, string? status, int? page, int? pageSize,
+            Guid facilityId, string? search, string? status, bool? includeArchived, int? page, int? pageSize,
             IMediator mediator, CancellationToken ct) =>
         {
-            var filter = new BuildingFilter(search, status, page ?? 1, pageSize ?? 20);
+            var filter = new BuildingFilter(search, status, includeArchived ?? false, page ?? 1, pageSize ?? 20);
             return Results.Ok(await mediator.Send(new GetBuildingsQuery(facilityId, filter), ct));
         });
 
@@ -53,6 +53,16 @@ public static class BuildingEndpoints
         {
             var result = await mediator.Send(new SetBuildingStatusCommand(id, r.Status), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        });
+
+        byId.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new ArchiveBuildingCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+        byId.MapPost("/{id:guid}/restore", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new RestoreBuildingCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+        byId.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new DeleteBuildingCommand(id), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.Conflict(new { error = result.Error });
         });
 
         return endpoints;

@@ -18,10 +18,12 @@ public sealed class Building : AggregateRoot<Guid>
     public BuildingStatus Status { get; private set; }
     public DateTimeOffset CreatedOnUtc { get; private set; }
     public DateTimeOffset? UpdatedOnUtc { get; private set; }
+    public DateTimeOffset? ArchivedOnUtc { get; private set; }
+    public bool IsArchived => ArchivedOnUtc is not null;
 
     private Building(
         Guid id, Guid facilityId, string code, string name, string? description, string? location,
-        BuildingStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
+        BuildingStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
     {
         Id = id;
         FacilityId = facilityId;
@@ -32,6 +34,7 @@ public sealed class Building : AggregateRoot<Guid>
         Status = status;
         CreatedOnUtc = createdOnUtc;
         UpdatedOnUtc = updatedOnUtc;
+        ArchivedOnUtc = archivedOnUtc;
     }
 
     public static Result<Building> Create(
@@ -49,7 +52,7 @@ public sealed class Building : AggregateRoot<Guid>
         var b = new Building(
             Guid.NewGuid(), facilityId, vCode.Value, vName.Value,
             Blank(description), Blank(location),
-            BuildingStatus.Active, DateTimeOffset.UtcNow, null);
+            BuildingStatus.Active, DateTimeOffset.UtcNow, null, null);
 
         b.AddDomainEvent(DomainEvent.Create((id, on) =>
             new BuildingCreated(id, on, b.Id, b.FacilityId, b.Name)));
@@ -59,8 +62,8 @@ public sealed class Building : AggregateRoot<Guid>
 
     public static Building Rehydrate(
         Guid id, Guid facilityId, string code, string name, string? description, string? location,
-        BuildingStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
-        => new(id, facilityId, code, name, description, location, status, createdOnUtc, updatedOnUtc);
+        BuildingStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
+        => new(id, facilityId, code, name, description, location, status, createdOnUtc, updatedOnUtc, archivedOnUtc);
 
     public Result Update(string code, string name, string? description, string? location)
     {
@@ -82,6 +85,9 @@ public sealed class Building : AggregateRoot<Guid>
         Status = status;
         Touch();
     }
+
+    public void Archive() { ArchivedOnUtc ??= DateTimeOffset.UtcNow; Touch(); }
+    public void Restore() { ArchivedOnUtc = null; Touch(); }
 
     private void Touch() => UpdatedOnUtc = DateTimeOffset.UtcNow;
 

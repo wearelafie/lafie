@@ -11,7 +11,7 @@ public class FloorRepositoryTests(PostgresFixture fixture) : IClassFixture<Postg
 
     private async Task<Guid> NewBuildingAsync()
     {
-        var facility = DomainOrganization.Create($"F{Guid.NewGuid():N}", OrganizationType.Hospital).Value;
+        var facility = DomainOrganization.Create($"F{Guid.NewGuid():N}", "Facility", "HOSPITAL", "PUBLIC", "TG").Value;
         await new OrganizationRepository(fixture.ConnectionFactory).AddAsync(facility);
         var building = Building.Create(facility.Id, $"B{Guid.NewGuid():N}", "Bât").Value;
         await new BuildingRepository(fixture.ConnectionFactory).AddAsync(building);

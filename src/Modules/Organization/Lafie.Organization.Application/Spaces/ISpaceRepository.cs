@@ -4,7 +4,7 @@ using Lafie.Organization.Domain;
 namespace Lafie.Organization.Application.Spaces;
 
 /// <summary>Critères de recherche/pagination des espaces (au sein d'un étage).</summary>
-public sealed record SpaceFilter(string? Search = null, string? Type = null, string? Status = null, int Page = 1, int PageSize = 20)
+public sealed record SpaceFilter(string? Search = null, string? Type = null, string? Status = null, bool IncludeArchived = false, int Page = 1, int PageSize = 20)
 {
     public const int MaxPageSize = 100;
     public int SafePage => Page < 1 ? 1 : Page;
@@ -21,4 +21,5 @@ public interface ISpaceRepository
     Task<SpaceDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PagedResult<SpaceDto>> SearchByFloorAsync(Guid floorId, SpaceFilter filter, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

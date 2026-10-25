@@ -29,6 +29,11 @@ builder.Services.AddLafiePersistence(connectionString);
 // Migrations SQL versionnées appliquées au démarrage (scripts embarqués dans cet assembly).
 builder.Services.AddLafieMigrations(typeof(Program).Assembly);
 
+// Seed de données de développement (module Infrastructure) — uniquement hors production,
+// après les migrations. Script idempotent ; sans effet en production.
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<Lafie.Api.DevDataSeeder>();
+
 // Eventing (bus in-process ; Outbox/broker à venir).
 builder.Services.AddLafieEventing();
 
