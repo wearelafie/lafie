@@ -26,11 +26,13 @@ public sealed class Space : AggregateRoot<Guid>
     public SpaceStatus Status { get; private set; }
     public DateTimeOffset CreatedOnUtc { get; private set; }
     public DateTimeOffset? UpdatedOnUtc { get; private set; }
+    public DateTimeOffset? ArchivedOnUtc { get; private set; }
+    public bool IsArchived => ArchivedOnUtc is not null;
 
     private Space(
         Guid id, Guid facilityId, Guid buildingId, Guid floorId, string code, string name, SpaceType type,
         string? description, decimal? area, int? maxCapacity, bool accessible,
-        SpaceStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
+        SpaceStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
     {
         Id = id;
         FacilityId = facilityId;
@@ -46,6 +48,7 @@ public sealed class Space : AggregateRoot<Guid>
         Status = status;
         CreatedOnUtc = createdOnUtc;
         UpdatedOnUtc = updatedOnUtc;
+        ArchivedOnUtc = archivedOnUtc;
     }
 
     public static Result<Space> Create(
@@ -67,7 +70,7 @@ public sealed class Space : AggregateRoot<Guid>
         var s = new Space(
             Guid.NewGuid(), facilityId, buildingId, floorId, vCode.Value, vName.Value, type,
             Blank(description), area, maxCapacity, accessible,
-            SpaceStatus.Active, DateTimeOffset.UtcNow, null);
+            SpaceStatus.Active, DateTimeOffset.UtcNow, null, null);
 
         s.AddDomainEvent(DomainEvent.Create((id, on) => new SpaceCreated(id, on, s.Id, s.FloorId, s.Type, s.Name)));
         return Result.Success(s);
@@ -76,8 +79,8 @@ public sealed class Space : AggregateRoot<Guid>
     public static Space Rehydrate(
         Guid id, Guid facilityId, Guid buildingId, Guid floorId, string code, string name, SpaceType type,
         string? description, decimal? area, int? maxCapacity, bool accessible,
-        SpaceStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc)
-        => new(id, facilityId, buildingId, floorId, code, name, type, description, area, maxCapacity, accessible, status, createdOnUtc, updatedOnUtc);
+        SpaceStatus status, DateTimeOffset createdOnUtc, DateTimeOffset? updatedOnUtc, DateTimeOffset? archivedOnUtc)
+        => new(id, facilityId, buildingId, floorId, code, name, type, description, area, maxCapacity, accessible, status, createdOnUtc, updatedOnUtc, archivedOnUtc);
 
     public Result Update(string code, string name, SpaceType type, string? description, decimal? area, int? maxCapacity, bool accessible)
     {
@@ -105,6 +108,9 @@ public sealed class Space : AggregateRoot<Guid>
         Status = status;
         Touch();
     }
+
+    public void Archive() { ArchivedOnUtc ??= DateTimeOffset.UtcNow; Touch(); }
+    public void Restore() { ArchivedOnUtc = null; Touch(); }
 
     private void Touch() => UpdatedOnUtc = DateTimeOffset.UtcNow;
 

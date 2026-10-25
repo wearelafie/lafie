@@ -1,21 +1,11 @@
 using Lafie.Core.Common;
 using Lafie.Core.Exceptions;
-using Lafie.Organization.Domain;
 using Mediator;
 
 namespace Lafie.Organization.Application.Organizations;
 
-/// <summary>Met à jour le nom et le profil d'une organisation.</summary>
-public sealed record UpdateOrganizationCommand(
-    Guid Id,
-    string Name,
-    string? ShortName = null,
-    string? Description = null,
-    string? Phone = null,
-    string? Email = null,
-    string? Timezone = null,
-    string? City = null,
-    string? Country = null) : IRequest<Result>;
+/// <summary>Met à jour un établissement.</summary>
+public sealed record UpdateOrganizationCommand(Guid Id, OrganizationWriteModel Model) : IRequest<Result>;
 
 public sealed class UpdateOrganizationHandler(IOrganizationRepository repository)
     : IRequestHandler<UpdateOrganizationCommand, Result>
@@ -23,15 +13,16 @@ public sealed class UpdateOrganizationHandler(IOrganizationRepository repository
     public async ValueTask<Result> Handle(UpdateOrganizationCommand command, CancellationToken cancellationToken)
     {
         var org = await repository.FindAsync(command.Id, cancellationToken)
-            ?? throw new NotFoundException($"Organisation {command.Id} introuvable.");
+            ?? throw new NotFoundException($"Établissement {command.Id} introuvable.");
 
-        var profile = new OrganizationProfile(
-            command.ShortName, command.Description, command.Phone, command.Email,
-            string.IsNullOrWhiteSpace(command.Timezone) ? "Africa/Lome" : command.Timezone!,
-            command.City, command.Country);
-
-        var result = org.Update(command.Name, profile);
+        var m = command.Model;
+        var result = org.Update(
+            m.Code, m.OfficialName, m.FacilityTypeCode, m.OwnershipTypeCode, m.CountryCode,
+            m.Identity(), m.Address(), m.Legal(), m.Operations(), m.Contact());
         if (result.IsFailure) return result;
+
+        if (await repository.CodeExistsAsync(org.Code, org.Id, cancellationToken))
+            return Result.Failure($"Le code '{org.Code}' est déjà utilisé.");
 
         await repository.UpdateAsync(org, cancellationToken);
         return Result.Success();

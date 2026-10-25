@@ -12,6 +12,7 @@ import HrIcon from '~icons/fluent-color/briefcase-24'
 import AccountingIcon from '~icons/fluent-color/savings-24'
 import FrontDeskIcon from '~icons/fluent-color/contact-card-24'
 import QualityIcon from '~icons/fluent-color/shield-checkmark-24'
+import InfraIcon from '~icons/fluent-color/building-24'
 // Icônes mono (fines) pour les sous-items.
 import {
   List20Regular,
@@ -184,12 +185,22 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    key: 'admin',
+    key: 'infrastructure',
     to: '/admin',
+    labelKey: 'nav.infrastructure',
+    icon: <InfraIcon />,
+    children: [
+      // Les bâtiments/étages/espaces sont imbriqués dans l'établissement : on y accède
+      // par la fiche établissement (onglets + drill), pas par des entrées plates ici.
+      { key: 'facilities', to: '/admin', labelKey: 'nav.sub.infrastructure.facilities', icon: <BuildingMultiple20Regular /> },
+    ],
+  },
+  {
+    key: 'admin',
+    to: '/admin/users',
     labelKey: 'nav.admin',
     icon: <AdminIcon />,
     children: [
-      { key: 'facilities', to: '/admin', labelKey: 'nav.sub.admin.facilities', icon: <BuildingMultiple20Regular /> },
       { key: 'users', to: '/admin/users', labelKey: 'nav.sub.admin.users', icon: <PeopleTeam20Regular /> },
       { key: 'terminology', to: '/admin/terminology', labelKey: 'nav.sub.admin.terminology', icon: <BookGlobe20Regular /> },
       { key: 'interop', to: '/admin/interop', labelKey: 'nav.sub.admin.interop', icon: <ArrowSync20Regular /> },

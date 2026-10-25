@@ -2,14 +2,16 @@ import type { ReactElement } from 'react'
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { AppShell } from '@app/layout/AppShell'
 import { DashboardPage } from '@features/dashboard'
-import { OrganizationsPage } from '@features/organization'
-import { BuildingsPage } from '@features/building'
-import { FloorsPage } from '@features/floor'
-import { SpacesPage } from '@features/space'
+import { OrganizationsPage, FacilityDetailPage } from '@features/organization'
+import { BuildingDetailPage } from '@features/building'
+import { FloorDetailPage } from '@features/floor'
+import { SpaceDetailPage } from '@features/space'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
 // Routes déjà implémentées (vraie feature) — les autres restent des pages stub.
+// Bâtiments/étages/espaces ne sont plus des routes à plat : ils vivent dans les
+// onglets des fiches détail (voir extraRoutes), scopés à leur établissement parent.
 const implemented: Record<string, () => ReactElement> = {
   '/admin': OrganizationsPage,
 }
@@ -38,9 +40,10 @@ const moduleRoutes = flatRoutes
 
 // Routes additionnelles (hors navModel) : écrans de détail/sous-ressources.
 const extraRoutes = [
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/buildings', component: BuildingsPage }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/floors', component: FloorsPage }),
-  createRoute({ getParentRoute: () => rootRoute, path: '/admin/spaces', component: SpacesPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/facility', component: FacilityDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/building', component: BuildingDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/floor', component: FloorDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
 ]
 
 const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes, ...extraRoutes])

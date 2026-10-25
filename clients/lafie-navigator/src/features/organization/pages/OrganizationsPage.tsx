@@ -1,41 +1,28 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import {
-  Badge,
-  Button,
-  Dropdown,
-  Option,
-  SearchBox,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableCellLayout,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-  Title3,
-  makeStyles,
-  mergeClasses,
-  tokens,
-} from '@fluentui/react-components'
-import { Add20Regular, Building20Regular, Edit20Regular, PlugConnected20Regular, PlugDisconnected20Regular } from '@fluentui/react-icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useAppStore } from '@app/store/appStore'
 import {
-  ORGANIZATION_STATUSES,
-  ORGANIZATION_TYPES,
-  getOrganizations,
-  organizationKeys,
-  setOrganizationActive,
-  type Organization,
-  type OrganizationFilter,
+  Badge, Button, Checkbox, Dropdown, Option, SearchBox, Spinner,
+  Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
+  Title3, makeStyles, mergeClasses, tokens,
+} from '@fluentui/react-components'
+import {
+  Add20Regular, Archive20Regular, ArrowReset20Regular, Building20Regular, Eye20Regular, Edit20Regular,
+  PlugConnected20Regular, PlugDisconnected20Regular,
+} from '@fluentui/react-icons'
+import { useAppStore } from '@app/store/appStore'
+import { RowActions, type RowAction } from '@shared/components'
+import {
+  FACILITY_TYPES, OPERATIONAL_STATUSES, archiveOrganization, deleteOrganization, getOrganizations,
+  organizationKeys, restoreOrganization, setOrganizationStatus, type Organization, type OrganizationFilter,
 } from '../api'
 import { OrganizationFormDialog } from '../components/OrganizationFormDialog'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 const PAGE_SIZE = 10
+const ANY = '__any__'
+const statusColor = (s: string) =>
+  s === 'Active' ? 'success' : s === 'Setup' ? 'brand' : s === 'PermanentlyClosed' ? 'danger' : 'warning'
 
 const useStyles = makeStyles({
   root: { padding: tokens.spacingVerticalXL, display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalL },
@@ -46,13 +33,15 @@ const useStyles = makeStyles({
   state: { padding: tokens.spacingVerticalXXL, textAlign: 'center', color: tokens.colorNeutralForeground3 },
   error: { color: tokens.colorPaletteRedForeground1 },
   rowSel: { backgroundColor: tokens.colorBrandBackground2 },
+  archived: { opacity: 0.55 },
   clickable: { cursor: 'pointer' },
-  actions: { display: 'flex', columnGap: tokens.spacingHorizontalXS },
   pager: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', columnGap: tokens.spacingHorizontalM },
 })
 
-const ANY = '__any__'
-const statusColor = (s: string) => (s === 'Active' ? 'success' : s === 'Inactive' ? 'danger' : 'warning')
+const typeLabel = (t: (k: string) => string, code: string) => {
+  const l = t(`organization.facilityTypes.${code}`)
+  return l.startsWith('organization.') ? code : l
+}
 
 export function OrganizationsPage() {
   const styles = useStyles()
@@ -61,34 +50,29 @@ export function OrganizationsPage() {
   const navigate = useNavigate()
   const selectedId = useAppStore((s) => s.selectedFacilityId)
   const setSelected = useAppStore((s) => s.setSelectedFacility)
-  const openBuildings = (id: string) => { setSelected(id); void navigate({ to: '/admin/buildings' }) }
+  const setInfraTab = useAppStore((s) => s.setInfraTab)
 
-  // Saisie des filtres (non appliquée tant qu'on ne clique pas « Rechercher »).
-  const [draft, setDraft] = useState<{ search: string; type: string; status: string }>({ search: '', type: ANY, status: ANY })
+  const [draft, setDraft] = useState<{ search: string; type: string; status: string; archived: boolean }>({ search: '', type: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<OrganizationFilter>({ page: 1, pageSize: PAGE_SIZE })
-
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Organization | null>(null)
 
-  const query = useQuery({
-    queryKey: organizationKeys.list(applied),
-    queryFn: () => getOrganizations(applied),
+  const query = useQuery({ queryKey: organizationKeys.list(applied), queryFn: () => getOrganizations(applied) })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: organizationKeys.all })
+  const statusMut = useMutation({ mutationFn: ({ id, status }: { id: string; status: 'Active' | 'TemporarilyClosed' }) => setOrganizationStatus(id, status), onSuccess: invalidate })
+  const archiveMut = useMutation({ mutationFn: archiveOrganization, onSuccess: invalidate })
+  const restoreMut = useMutation({ mutationFn: restoreOrganization, onSuccess: invalidate })
+
+  // Drill vers la fiche établissement, en ouvrant directement l'onglet voulu (aperçu ou bâtiments).
+  const openFacility = (id: string, tab: string) => { setSelected(id); setInfraTab(tab); void navigate({ to: '/admin/facility' }) }
+
+  const runSearch = () => setApplied({
+    search: draft.search || undefined,
+    facilityTypeCode: draft.type === ANY ? undefined : draft.type,
+    operationalStatus: draft.status === ANY ? undefined : draft.status,
+    includeArchived: draft.archived,
+    page: 1, pageSize: PAGE_SIZE,
   })
-
-  const activeMutation = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) => setOrganizationActive(id, active),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: organizationKeys.all }),
-  })
-
-  const runSearch = () =>
-    setApplied({
-      search: draft.search || undefined,
-      type: draft.type === ANY ? undefined : draft.type,
-      status: draft.status === ANY ? undefined : draft.status,
-      page: 1,
-      pageSize: PAGE_SIZE,
-    })
-
   const goPage = (p: number) => setApplied((f) => ({ ...f, page: p }))
 
   const data = query.data
@@ -107,34 +91,23 @@ export function OrganizationsPage() {
       <div className={styles.filters}>
         <div className={styles.filterField}>
           <span className={styles.label}>{t('organization.filters.search')}</span>
-          <SearchBox
-            value={draft.search}
-            onChange={(_, d) => setDraft((s) => ({ ...s, search: d.value }))}
-            placeholder={t('organization.filters.searchPlaceholder')}
-          />
+          <SearchBox value={draft.search} onChange={(_, d) => setDraft((s) => ({ ...s, search: d.value }))} placeholder={t('organization.filters.searchPlaceholder')} />
         </div>
         <div className={styles.filterField}>
-          <span className={styles.label}>{t('organization.fields.type')}</span>
-          <Dropdown
-            value={draft.type === ANY ? t('organization.filters.all') : t(`organization.types.${draft.type}`)}
-            selectedOptions={[draft.type]}
-            onOptionSelect={(_, d) => setDraft((s) => ({ ...s, type: d.optionValue! }))}
-          >
+          <span className={styles.label}>{t('organization.fields.facilityType')}</span>
+          <Dropdown value={draft.type === ANY ? t('organization.filters.all') : typeLabel(t, draft.type)} selectedOptions={[draft.type]} onOptionSelect={(_, d) => setDraft((s) => ({ ...s, type: d.optionValue! }))}>
             <Option value={ANY}>{t('organization.filters.all')}</Option>
-            {ORGANIZATION_TYPES.map((ty) => <Option key={ty} value={ty}>{t(`organization.types.${ty}`)}</Option>)}
+            {FACILITY_TYPES.map((c) => <Option key={c} value={c}>{t(`organization.facilityTypes.${c}`)}</Option>)}
           </Dropdown>
         </div>
         <div className={styles.filterField}>
           <span className={styles.label}>{t('organization.fields.status')}</span>
-          <Dropdown
-            value={draft.status === ANY ? t('organization.filters.all') : t(`organization.status.${draft.status}`)}
-            selectedOptions={[draft.status]}
-            onOptionSelect={(_, d) => setDraft((s) => ({ ...s, status: d.optionValue! }))}
-          >
+          <Dropdown value={draft.status === ANY ? t('organization.filters.all') : t(`organization.operationalStatus.${draft.status}`)} selectedOptions={[draft.status]} onOptionSelect={(_, d) => setDraft((s) => ({ ...s, status: d.optionValue! }))}>
             <Option value={ANY}>{t('organization.filters.all')}</Option>
-            {ORGANIZATION_STATUSES.map((st) => <Option key={st} value={st}>{t(`organization.status.${st}`)}</Option>)}
+            {OPERATIONAL_STATUSES.map((st) => <Option key={st} value={st}>{t(`organization.operationalStatus.${st}`)}</Option>)}
           </Dropdown>
         </div>
+        <Checkbox label={t('actions.showArchived')} checked={draft.archived} onChange={(_, d) => setDraft((s) => ({ ...s, archived: !!d.checked }))} />
         <Button appearance="primary" onClick={runSearch}>{t('organization.filters.apply')}</Button>
       </div>
 
@@ -147,58 +120,48 @@ export function OrganizationsPage() {
           <Table aria-label={t('organization.title')}>
             <TableHeader>
               <TableRow>
-                <TableHeaderCell>{t('organization.fields.name')}</TableHeaderCell>
-                <TableHeaderCell>{t('organization.fields.type')}</TableHeaderCell>
                 <TableHeaderCell>{t('organization.fields.code')}</TableHeaderCell>
+                <TableHeaderCell>{t('organization.fields.officialName')}</TableHeaderCell>
+                <TableHeaderCell>{t('organization.fields.facilityType')}</TableHeaderCell>
                 <TableHeaderCell>{t('organization.fields.status')}</TableHeaderCell>
-                <TableHeaderCell>{t('organization.fields.city')}</TableHeaderCell>
+                <TableHeaderCell>{t('organization.fields.locality')}</TableHeaderCell>
                 <TableHeaderCell>{t('organization.fields.actions')}</TableHeaderCell>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data!.items.map((org) => (
-                <TableRow
-                  key={org.id}
-                  className={mergeClasses(styles.clickable, selectedId === org.id && styles.rowSel)}
-                  onClick={() => setSelected(org.id)}
-                >
-                  <TableCell><TableCellLayout>{org.name}</TableCellLayout></TableCell>
-                  <TableCell>{t(`organization.types.${org.type}`)}</TableCell>
-                  <TableCell>{org.code ?? '—'}</TableCell>
-                  <TableCell>
-                    <Badge appearance="filled" color={statusColor(org.status)}>
-                      {t(`organization.status.${org.status}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{org.city ?? '—'}</TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className={styles.actions}>
-                      <Button size="small" appearance="subtle" icon={<Building20Regular />}
-                        aria-label={t('organization.buildings')}
-                        onClick={() => openBuildings(org.id)} />
-                      <Button size="small" appearance="subtle" icon={<Edit20Regular />}
-                        aria-label={t('organization.edit')}
-                        onClick={() => { setEditing(org); setFormOpen(true) }} />
-                      {org.status === 'Active' ? (
-                        <Button size="small" appearance="subtle" icon={<PlugDisconnected20Regular />}
-                          aria-label={t('organization.deactivate')}
-                          onClick={() => activeMutation.mutate({ id: org.id, active: false })} />
-                      ) : (
-                        <Button size="small" appearance="subtle" icon={<PlugConnected20Regular />}
-                          aria-label={t('organization.activate')}
-                          onClick={() => activeMutation.mutate({ id: org.id, active: true })} />
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data!.items.map((o) => {
+                const primary: RowAction[] = [
+                  { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openFacility(o.id, 'overview') },
+                  { key: 'buildings', label: t('organization.buildings'), icon: <Building20Regular />, color: tokens.colorBrandForeground1, onClick: () => openFacility(o.id, 'buildings') },
+                  { key: 'edit', label: t('organization.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => { setEditing(o); setFormOpen(true) } },
+                ]
+                const statusItem: RowAction = o.operationalStatus === 'Active'
+                  ? { key: 'close', label: t('organization.close'), icon: <PlugDisconnected20Regular />, color: tokens.colorPaletteYellowForeground1, onClick: () => statusMut.mutate({ id: o.id, status: 'TemporarilyClosed' }) }
+                  : { key: 'reopen', label: t('organization.reopen'), icon: <PlugConnected20Regular />, color: tokens.colorPaletteGreenForeground1, onClick: () => statusMut.mutate({ id: o.id, status: 'Active' }) }
+                const archiveItem: RowAction = o.archivedOnUtc == null
+                  ? { key: 'archive', label: t('actions.archive'), icon: <Archive20Regular />, onClick: () => archiveMut.mutate(o.id) }
+                  : { key: 'restore', label: t('actions.restore'), icon: <ArrowReset20Regular />, onClick: () => restoreMut.mutate(o.id) }
+                const menuItems: RowAction[] = [statusItem, archiveItem]
+                return (
+                  <TableRow key={o.id} className={mergeClasses(styles.clickable, selectedId === o.id && styles.rowSel, o.archivedOnUtc != null && styles.archived)} onClick={() => setSelected(o.id)}>
+                    <TableCell><TableCellLayout>{o.code}</TableCellLayout></TableCell>
+                    <TableCell>{o.officialName}</TableCell>
+                    <TableCell>{typeLabel(t, o.facilityTypeCode)}</TableCell>
+                    <TableCell><Badge appearance="filled" color={statusColor(o.operationalStatus)}>{t(`organization.operationalStatus.${o.operationalStatus}`)}</Badge></TableCell>
+                    <TableCell>{o.locality ?? '—'}</TableCell>
+                    <TableCell>
+                      <RowActions primary={primary} menu={menuItems}
+                        onDelete={async () => { await deleteOrganization(o.id); invalidate() }}
+                        confirmTitle={t('actions.confirmDeleteTitle')}
+                        confirmMessage={t('organization.confirmDelete', { name: o.officialName })} />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
-
           <div className={styles.pager}>
-            <span className={styles.label}>
-              {t('organization.pager', { page, totalPages, total: data!.total })}
-            </span>
+            <span className={styles.label}>{t('organization.pager', { page, totalPages, total: data!.total })}</span>
             <Button size="small" disabled={page <= 1} onClick={() => goPage(page - 1)}>{t('organization.prev')}</Button>
             <Button size="small" disabled={page >= totalPages} onClick={() => goPage(page + 1)}>{t('organization.next')}</Button>
           </div>

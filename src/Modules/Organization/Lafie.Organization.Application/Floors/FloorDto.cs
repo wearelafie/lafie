@@ -13,4 +13,5 @@ public sealed class FloorDto
     public string Status { get; init; } = string.Empty;
     public DateTime CreatedOnUtc { get; init; }
     public DateTime? UpdatedOnUtc { get; init; }
+    public DateTime? ArchivedOnUtc { get; init; }
 }

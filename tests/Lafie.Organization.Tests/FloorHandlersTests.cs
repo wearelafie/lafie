@@ -20,6 +20,7 @@ public class FloorHandlersTests
             => Task.FromResult(new PagedResult<FloorDto>([], f.SafePage, f.SafePageSize, 0));
         public Task<bool> CodeExistsAsync(Guid b, string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(ExistingCodes.Contains(code));
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class FakeBuildings(bool exists) : IBuildingRepository
@@ -33,6 +34,7 @@ public class FloorHandlersTests
             => Task.FromResult(new PagedResult<BuildingDto>([], 1, 20, 0));
         public Task<bool> CodeExistsAsync(Guid f, string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(false);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     [Fact]
