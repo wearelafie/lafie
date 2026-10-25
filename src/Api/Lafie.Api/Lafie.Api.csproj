@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- Scripts de migration SQL embarqués (appliqués au démarrage par MigrationRunner). -->
     <EmbeddedResource Include="..\..\..\db\migrations\*.sql" Link="Migrations\%(Filename)%(Extension)" />
+    <!-- Scripts de seed de développement embarqués (appliqués en Development par DevDataSeeder). -->
+    <EmbeddedResource Include="..\..\..\db\seed\*.sql" Link="Seed\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
