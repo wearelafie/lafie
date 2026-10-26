@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Calque_2" data-name="Calque 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 253.41 106.91">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: Ubuntu-Medium, Ubuntu;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #099664;
+      }
+
+      .cls-2, .cls-3 {
+        opacity: .75;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+
+      .cls-5 {
+        fill: #1d1d1b;
+        font-family: Ubuntu-Regular, Ubuntu;
+        font-size: 74px;
+      }
+
+      .cls-3 {
+        fill: #0c62a5;
+      }
+
+      .cls-6 {
+        letter-spacing: 0em;
+      }
+
+      .cls-7 {
+        letter-spacing: 0em;
+      }
+    </style>
+  </defs>
+  <g id="Calque_1-2" data-name="Calque 1">
+    <text class="cls-5" transform="translate(105.63 62.64)"><tspan x="0" y="0">lafie</tspan></text>
+    <text class="cls-1" transform="translate(114.79 80.25)"><tspan x="0" y="0">OpenSource</tspan><tspan x="0" y="12">Hospital Management </tspan><tspan x="0" y="24">Pla</tspan><tspan class="cls-7" x="18.9" y="24">t</tspan><tspan class="cls-6" x="24.22" y="24">e</tspan><tspan class="cls-4" x="31.64" y="24">f</tspan><tspan x="36.71" y="24">orm</tspan></text>
+    <path class="cls-2" d="M46.64,44.86c0-.51.03-1,.1-1.49v-26.57c0-6.24,5.06-11.3,11.3-11.3,3.12,0,5.95,1.27,7.99,3.31s3.31,4.87,3.31,7.99v16.76h16.48c6.24,0,11.3,5.06,11.3,11.3,0,3.12-1.27,5.95-3.31,7.99-2.05,2.05-4.87,3.31-7.99,3.31h-27.89c-6.24,0-11.3-5.06-11.3-11.3Z"/>
+    <path class="cls-3" d="M50.48,65.35c0,.51-.03,1-.1,1.49v26.57c0,6.24-5.06,11.3-11.3,11.3-3.12,0-5.95-1.27-7.99-3.31s-3.31-4.87-3.31-7.99v-16.76H11.3c-6.24,0-11.3-5.06-11.3-11.3,0-3.12,1.27-5.95,3.31-7.99,2.05-2.05,4.87-3.31,7.99-3.31h27.89c6.24,0,11.3,5.06,11.3,11.3Z"/>
+  </g>
+</svg>

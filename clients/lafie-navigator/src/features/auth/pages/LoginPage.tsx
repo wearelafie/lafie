@@ -10,7 +10,10 @@ import {
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { ChevronDown16Regular, Eye20Regular, EyeOff20Regular, Globe20Regular } from '@fluentui/react-icons'
+import { useThemeMode } from '@app/providers/ThemeModeProvider'
 import { login, setToken } from '../api'
+import logoFull from '../../../assets/logos/lafie-full.svg'
+import logoFullDark from '../../../assets/logos/lafie-full-dark.svg'
 
 const useStyles = makeStyles({
   root: { display: 'flex', minHeight: '100vh', backgroundColor: tokens.colorNeutralBackground1 },
@@ -19,14 +22,14 @@ const useStyles = makeStyles({
     minWidth: '360px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    padding: `${tokens.spacingVerticalXXL} ${tokens.spacingHorizontalXXXL}`,
+    justifyContent: 'flex-start',
+    padding: `0 ${tokens.spacingHorizontalXXXL}`,
+    paddingTop: '9vh',
     position: 'relative',
-    '@media (max-width: 768px)': { width: '100%', minWidth: 0, padding: tokens.spacingHorizontalXL },
+    '@media (max-width: 768px)': { width: '100%', minWidth: 0, padding: tokens.spacingHorizontalXL, paddingTop: '8vh' },
   },
   inner: { width: '100%', maxWidth: '340px', margin: '0 auto', display: 'flex', flexDirection: 'column' },
-  logo: { display: 'flex', alignItems: 'center', columnGap: '9px', marginBottom: tokens.spacingVerticalXXXL },
-  wordmark: { fontSize: '23px', fontWeight: tokens.fontWeightSemibold, color: tokens.colorBrandForeground1, letterSpacing: '.3px' },
+  logo: { height: '52px', width: 'auto', alignSelf: 'flex-start', marginBottom: tokens.spacingVerticalXXXL },
   title: { fontSize: '28px', fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground1, margin: `0 0 ${tokens.spacingVerticalXL}` },
   field: { marginBottom: tokens.spacingVerticalL },
   submit: { marginTop: tokens.spacingVerticalM, height: '44px' },
@@ -56,15 +59,8 @@ const useStyles = makeStyles({
 
 function LafieLogo() {
   const styles = useStyles()
-  return (
-    <div className={styles.logo}>
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <rect x="10.5" y="2" width="5" height="22" rx="2.5" fill="#00728b" />
-        <rect x="2" y="10.5" width="22" height="5" rx="2.5" fill="#009664" />
-      </svg>
-      <span className={styles.wordmark}>lafie</span>
-    </div>
-  )
+  const { isDark } = useThemeMode()
+  return <img className={styles.logo} src={isDark ? logoFullDark : logoFull} alt="Lafie" />
 }
 
 function LanguageMenu({ className }: { className?: string }) {
