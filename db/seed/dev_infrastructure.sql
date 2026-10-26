@@ -132,3 +132,90 @@ begin
         (gen_random_uuid(), v_clin, b_id, f_id, 'P-E1-BLOC','Bloc',        'OperatingRoom', 35, 6, true, 'Active', v_now),
         (gen_random_uuid(), v_clin, b_id, f_id, 'P-E1-CH1', 'Chambre 1',   'PatientRoom',   18, 2, true, 'Active', v_now);
 end $$;
+
+-- ============================================================
+-- Services & unités de soins (bloc indépendant, sentinelle propre).
+-- Réutilise les établissements/espaces seedés ci-dessus (lookup par id/code).
+-- ============================================================
+do $$
+declare
+    v_chu   constant uuid        := '0a000000-0000-4000-8000-000000000001';
+    v_clin  constant uuid        := '0a000000-0000-4000-8000-000000000002';
+    v_sent  constant uuid        := '0b000000-0000-4000-8000-000000000001'; -- service sentinelle
+    v_now   constant timestamptz := now();
+    s_id uuid;
+    s_img uuid;
+    u_id uuid;
+begin
+    -- Pré-requis : établissement CHU seedé ; et pas déjà fait.
+    if not exists (select 1 from organization.organizations where id = v_chu) then
+        return;
+    end if;
+    if exists (select 1 from organization.services where id = v_sent) then
+        return;
+    end if;
+
+    -- === CHU : services cliniques ===
+    s_id := v_sent;
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, head, display_order, status, created_on_utc)
+    values (s_id, v_chu, null, 'CARD', 'Cardiologie', 'Clinical', 'Dr Koffi', 1, 'Active', v_now);
+
+    u_id := gen_random_uuid();
+    insert into organization.care_units (id, facility_id, service_id, code, name, type, bed_capacity, display_order, status, created_on_utc)
+    values (u_id, v_chu, s_id, 'CARD-HOSP', 'Hospitalisation Cardiologie', 'Hospitalization', 20, 1, 'Active', v_now);
+    insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+        select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_chu and sp.code in ('B-E1-101', 'B-E1-102');
+
+    u_id := gen_random_uuid();
+    insert into organization.care_units (id, facility_id, service_id, code, name, type, bed_capacity, display_order, status, created_on_utc)
+    values (u_id, v_chu, s_id, 'CARD-USIC', 'USIC', 'IntensiveCare', 8, 2, 'Active', v_now);
+    insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+        select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_chu and sp.code = 'B-RDC-REA';
+
+    s_id := gen_random_uuid();
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, head, display_order, status, created_on_utc)
+    values (s_id, v_chu, null, 'PED', 'Pédiatrie', 'Clinical', 'Dr Mensah', 2, 'Active', v_now);
+    u_id := gen_random_uuid();
+    insert into organization.care_units (id, facility_id, service_id, code, name, type, bed_capacity, display_order, status, created_on_utc)
+    values (u_id, v_chu, s_id, 'PED-HOSP', 'Hospitalisation Pédiatrie', 'Hospitalization', 15, 1, 'Active', v_now);
+    insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+        select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_chu and sp.code in ('B-E2-201', 'B-E2-202');
+
+    -- === CHU : services médico-techniques (dont hiérarchie Imagerie > Scanner/IRM) ===
+    s_id := gen_random_uuid();
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, display_order, status, created_on_utc)
+    values (s_id, v_chu, null, 'LAB', 'Laboratoire', 'MedicoTechnical', 3, 'Active', v_now);
+    u_id := gen_random_uuid();
+    insert into organization.care_units (id, facility_id, service_id, code, name, type, display_order, status, created_on_utc)
+    values (u_id, v_chu, s_id, 'LAB-CENT', 'Laboratoire central', 'Other', 1, 'Active', v_now);
+    insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+        select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_chu and sp.code = 'C-RDC-LAB';
+
+    s_img := gen_random_uuid();
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, display_order, status, created_on_utc)
+    values (s_img, v_chu, null, 'IMG', 'Imagerie', 'MedicoTechnical', 4, 'Active', v_now);
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, display_order, status, created_on_utc) values
+        (gen_random_uuid(), v_chu, s_img, 'IMG-SCAN', 'Scanner', 'MedicoTechnical', 1, 'Active', v_now),
+        (gen_random_uuid(), v_chu, s_img, 'IMG-IRM',  'IRM',     'MedicoTechnical', 2, 'Active', v_now);
+    u_id := gen_random_uuid();
+    insert into organization.care_units (id, facility_id, service_id, code, name, type, display_order, status, created_on_utc)
+    values (u_id, v_chu, s_img, 'IMG-UNIT', 'Unité d''imagerie', 'Ambulatory', 1, 'Active', v_now);
+    insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+        select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_chu and sp.code = 'C-RDC-IMG';
+
+    -- === CHU : service administratif (sans unité) ===
+    insert into organization.services (id, facility_id, parent_service_id, code, name, category, head, display_order, status, created_on_utc)
+    values (gen_random_uuid(), v_chu, null, 'DIR', 'Direction', 'Administrative', 'Mme Adjo', 5, 'Active', v_now);
+
+    -- === Clinique Biasa : maternité ===
+    if exists (select 1 from organization.organizations where id = v_clin) then
+        s_id := gen_random_uuid();
+        insert into organization.services (id, facility_id, parent_service_id, code, name, category, display_order, status, created_on_utc)
+        values (s_id, v_clin, null, 'MAT', 'Maternité', 'Clinical', 1, 'Active', v_now);
+        u_id := gen_random_uuid();
+        insert into organization.care_units (id, facility_id, service_id, code, name, type, bed_capacity, display_order, status, created_on_utc)
+        values (u_id, v_clin, s_id, 'MAT-HOSP', 'Unité Maternité', 'Maternity', 10, 1, 'Active', v_now);
+        insert into organization.care_unit_spaces (care_unit_id, space_id, created_on_utc)
+            select u_id, sp.id, v_now from organization.spaces sp where sp.facility_id = v_clin and sp.code = 'P-E1-MAT';
+    end if;
+end $$;

@@ -6,6 +6,8 @@ import { OrganizationsPage, FacilityDetailPage } from '@features/organization'
 import { BuildingDetailPage } from '@features/building'
 import { FloorDetailPage } from '@features/floor'
 import { SpaceDetailPage } from '@features/space'
+import { ServiceDetailPage } from '@features/service'
+import { CareUnitDetailPage } from '@features/care-unit'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -44,6 +46,8 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/building', component: BuildingDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/floor', component: FloorDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/service', component: ServiceDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/care-unit', component: CareUnitDetailPage }),
 ]
 
 const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes, ...extraRoutes])

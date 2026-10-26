@@ -20,6 +20,7 @@ public interface ISpaceRepository
     Task<Space?> FindAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SpaceDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PagedResult<SpaceDto>> SearchByFloorAsync(Guid floorId, SpaceFilter filter, CancellationToken cancellationToken = default);
+    Task<PagedResult<SpaceDto>> SearchByFacilityAsync(Guid facilityId, SpaceFilter filter, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

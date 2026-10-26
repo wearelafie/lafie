@@ -1,6 +1,8 @@
 using Lafie.Organization.Application;
 using Lafie.Organization.Application.Buildings;
+using Lafie.Organization.Application.CareUnits;
 using Lafie.Organization.Application.Floors;
+using Lafie.Organization.Application.Services;
 using Lafie.Organization.Application.Spaces;
 using Lafie.Organization.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,8 @@ public static class OrganizationModule
         services.AddScoped<IBuildingRepository, BuildingRepository>();
         services.AddScoped<IFloorRepository, FloorRepository>();
         services.AddScoped<ISpaceRepository, SpaceRepository>();
+        services.AddScoped<IServiceRepository, ServiceRepository>();
+        services.AddScoped<ICareUnitRepository, CareUnitRepository>();
         return services;
     }
 }
