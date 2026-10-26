@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from '@tanstack/react-router'
+import { Outlet, useRouterState } from '@tanstack/react-router'
 import { DrawerBody, OverlayDrawer, makeStyles } from '@fluentui/react-components'
 import { useIsMobile } from '@shared/hooks'
 import { TopBar } from './TopBar'
@@ -25,6 +25,11 @@ export function AppShell() {
   const isMobile = useIsMobile()
   const [expanded, setExpanded] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+  // Les écrans d'authentification s'affichent en plein écran, sans le chrome applicatif.
+  const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
+  if (isAuthRoute) return <Outlet />
 
   const onMenuClick = () => (isMobile ? setMobileNavOpen((o) => !o) : setExpanded((e) => !e))
 

@@ -8,6 +8,8 @@ import { FloorDetailPage } from '@features/floor'
 import { SpaceDetailPage } from '@features/space'
 import { ServiceDetailPage } from '@features/service'
 import { CareUnitDetailPage } from '@features/care-unit'
+import { LoginPage } from '@features/auth'
+import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -48,6 +50,8 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/service', component: ServiceDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/care-unit', component: CareUnitDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/forgot-password', component: ForgotPasswordPage }),
 ]
 
 const routeTree = rootRoute.addChildren([indexRoute, ...moduleRoutes, ...extraRoutes])
