@@ -152,6 +152,9 @@ const resources = {
         pager: 'Page {{page}} / {{totalPages}} · {{total}} au total',
         filters: { search: 'Recherche', searchPlaceholder: 'Nom ou code…', all: 'Tous', apply: 'Rechercher' },
         tabs: { overview: 'Aperçu', buildings: 'Bâtiments', services: 'Services' },
+        geoPick: 'Sélectionner…',
+        communeHint: 'Import des communes à venir (saisie libre).',
+        refNone: 'Aucun',
         sections: { identity: 'Identification', location: 'Localisation', legal: 'Légal & administratif', operations: 'Exploitation' },
         operationalStatus: {
           Setup: 'En installation', Active: 'Actif', TemporarilyClosed: 'Fermé (temp.)',
@@ -554,6 +557,9 @@ const resources = {
         pager: 'Page {{page}} / {{totalPages}} · {{total}} total',
         filters: { search: 'Search', searchPlaceholder: 'Name or code…', all: 'All', apply: 'Search' },
         tabs: { overview: 'Overview', buildings: 'Buildings', services: 'Services' },
+        geoPick: 'Select…',
+        communeHint: 'Communes import coming soon (free text).',
+        refNone: 'None',
         sections: { identity: 'Identification', location: 'Location', legal: 'Legal & administrative', operations: 'Operations' },
         operationalStatus: {
           Setup: 'Setup', Active: 'Active', TemporarilyClosed: 'Temporarily closed',

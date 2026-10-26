@@ -25,7 +25,7 @@ begin
          established_on, created_on_utc)
     values
         (v_chu, 'CHU-SO', 'Centre Hospitalier Universitaire Sylvanus Olympio', 'CHU Sylvanus Olympio', 'CHU-SO',
-         'UNIVERSITY_HOSPITAL', 'PUBLIC', 'TG', 'MAR', 'Lomé', 'Boulevard du 13 Janvier', '+228 22 21 25 01',
+         'UNIVERSITY_HOSPITAL', 'PUBLIC', 'TG', 'TG-M', 'Lomé', 'Boulevard du 13 Janvier', '+228 22 21 25 01',
          'contact@chu-so.tg', 'https://chu-so.tg', 'Africa/Lome', 'XOF', 'fr',
          'Active', 'Completed', true, true, date '1965-01-01', v_now);
 
@@ -107,7 +107,7 @@ begin
          created_on_utc)
     values
         (v_clin, 'CLIN-BIASA', 'Clinique Biasa', 'Clinique Biasa', 'BIASA',
-         'CLINIC', 'PRIVATE_FOR_PROFIT', 'TG', 'MAR', 'Lomé', 'Rue des Clercs', '+228 22 20 10 10',
+         'CLINIC', 'PRIVATE_FOR_PROFIT', 'TG', 'TG-M', 'Lomé', 'Rue des Clercs', '+228 22 20 10 10',
          'accueil@clinique-biasa.tg', 'Africa/Lome', 'XOF', 'fr',
          'Active', 'Completed', false, true, v_now);
 

@@ -1,5 +1,6 @@
 using Lafie.Core.Common;
 using Lafie.Core.Exceptions;
+using Lafie.Organization.Application.References;
 using Mediator;
 
 namespace Lafie.Organization.Application.Organizations;
@@ -7,7 +8,7 @@ namespace Lafie.Organization.Application.Organizations;
 /// <summary>Met à jour un établissement.</summary>
 public sealed record UpdateOrganizationCommand(Guid Id, OrganizationWriteModel Model) : IRequest<Result>;
 
-public sealed class UpdateOrganizationHandler(IOrganizationRepository repository)
+public sealed class UpdateOrganizationHandler(IOrganizationRepository repository, IReferenceDataRepository referenceData)
     : IRequestHandler<UpdateOrganizationCommand, Result>
 {
     public async ValueTask<Result> Handle(UpdateOrganizationCommand command, CancellationToken cancellationToken)
@@ -16,6 +17,9 @@ public sealed class UpdateOrganizationHandler(IOrganizationRepository repository
             ?? throw new NotFoundException($"Établissement {command.Id} introuvable.");
 
         var m = command.Model;
+        var codes = await ReferenceValidation.ValidateAsync(referenceData, m, cancellationToken);
+        if (codes.IsFailure) return codes;
+
         var result = org.Update(
             m.Code, m.OfficialName, m.FacilityTypeCode, m.OwnershipTypeCode, m.CountryCode,
             m.Identity(), m.Address(), m.Legal(), m.Operations(), m.Contact());
