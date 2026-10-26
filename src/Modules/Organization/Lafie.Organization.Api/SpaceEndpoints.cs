@@ -33,6 +33,15 @@ public static class SpaceEndpoints
                 : Results.BadRequest(new { error = result.Error });
         });
 
+        // Espaces d'un établissement (tous bâtiments/étages) — utilisé par le sélecteur d'association aux unités.
+        endpoints.MapGet("/facilities/{facilityId:guid}/spaces", async (
+            Guid facilityId, string? search, string? type, string? status, bool? includeArchived, int? page, int? pageSize,
+            IMediator mediator, CancellationToken ct) =>
+        {
+            var filter = new SpaceFilter(search, type, status, includeArchived ?? false, page ?? 1, pageSize ?? 50);
+            return Results.Ok(await mediator.Send(new GetSpacesByFacilityQuery(facilityId, filter), ct));
+        }).WithTags("Space");
+
         var byId = endpoints.MapGroup("/spaces").WithTags("Space");
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
