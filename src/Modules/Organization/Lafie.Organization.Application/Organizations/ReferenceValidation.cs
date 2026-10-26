@@ -12,6 +12,12 @@ internal static class ReferenceValidation
             return Result.Failure($"Type d'établissement inconnu : '{m.FacilityTypeCode}'.");
         if (!await reference.ReferenceValueExistsAsync("OWNERSHIP_TYPE", m.OwnershipTypeCode, ct))
             return Result.Failure($"Type de propriété inconnu : '{m.OwnershipTypeCode}'.");
+        if (!await reference.ReferenceValueExistsAsync("COUNTRY", m.CountryCode, ct))
+            return Result.Failure($"Pays inconnu : '{m.CountryCode}'.");
+
+        if (!string.IsNullOrWhiteSpace(m.DefaultCurrencyCode)
+            && !await reference.ReferenceValueExistsAsync("CURRENCY", m.DefaultCurrencyCode, ct))
+            return Result.Failure($"Devise inconnue : '{m.DefaultCurrencyCode}'.");
 
         if (!string.IsNullOrWhiteSpace(m.LegalEntityTypeCode)
             && !await reference.ReferenceValueExistsAsync("LEGAL_ENTITY_TYPE", m.LegalEntityTypeCode, ct))
