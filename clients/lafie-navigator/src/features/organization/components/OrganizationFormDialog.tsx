@@ -81,7 +81,8 @@ export function OrganizationFormDialog({
 
   const countryCode = watch('countryCode')
   const regionCode = watch('regionCode')
-  const countries = useQuery({ queryKey: referenceKeys.geo('Country'), queryFn: () => getGeoDivisions('Country'), enabled: open })
+  const countries = useQuery({ queryKey: referenceKeys.values('COUNTRY'), queryFn: () => getReferenceValues('COUNTRY'), enabled: open })
+  const currencies = useQuery({ queryKey: referenceKeys.values('CURRENCY'), queryFn: () => getReferenceValues('CURRENCY'), enabled: open })
   const regions = useQuery({ queryKey: referenceKeys.geo('Region', countryCode), queryFn: () => getGeoDivisions('Region', countryCode), enabled: open && !!countryCode })
   const prefectures = useQuery({ queryKey: referenceKeys.geo('Prefecture', regionCode), queryFn: () => getGeoDivisions('Prefecture', regionCode), enabled: open && !!regionCode })
 
@@ -171,10 +172,10 @@ export function OrganizationFormDialog({
                 <Subtitle2 className={styles.section}>{t('organization.sections.location')}</Subtitle2>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.countryCode')} required>
-                    <Dropdown value={(countries.data ?? []).find((x) => x.code === v.countryCode)?.name ?? v.countryCode}
+                    <Dropdown value={refItemLabel(countries.data, v.countryCode)}
                       selectedOptions={[v.countryCode]}
                       onOptionSelect={(_, d) => { setValue('countryCode', d.optionValue!); setValue('regionCode', ''); setValue('prefectureCode', '') }}>
-                      {(countries.data ?? []).map((c) => <Option key={c.code} value={c.code}>{c.name}</Option>)}
+                      {(countries.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
                     </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.timeZoneId')}><Input {...txt('timeZoneId')} /></Field>
                 </div>
@@ -245,7 +246,12 @@ export function OrganizationFormDialog({
                 <Subtitle2 className={styles.section}>{t('organization.sections.operations')}</Subtitle2>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.openingDate')}><Input {...txt('openingDate')} type="date" /></Field>
-                  <Field className={styles.grow} label={t('organization.fields.currency')}><Input {...txt('defaultCurrencyCode')} /></Field>
+                  <Field className={styles.grow} label={t('organization.fields.currency')}>
+                    <Dropdown value={v.defaultCurrencyCode ? `${v.defaultCurrencyCode} — ${refItemLabel(currencies.data, v.defaultCurrencyCode!)}` : ''}
+                      selectedOptions={v.defaultCurrencyCode ? [v.defaultCurrencyCode] : []}
+                      onOptionSelect={(_, d) => setValue('defaultCurrencyCode', d.optionValue!)}>
+                      {(currencies.data ?? []).map((c) => <Option key={c.code} value={c.code}>{c.code} — {refLabel(c, lang)}</Option>)}
+                    </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.language')}><Input {...txt('defaultLanguageCode')} /></Field>
                 </div>
                 <div className={styles.row}>
