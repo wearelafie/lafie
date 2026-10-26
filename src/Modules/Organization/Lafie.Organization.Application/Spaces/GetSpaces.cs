@@ -12,6 +12,15 @@ public sealed class GetSpacesHandler(ISpaceRepository spaces) : IRequestHandler<
         => await spaces.SearchByFloorAsync(query.FloorId, query.Filter, cancellationToken);
 }
 
+/// <summary>Liste paginée/filtrée des espaces d'un établissement (tous bâtiments/étages confondus).</summary>
+public sealed record GetSpacesByFacilityQuery(Guid FacilityId, SpaceFilter Filter) : IRequest<PagedResult<SpaceDto>>;
+
+public sealed class GetSpacesByFacilityHandler(ISpaceRepository spaces) : IRequestHandler<GetSpacesByFacilityQuery, PagedResult<SpaceDto>>
+{
+    public async ValueTask<PagedResult<SpaceDto>> Handle(GetSpacesByFacilityQuery query, CancellationToken cancellationToken)
+        => await spaces.SearchByFacilityAsync(query.FacilityId, query.Filter, cancellationToken);
+}
+
 /// <summary>Récupère un espace par identifiant.</summary>
 public sealed record GetSpaceByIdQuery(Guid Id) : IRequest<SpaceDto?>;
 

@@ -98,6 +98,41 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         return new PagedResult<SpaceDto>(items, filter.SafePage, filter.SafePageSize, total);
     }
 
+    public async Task<PagedResult<SpaceDto>> SearchByFacilityAsync(Guid facilityId, SpaceFilter filter, CancellationToken cancellationToken = default)
+    {
+        var where = new StringBuilder("where facility_id = @facilityId");
+        if (!filter.IncludeArchived) where.Append(" and archived_on_utc is null");
+        var p = new DynamicParameters();
+        p.Add("facilityId", facilityId);
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            where.Append(" and (name ilike @search or code ilike @search)");
+            p.Add("search", $"%{filter.Search.Trim()}%");
+        }
+        if (!string.IsNullOrWhiteSpace(filter.Type))
+        {
+            where.Append(" and type = @type");
+            p.Add("type", filter.Type.Trim());
+        }
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+        {
+            where.Append(" and status = @status");
+            p.Add("status", filter.Status.Trim());
+        }
+        p.Add("limit", filter.SafePageSize);
+        p.Add("offset", filter.Offset);
+
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            $"select count(*) from organization.spaces {where}", p, cancellationToken: cancellationToken));
+        var items = (await connection.QueryAsync<SpaceDto>(new CommandDefinition(
+            $"select {Columns} from organization.spaces {where} order by code limit @limit offset @offset",
+            p, cancellationToken: cancellationToken))).ToList();
+
+        return new PagedResult<SpaceDto>(items, filter.SafePage, filter.SafePageSize, total);
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);

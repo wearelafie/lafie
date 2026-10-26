@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Badge, Spinner, Subtitle2, Tab, TabList, makeStyles, tokens } from '@fluentui/react-components'
 import { useAppStore } from '@app/store/appStore'
 import { BuildingsPage } from '@features/building'
+import { ServicesPage } from '@features/service'
 import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
 import { getOrganization } from '../api'
 
-const TABS = ['overview', 'buildings'] as const
+const TABS = ['overview', 'buildings', 'services'] as const
 type TabKey = (typeof TABS)[number]
 
 const useStyles = makeStyles({
@@ -97,9 +98,10 @@ export function FacilityDetailPage() {
       <TabList selectedValue={tab} onTabSelect={(_, dt) => setTab(dt.value as TabKey)}>
         <Tab value="overview">{t('organization.tabs.overview')}</Tab>
         <Tab value="buildings">{t('organization.tabs.buildings')}</Tab>
+        <Tab value="services">{t('organization.tabs.services')}</Tab>
       </TabList>
       <div className={styles.tabContent}>
-        {tab === 'overview' ? (
+        {tab === 'overview' && (
           <div className={styles.sections}>
             {sections.map((s) => (
               <div key={s.key} className={styles.section}>
@@ -108,9 +110,9 @@ export function FacilityDetailPage() {
               </div>
             ))}
           </div>
-        ) : (
-          <BuildingsPage />
         )}
+        {tab === 'buildings' && <BuildingsPage />}
+        {tab === 'services' && <ServicesPage />}
       </div>
     </div>
   )
