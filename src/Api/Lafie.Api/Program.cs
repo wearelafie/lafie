@@ -1,11 +1,19 @@
+using System.Text;
+using Lafie.Core.Context;
 using Lafie.Eventing;
 using Lafie.Identity.Api;
+using Lafie.Identity.Application.Security;
+using Lafie.Identity.Infrastructure;
 using Lafie.Persistence;
 using Lafie.Persistence.Migrations;
 using Lafie.Interop.Api;
 using Lafie.Organization.Api;
 using Lafie.Patient.Api;
 using Lafie.Terminology.Api;
+using Lafie.Web.Context;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,13 +53,51 @@ builder.Services
     .AddTerminologyModule()
     .AddInteropModule();
 
+// --- Authentification / autorisation (JWT Bearer émis par le module Identity) ---
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
+    // Clé de dev par défaut (≥ 32 octets). À surcharger via config/secret en production.
+    jwtOptions.SigningKey = "lafie-dev-signing-key-change-me-0123456789";
+builder.Services.AddSingleton(jwtOptions);
+builder.Services.AddSingleton<IJwtTokenService>(_ => new JwtTokenService(jwtOptions));
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidAudience = jwtOptions.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+        };
+    });
+
+// Par défaut tout endpoint exige un utilisateur authentifié ; /auth/login, /health et la doc sont en AllowAnonymous.
+builder.Services.AddAuthorization(options =>
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
 var app = builder.Build();
 
 // Renvoie un ProblemDetails sur exception non gérée.
 app.UseExceptionHandler();
 
-app.MapOpenApi();
-app.MapScalarApiReference();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapOpenApi().AllowAnonymous();
+app.MapScalarApiReference().AllowAnonymous();
+
+// Authentification.
+app.MapAuthEndpoints();
 
 // Endpoints des modules.
 app.MapOrganizationEndpoints();
@@ -62,11 +108,11 @@ app.MapServiceEndpoints();
 app.MapCareUnitEndpoints();
 app.MapReferenceEndpoints();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();
 
 app.MapGet("/health/db", async (DatabaseHealth db, CancellationToken ct) =>
     await db.IsReachableAsync(ct)
         ? Results.Ok(new { database = "up" })
-        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable));
+        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable)).AllowAnonymous();
 
 app.Run();

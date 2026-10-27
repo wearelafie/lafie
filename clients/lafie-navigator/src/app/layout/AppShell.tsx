@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Outlet, useRouterState } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { DrawerBody, OverlayDrawer, makeStyles } from '@fluentui/react-components'
 import { useIsMobile } from '@shared/hooks'
+import { getToken } from '@features/auth'
 import { TopBar } from './TopBar'
 import { CommandBar } from './CommandBar'
 import { SideNav } from './SideNav'
@@ -26,10 +27,19 @@ export function AppShell() {
   const [expanded, setExpanded] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const navigate = useNavigate()
 
   // Les écrans d'authentification s'affichent en plein écran, sans le chrome applicatif.
   const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
+  const hasToken = !!getToken()
+
+  // Garde d'accès : sans jeton, rediriger vers la connexion (hors écrans d'auth).
+  useEffect(() => {
+    if (!isAuthRoute && !hasToken) void navigate({ to: '/login' as never })
+  }, [isAuthRoute, hasToken, navigate])
+
   if (isAuthRoute) return <Outlet />
+  if (!hasToken) return null
 
   const onMenuClick = () => (isMobile ? setMobileNavOpen((o) => !o) : setExpanded((e) => !e))
 
