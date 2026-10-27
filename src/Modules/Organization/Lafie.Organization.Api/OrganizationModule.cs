@@ -2,6 +2,7 @@ using Lafie.Organization.Application;
 using Lafie.Organization.Application.Buildings;
 using Lafie.Organization.Application.CareUnits;
 using Lafie.Organization.Application.Floors;
+using Lafie.Organization.Application.References;
 using Lafie.Organization.Application.Services;
 using Lafie.Organization.Application.Spaces;
 using Lafie.Organization.Infrastructure;
@@ -20,6 +21,7 @@ public static class OrganizationModule
         services.AddScoped<ISpaceRepository, SpaceRepository>();
         services.AddScoped<IServiceRepository, ServiceRepository>();
         services.AddScoped<ICareUnitRepository, CareUnitRepository>();
+        services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         return services;
     }
 }

@@ -1,4 +1,5 @@
 using Lafie.Core.Common;
+using Lafie.Organization.Application.References;
 using Mediator;
 using DomainOrganization = Lafie.Organization.Domain.Organization;
 
@@ -7,12 +8,15 @@ namespace Lafie.Organization.Application.Organizations;
 /// <summary>Crée un établissement.</summary>
 public sealed record CreateOrganizationCommand(OrganizationWriteModel Model) : IRequest<Result<Guid>>;
 
-public sealed class CreateOrganizationHandler(IOrganizationRepository repository)
+public sealed class CreateOrganizationHandler(IOrganizationRepository repository, IReferenceDataRepository referenceData)
     : IRequestHandler<CreateOrganizationCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(CreateOrganizationCommand command, CancellationToken cancellationToken)
     {
         var m = command.Model;
+        var codes = await ReferenceValidation.ValidateAsync(referenceData, m, cancellationToken);
+        if (codes.IsFailure) return Result.Failure<Guid>(codes.Error!);
+
         var created = DomainOrganization.Create(
             m.Code, m.OfficialName, m.FacilityTypeCode, m.OwnershipTypeCode, m.CountryCode,
             m.Identity(), m.Address(), m.Legal(), m.Operations(), m.Contact());

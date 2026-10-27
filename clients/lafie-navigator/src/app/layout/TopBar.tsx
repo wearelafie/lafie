@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
   Button,
@@ -33,7 +35,7 @@ import {
 } from '@fluentui/react-icons'
 import { SettingsDialog } from '@features/settings'
 import { useConnectionStatus } from '@shared/hooks'
-import { currentUser } from '@shared/auth/currentUser'
+import { clearToken, useCurrentUser } from '@features/auth'
 import { AppLauncherDialog } from './AppLauncherDialog'
 
 const useStyles = makeStyles({
@@ -124,6 +126,17 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const [launcherOpen, setLauncherOpen] = useState(false)
   const status = useConnectionStatus()
   const isFr = i18n.language.startsWith('fr')
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { me } = useCurrentUser()
+  const displayName = me?.displayName ?? me?.username ?? '—'
+  const usernameLabel = me ? `@${me.username}` : ''
+  const roleLabel = me?.roles?.[0] ?? ''
+  const onLogout = () => {
+    clearToken()
+    queryClient.removeQueries({ queryKey: ['me'] })
+    void navigate({ to: '/login' as never })
+  }
 
   const statusDot = mergeClasses(
     styles.dot,
@@ -211,9 +224,9 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         {/* Profil — menu */}
         <Menu>
           <MenuTrigger disableButtonEnhancement>
-            <button type="button" className={styles.avatarBtn} aria-label={currentUser.name}>
+            <button type="button" className={styles.avatarBtn} aria-label={displayName}>
               <Avatar
-                name={currentUser.name}
+                name={displayName}
                 size={28}
                 color="colorful"
                 badge={{ status: status === 'online' ? 'available' : 'offline' }}
@@ -222,16 +235,16 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
           </MenuTrigger>
           <MenuPopover className={styles.profileMenu}>
             <div className={styles.profileHeader}>
-              <Avatar name={currentUser.name} size={48} color="colorful" />
+              <Avatar name={displayName} size={48} color="colorful" />
               <div className={styles.profileInfo}>
                 <Text className={styles.profileName} weight="semibold" size={400}>
-                  {currentUser.name}
+                  {displayName}
                 </Text>
                 <Text className={styles.profileUser} size={200}>
-                  {currentUser.username}
+                  {usernameLabel}
                 </Text>
                 <Text className={styles.profileRole} size={200}>
-                  {currentUser.role}
+                  {roleLabel}
                 </Text>
               </div>
             </div>
@@ -254,7 +267,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                 {t('topbar.profile.systemInfo')}
               </MenuItem>
               <MenuDivider />
-              <MenuItem className={styles.profileItem} icon={<SignOut20Regular />}>
+              <MenuItem className={styles.profileItem} icon={<SignOut20Regular />} onClick={onLogout}>
                 {t('topbar.profile.logout')}
               </MenuItem>
             </MenuList>

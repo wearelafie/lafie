@@ -3,15 +3,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Dropdown, Field, Input, Option, Subtitle2, Textarea, makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Dismiss24Regular } from '@fluentui/react-icons'
 import {
-  FACILITY_TYPES, OWNERSHIP_TYPES, createOrganization, organizationKeys, updateOrganization, type Organization,
-} from '../api'
+  getGeoDivisions, getReferenceValues, referenceKeys, refLabel, type ReferenceValue,
+} from '@features/reference/api'
+import { createOrganization, organizationKeys, updateOrganization, type Organization } from '../api'
 
 const useStyles = makeStyles({
   surface: { width: '92vw', maxWidth: '820px', maxHeight: '88vh' },
@@ -63,13 +64,30 @@ export function OrganizationFormDialog({
   organization: Organization | null
 }) {
   const styles = useStyles()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language
   const queryClient = useQueryClient()
   const isEdit = organization !== null
 
   const { handleSubmit, setValue, watch, reset, formState } = useForm<FormValues>({
     resolver: zodResolver(schema), defaultValues: empty,
   })
+
+  // Référentiels (listes de codes) et géographie, depuis l'API.
+  const facilityTypes = useQuery({ queryKey: referenceKeys.values('FACILITY_TYPE'), queryFn: () => getReferenceValues('FACILITY_TYPE'), enabled: open })
+  const ownershipTypes = useQuery({ queryKey: referenceKeys.values('OWNERSHIP_TYPE'), queryFn: () => getReferenceValues('OWNERSHIP_TYPE'), enabled: open })
+  const legalTypes = useQuery({ queryKey: referenceKeys.values('LEGAL_ENTITY_TYPE'), queryFn: () => getReferenceValues('LEGAL_ENTITY_TYPE'), enabled: open })
+  const accreditations = useQuery({ queryKey: referenceKeys.values('ACCREDITATION_STATUS'), queryFn: () => getReferenceValues('ACCREDITATION_STATUS'), enabled: open })
+
+  const countryCode = watch('countryCode')
+  const regionCode = watch('regionCode')
+  const countries = useQuery({ queryKey: referenceKeys.values('COUNTRY'), queryFn: () => getReferenceValues('COUNTRY'), enabled: open })
+  const currencies = useQuery({ queryKey: referenceKeys.values('CURRENCY'), queryFn: () => getReferenceValues('CURRENCY'), enabled: open })
+  const regions = useQuery({ queryKey: referenceKeys.geo('Region', countryCode), queryFn: () => getGeoDivisions('Region', countryCode), enabled: open && !!countryCode })
+  const prefectures = useQuery({ queryKey: referenceKeys.geo('Prefecture', regionCode), queryFn: () => getGeoDivisions('Prefecture', regionCode), enabled: open && !!regionCode })
+
+  const refItemLabel = (list: ReferenceValue[] | undefined, code: string) =>
+    { const f = (list ?? []).find((x) => x.code === code); return f ? refLabel(f, lang) : code }
 
   useEffect(() => {
     if (!open) return
@@ -135,14 +153,14 @@ export function OrganizationFormDialog({
                 </div>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.facilityType')} required>
-                    <Dropdown value={typeLabel(t, v.facilityTypeCode)} selectedOptions={[v.facilityTypeCode]}
+                    <Dropdown value={refItemLabel(facilityTypes.data, v.facilityTypeCode)} selectedOptions={[v.facilityTypeCode]}
                       onOptionSelect={(_, d) => setValue('facilityTypeCode', d.optionValue!)}>
-                      {FACILITY_TYPES.map((c) => <Option key={c} value={c}>{t(`organization.facilityTypes.${c}`)}</Option>)}
+                      {(facilityTypes.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
                     </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.ownershipType')} required>
-                    <Dropdown value={ownLabel(t, v.ownershipTypeCode)} selectedOptions={[v.ownershipTypeCode]}
+                    <Dropdown value={refItemLabel(ownershipTypes.data, v.ownershipTypeCode)} selectedOptions={[v.ownershipTypeCode]}
                       onOptionSelect={(_, d) => setValue('ownershipTypeCode', d.optionValue!)}>
-                      {OWNERSHIP_TYPES.map((c) => <Option key={c} value={c}>{t(`organization.ownershipTypes.${c}`)}</Option>)}
+                      {(ownershipTypes.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
                     </Dropdown></Field>
                 </div>
                 <div className={styles.row}>
@@ -153,15 +171,31 @@ export function OrganizationFormDialog({
 
                 <Subtitle2 className={styles.section}>{t('organization.sections.location')}</Subtitle2>
                 <div className={styles.row}>
-                  <Field className={styles.grow} label={t('organization.fields.countryCode')} required
-                    validationMessage={formState.errors.countryCode ? t('organization.validation.countryCode') : undefined}>
-                    <Input {...txt('countryCode')} maxLength={2} /></Field>
+                  <Field className={styles.grow} label={t('organization.fields.countryCode')} required>
+                    <Dropdown value={refItemLabel(countries.data, v.countryCode)}
+                      selectedOptions={[v.countryCode]}
+                      onOptionSelect={(_, d) => { setValue('countryCode', d.optionValue!); setValue('regionCode', ''); setValue('prefectureCode', '') }}>
+                      {(countries.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
+                    </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.timeZoneId')}><Input {...txt('timeZoneId')} /></Field>
                 </div>
                 <div className={styles.row}>
-                  <Field className={styles.grow} label={t('organization.fields.regionCode')}><Input {...txt('regionCode')} /></Field>
-                  <Field className={styles.grow} label={t('organization.fields.prefectureCode')}><Input {...txt('prefectureCode')} /></Field>
-                  <Field className={styles.grow} label={t('organization.fields.communeCode')}><Input {...txt('communeCode')} /></Field>
+                  <Field className={styles.grow} label={t('organization.fields.regionCode')}>
+                    <Dropdown disabled={!v.countryCode} placeholder={t('organization.geoPick')}
+                      value={(regions.data ?? []).find((x) => x.code === v.regionCode)?.name ?? ''}
+                      selectedOptions={v.regionCode ? [v.regionCode] : []}
+                      onOptionSelect={(_, d) => { setValue('regionCode', d.optionValue!); setValue('prefectureCode', '') }}>
+                      {(regions.data ?? []).map((r) => <Option key={r.code} value={r.code}>{r.name}</Option>)}
+                    </Dropdown></Field>
+                  <Field className={styles.grow} label={t('organization.fields.prefectureCode')}>
+                    <Dropdown disabled={!v.regionCode} placeholder={t('organization.geoPick')}
+                      value={(prefectures.data ?? []).find((x) => x.code === v.prefectureCode)?.name ?? ''}
+                      selectedOptions={v.prefectureCode ? [v.prefectureCode] : []}
+                      onOptionSelect={(_, d) => setValue('prefectureCode', d.optionValue!)}>
+                      {(prefectures.data ?? []).map((p) => <Option key={p.code} value={p.code}>{p.name}</Option>)}
+                    </Dropdown></Field>
+                  <Field className={styles.grow} label={t('organization.fields.communeCode')} hint={t('organization.communeHint')}>
+                    <Input {...txt('communeCode')} /></Field>
                 </div>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.locality')}><Input {...txt('locality')} /></Field>
@@ -181,7 +215,14 @@ export function OrganizationFormDialog({
                 <Subtitle2 className={styles.section}>{t('organization.sections.legal')}</Subtitle2>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.legalName')}><Input {...txt('legalName')} /></Field>
-                  <Field className={styles.grow} label={t('organization.fields.legalEntityType')}><Input {...txt('legalEntityTypeCode')} /></Field>
+                  <Field className={styles.grow} label={t('organization.fields.legalEntityType')}>
+                    <Dropdown placeholder={t('organization.refNone')}
+                      value={v.legalEntityTypeCode ? refItemLabel(legalTypes.data, v.legalEntityTypeCode!) : ''}
+                      selectedOptions={v.legalEntityTypeCode ? [v.legalEntityTypeCode] : []}
+                      onOptionSelect={(_, d) => setValue('legalEntityTypeCode', d.optionValue === '__none__' ? '' : d.optionValue!)}>
+                      <Option value="__none__">{t('organization.refNone')}</Option>
+                      {(legalTypes.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
+                    </Dropdown></Field>
                 </div>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.registrationNumber')}><Input {...txt('registrationNumber')} /></Field>
@@ -193,12 +234,24 @@ export function OrganizationFormDialog({
                   <Field className={styles.grow} label={t('organization.fields.licenseIssuedOn')}><Input {...txt('licenseIssuedOn')} type="date" /></Field>
                   <Field className={styles.grow} label={t('organization.fields.licenseExpiresOn')}><Input {...txt('licenseExpiresOn')} type="date" /></Field>
                 </div>
-                <Field label={t('organization.fields.accreditationStatus')}><Input {...txt('accreditationStatusCode')} /></Field>
+                <Field label={t('organization.fields.accreditationStatus')}>
+                  <Dropdown placeholder={t('organization.refNone')}
+                    value={v.accreditationStatusCode ? refItemLabel(accreditations.data, v.accreditationStatusCode!) : ''}
+                    selectedOptions={v.accreditationStatusCode ? [v.accreditationStatusCode] : []}
+                    onOptionSelect={(_, d) => setValue('accreditationStatusCode', d.optionValue === '__none__' ? '' : d.optionValue!)}>
+                    <Option value="__none__">{t('organization.refNone')}</Option>
+                    {(accreditations.data ?? []).map((c) => <Option key={c.code} value={c.code}>{refLabel(c, lang)}</Option>)}
+                  </Dropdown></Field>
 
                 <Subtitle2 className={styles.section}>{t('organization.sections.operations')}</Subtitle2>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('organization.fields.openingDate')}><Input {...txt('openingDate')} type="date" /></Field>
-                  <Field className={styles.grow} label={t('organization.fields.currency')}><Input {...txt('defaultCurrencyCode')} /></Field>
+                  <Field className={styles.grow} label={t('organization.fields.currency')}>
+                    <Dropdown value={v.defaultCurrencyCode ? `${v.defaultCurrencyCode} — ${refItemLabel(currencies.data, v.defaultCurrencyCode!)}` : ''}
+                      selectedOptions={v.defaultCurrencyCode ? [v.defaultCurrencyCode] : []}
+                      onOptionSelect={(_, d) => setValue('defaultCurrencyCode', d.optionValue!)}>
+                      {(currencies.data ?? []).map((c) => <Option key={c.code} value={c.code}>{c.code} — {refLabel(c, lang)}</Option>)}
+                    </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.language')}><Input {...txt('defaultLanguageCode')} /></Field>
                 </div>
                 <div className={styles.row}>
@@ -224,15 +277,6 @@ export function OrganizationFormDialog({
       </DialogSurface>
     </Dialog>
   )
-}
-
-function typeLabel(t: (k: string) => string, code: string) {
-  const l = t(`organization.facilityTypes.${code}`)
-  return l.startsWith('organization.') ? code : l
-}
-function ownLabel(t: (k: string) => string, code: string) {
-  const l = t(`organization.ownershipTypes.${code}`)
-  return l.startsWith('organization.') ? code : l
 }
 
 function fromOrg(o: Organization): FormValues {
