@@ -1,3 +1,7 @@
 export { LoginPage } from './pages/LoginPage'
-export { getToken, setToken, clearToken, login, getMe, hasPermission, type Me } from './api'
+export { SelectEstablishmentPage } from './pages/SelectEstablishmentPage'
+export {
+  getToken, setToken, clearToken, login, selectEstablishment, getMe, hasPermission,
+  type Me, type EstablishmentRef,
+} from './api'
 export { useCurrentUser } from './useCurrentUser'

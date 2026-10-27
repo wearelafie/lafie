@@ -29,17 +29,19 @@ export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const navigate = useNavigate()
 
-  // Les écrans d'authentification s'affichent en plein écran, sans le chrome applicatif.
-  const isAuthRoute = pathname === '/login' || pathname === '/forgot-password'
+  // Écrans d'auth publics (sans jeton) et écran de sélection d'établissement (authentifié) : plein écran.
+  const isPublicAuth = pathname === '/login' || pathname === '/forgot-password'
+  const isSelect = pathname === '/select-establishment'
   const hasToken = !!getToken()
 
-  // Garde d'accès : sans jeton, rediriger vers la connexion (hors écrans d'auth).
+  // Garde d'accès : sans jeton, rediriger vers la connexion (hors écrans publics).
   useEffect(() => {
-    if (!isAuthRoute && !hasToken) void navigate({ to: '/login' as never })
-  }, [isAuthRoute, hasToken, navigate])
+    if (!isPublicAuth && !hasToken) void navigate({ to: '/login' as never })
+  }, [isPublicAuth, hasToken, navigate])
 
-  if (isAuthRoute) return <Outlet />
+  if (isPublicAuth) return <Outlet />
   if (!hasToken) return null
+  if (isSelect) return <Outlet />
 
   const onMenuClick = () => (isMobile ? setMobileNavOpen((o) => !o) : setExpanded((e) => !e))
 
