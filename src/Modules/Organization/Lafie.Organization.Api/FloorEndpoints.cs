@@ -1,4 +1,5 @@
 using Lafie.Organization.Application.Floors;
+using Lafie.Web.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +24,7 @@ public static class FloorEndpoints
         {
             var filter = new FloorFilter(search, status, includeArchived ?? false, page ?? 1, pageSize ?? 20);
             return Results.Ok(await mediator.Send(new GetFloorsQuery(buildingId, filter), ct));
-        });
+        }).RequirePermission("infrastructure.read");
 
         byBuilding.MapPost("", async (Guid buildingId, CreateFloorRequest r, IMediator mediator, CancellationToken ct) =>
         {
@@ -31,7 +32,7 @@ public static class FloorEndpoints
             return result.IsSuccess
                 ? Results.Created($"/floors/{result.Value}", new { id = result.Value })
                 : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         var byId = endpoints.MapGroup("/floors").WithTags("Floor");
 
@@ -39,29 +40,29 @@ public static class FloorEndpoints
         {
             var dto = await mediator.Send(new GetFloorByIdQuery(id), ct);
             return dto is null ? Results.NotFound() : Results.Ok(dto);
-        });
+        }).RequirePermission("infrastructure.read");
 
         byId.MapPut("/{id:guid}", async (Guid id, UpdateFloorRequest r, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new UpdateFloorCommand(id, r.Code, r.Name, r.Level, r.DisplayOrder, r.Description), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         byId.MapPut("/{id:guid}/status", async (Guid id, SetFloorStatusRequest r, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new SetFloorStatusCommand(id, r.Status), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         byId.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
-            await mediator.Send(new ArchiveFloorCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+            await mediator.Send(new ArchiveFloorCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest()).RequirePermission("infrastructure.manage");
         byId.MapPost("/{id:guid}/restore", async (Guid id, IMediator mediator, CancellationToken ct) =>
-            await mediator.Send(new RestoreFloorCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest());
+            await mediator.Send(new RestoreFloorCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest()).RequirePermission("infrastructure.manage");
         byId.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new DeleteFloorCommand(id), ct);
             return result.IsSuccess ? Results.NoContent() : Results.Conflict(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         return endpoints;
     }
