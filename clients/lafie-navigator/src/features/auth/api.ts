@@ -13,6 +13,13 @@ export function clearToken(): void {
   try { localStorage.removeItem(TOKEN_KEY) } catch { /* stockage indisponible */ }
 }
 
+export type EstablishmentRef = {
+  facilityId: string
+  name: string
+  isDefault: boolean
+  active: boolean
+}
+
 export type Me = {
   id: string
   username: string
@@ -25,16 +32,23 @@ export type Me = {
   preferredLanguage: string | null
   avatarUrl: string | null
   practitionerId: string | null
+  activeEstablishment: EstablishmentRef | null
+  establishments: EstablishmentRef[]
   roles: string[]
   permissions: string[]
 }
 
 export type LoginInput = { login: string; password: string }
-export type LoginResult = { token: string; expiresAtUtc: string; user: Me }
+export type AuthResult = { token: string; expiresAtUtc: string; needsSelection: boolean; user: Me }
 
 /** Authentifie (e-mail ou nom d'utilisateur) et renvoie un jeton + le profil. */
-export function login(input: LoginInput): Promise<LoginResult> {
-  return postJson<LoginResult>('/api/auth/login', input)
+export function login(input: LoginInput): Promise<AuthResult> {
+  return postJson<AuthResult>('/api/auth/login', input)
+}
+
+/** Choisit (ou change) l'établissement actif et renvoie un jeton scopé. */
+export function selectEstablishment(facilityId: string): Promise<AuthResult> {
+  return postJson<AuthResult>('/api/auth/select-establishment', { facilityId })
 }
 
 /** Profil de l'utilisateur connecté. */

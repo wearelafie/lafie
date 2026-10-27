@@ -104,10 +104,10 @@ export function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: (vals: FormValues) => login({ login: vals.login, password: vals.password }),
-    onSuccess: async (res) => {
+    onSuccess: (res) => {
       setToken(res.token)
       queryClient.setQueryData(['me'], res.user)
-      void navigate({ to: '/' })
+      void navigate({ to: (res.needsSelection ? '/select-establishment' : '/') as never })
     },
   })
 

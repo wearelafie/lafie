@@ -1,5 +1,6 @@
 using Lafie.Organization.Application;
 using Lafie.Organization.Application.Organizations;
+using Lafie.Web.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,13 +23,13 @@ public static class OrganizationEndpoints
         {
             var filter = new OrganizationFilter(search, type, status, includeArchived ?? false, page ?? 1, pageSize ?? 20);
             return Results.Ok(await mediator.Send(new GetOrganizationsQuery(filter), ct));
-        });
+        }).RequirePermission("infrastructure.read");
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
             var dto = await mediator.Send(new GetOrganizationByIdQuery(id), ct);
             return dto is null ? Results.NotFound() : Results.Ok(dto);
-        });
+        }).RequirePermission("infrastructure.read");
 
         group.MapPost("", async (OrganizationWriteModel model, IMediator mediator, CancellationToken ct) =>
         {
@@ -36,33 +37,33 @@ public static class OrganizationEndpoints
             return result.IsSuccess
                 ? Results.Created($"/organizations/{result.Value}", new { id = result.Value })
                 : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         group.MapPut("/{id:guid}", async (Guid id, OrganizationWriteModel model, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new UpdateOrganizationCommand(id, model), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         group.MapPut("/{id:guid}/status", async (Guid id, ChangeFacilityStatusRequest r, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new ChangeOrganizationStatusCommand(id, r.OperationalStatus), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         group.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
             await mediator.Send(new ArchiveOrganizationCommand(id), ct) is { IsSuccess: true }
-                ? Results.NoContent() : Results.BadRequest());
+                ? Results.NoContent() : Results.BadRequest()).RequirePermission("infrastructure.manage");
 
         group.MapPost("/{id:guid}/restore", async (Guid id, IMediator mediator, CancellationToken ct) =>
             await mediator.Send(new RestoreOrganizationCommand(id), ct) is { IsSuccess: true }
-                ? Results.NoContent() : Results.BadRequest());
+                ? Results.NoContent() : Results.BadRequest()).RequirePermission("infrastructure.manage");
 
         group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new DeleteOrganizationCommand(id), ct);
             return result.IsSuccess ? Results.NoContent() : Results.Conflict(new { error = result.Error });
-        });
+        }).RequirePermission("infrastructure.manage");
 
         return endpoints;
     }

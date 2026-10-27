@@ -23,6 +23,7 @@ import {
 import {
   Alert24Regular,
   Apps24Regular,
+  Building20Regular,
   Checkmark16Regular,
   Globe20Regular,
   Info20Regular,
@@ -35,7 +36,7 @@ import {
 } from '@fluentui/react-icons'
 import { SettingsDialog } from '@features/settings'
 import { useConnectionStatus } from '@shared/hooks'
-import { clearToken, useCurrentUser } from '@features/auth'
+import { clearToken, selectEstablishment, setToken, useCurrentUser } from '@features/auth'
 import { AppLauncherDialog } from './AppLauncherDialog'
 
 const useStyles = makeStyles({
@@ -137,6 +138,14 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
     queryClient.removeQueries({ queryKey: ['me'] })
     void navigate({ to: '/login' as never })
   }
+  const onSwitchEstablishment = async (facilityId: string) => {
+    if (facilityId === me?.activeEstablishment?.facilityId) return
+    const res = await selectEstablishment(facilityId)
+    setToken(res.token)
+    queryClient.setQueryData(['me'], res.user)
+    await queryClient.invalidateQueries()
+    void navigate({ to: '/' as never })
+  }
 
   const statusDot = mergeClasses(
     styles.dot,
@@ -178,6 +187,35 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
           <span className={statusDot} />
           <span>{t(`topbar.status.${status}`)}</span>
         </span>
+
+        {/* Établissement actif — sélecteur (multi-établissements) */}
+        {me && me.establishments.length > 0 && (
+          <Menu>
+            <MenuTrigger disableButtonEnhancement>
+              <Button
+                appearance="transparent"
+                className={styles.onBrand}
+                icon={<Building20Regular />}
+                aria-label={t('auth.establishment')}
+              >
+                <span className={styles.langLabel}>{me.activeEstablishment?.name ?? t('auth.establishment')}</span>
+              </Button>
+            </MenuTrigger>
+            <MenuPopover>
+              <MenuList>
+                {me.establishments.map((e) => (
+                  <MenuItem
+                    key={e.facilityId}
+                    icon={e.facilityId === me.activeEstablishment?.facilityId ? <Checkmark16Regular /> : undefined}
+                    onClick={() => onSwitchEstablishment(e.facilityId)}
+                  >
+                    {e.name}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </MenuPopover>
+          </Menu>
+        )}
 
         {/* Langue — menu déroulant */}
         <Menu>

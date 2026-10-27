@@ -24,11 +24,18 @@ public sealed class DevDataSeeder(
     private const string AdminEmail = "admin@lafie.local";
     private const string AdminUsername = "admin";
     private const string AdminPassword = "Admin123!"; // DEV uniquement.
+    private const string DemoPassword = "Lafie123!"; // DEV uniquement (profils métier).
+
+    // Établissements seedés par dev_infrastructure.sql (ids fixes).
+    private static readonly Guid ChuId = Guid.Parse("0a000000-0000-4000-8000-000000000001");
+    private static readonly Guid BiasaId = Guid.Parse("0a000000-0000-4000-8000-000000000002");
+    private const string ChuName = "Centre Hospitalier Universitaire Sylvanus Olympio";
+    private const string BiasaName = "Clinique Biasa";
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         await SeedInfrastructureAsync(cancellationToken);
-        await SeedAdminAsync(cancellationToken);
+        await SeedUsersAsync(cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -52,7 +59,7 @@ public sealed class DevDataSeeder(
         }
     }
 
-    private async Task SeedAdminAsync(CancellationToken cancellationToken)
+    private async Task SeedUsersAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -60,23 +67,69 @@ public sealed class DevDataSeeder(
             var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
             var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-            if (await users.ExistsAsync(AdminEmail, AdminUsername, cancellationToken))
+            // 1) Super-admin plateforme (aucune appartenance → contexte plateforme).
+            if (!await users.ExistsAsync(AdminEmail, AdminUsername, cancellationToken))
             {
-                logger.LogInformation("Compte admin de développement déjà présent.");
-                return;
+                var admin = User.Create(AdminUsername, AdminEmail, hasher.Hash(AdminPassword), hasher.Algorithm,
+                    UserType.Staff, firstName: "Admin", lastName: "Lafie", displayName: "Administrateur Lafie");
+                await users.AddAsync(admin, cancellationToken);
+                await users.AssignRoleAsync(admin.Id, "SUPER_ADMIN", cancellationToken: cancellationToken);
+                logger.LogInformation("Compte admin de développement créé ({Email}).", AdminEmail);
             }
 
-            var admin = User.Create(
-                AdminUsername, AdminEmail, hasher.Hash(AdminPassword), hasher.Algorithm, UserType.Staff,
-                firstName: "Admin", lastName: "Lafie", displayName: "Administrateur Lafie");
-            await users.AddAsync(admin, cancellationToken);
-            await users.AssignRoleAsync(admin.Id, "SUPER_ADMIN", cancellationToken);
+            // 2) Médecin multi-établissements (CHU par défaut + Biasa) → teste la sélection d'établissement.
+            if (!await users.ExistsAsync("dr.koffi@chu-so.tg", "dr.koffi", cancellationToken))
+            {
+                var doc = User.Create("dr.koffi", "dr.koffi@chu-so.tg", hasher.Hash("Doctor123!"), hasher.Algorithm,
+                    UserType.Practitioner, firstName: "Komlan", lastName: "Koffi", displayName: "Dr Komlan Koffi");
+                await users.AddAsync(doc, cancellationToken);
+                // Pas d'établissement par défaut → l'écran de sélection s'affiche à la connexion.
+                await users.AddEstablishmentAsync(doc.Id, ChuId, ChuName, isDefault: false, cancellationToken);
+                await users.AddEstablishmentAsync(doc.Id, BiasaId, BiasaName, isDefault: false, cancellationToken);
+                await users.AssignRoleAsync(doc.Id, "DOCTOR", $"facility:{ChuId}", cancellationToken);
+                await users.AssignRoleAsync(doc.Id, "DOCTOR", $"facility:{BiasaId}", cancellationToken);
+                logger.LogInformation("Compte médecin de développement créé (dr.koffi@chu-so.tg).");
+            }
 
-            logger.LogInformation("Compte admin de développement créé ({Email}).", AdminEmail);
+            // 3) Admin d'établissement (CHU uniquement) → teste l'ABAC périmètre établissement.
+            if (!await users.ExistsAsync("admin.chu@chu-so.tg", "admin.chu", cancellationToken))
+            {
+                var fadmin = User.Create("admin.chu", "admin.chu@chu-so.tg", hasher.Hash("Admin123!"), hasher.Algorithm,
+                    UserType.Staff, firstName: "Afi", lastName: "Mensah", displayName: "Afi Mensah");
+                await users.AddAsync(fadmin, cancellationToken);
+                await users.AddEstablishmentAsync(fadmin.Id, ChuId, ChuName, isDefault: true, cancellationToken);
+                await users.AssignRoleAsync(fadmin.Id, "FACILITY_ADMIN", $"facility:{ChuId}", cancellationToken);
+                logger.LogInformation("Compte admin établissement de développement créé (admin.chu@chu-so.tg).");
+            }
+
+            // 4) Profils métier au CHU (un par rôle) pour couvrir les permissions.
+            var demo = new (string Username, string Email, string First, string Last, UserType Type, string Role)[]
+            {
+                ("inf.adjo",     "inf.adjo@chu-so.tg",     "Adjo",   "Agbeko", UserType.Practitioner, "NURSE"),
+                ("sage.afia",    "sage.afia@chu-so.tg",    "Afia",   "Kouma",  UserType.Practitioner, "MIDWIFE"),
+                ("phar.kossi",   "phar.kossi@chu-so.tg",   "Kossi",  "Amegan", UserType.Practitioner, "PHARMACIST"),
+                ("labo.ama",     "labo.ama@chu-so.tg",     "Ama",    "Dossou", UserType.Practitioner, "LAB_TECH"),
+                ("accueil.yawa", "accueil.yawa@chu-so.tg", "Yawa",   "Lawson", UserType.Staff,        "RECEPTIONIST"),
+                ("caisse.edem",  "caisse.edem@chu-so.tg",  "Edem",   "Akakpo", UserType.Staff,        "CASHIER"),
+                ("compta.sena",  "compta.sena@chu-so.tg",  "Sena",   "Bruce",  UserType.Staff,        "ACCOUNTANT"),
+                ("rh.enyo",      "rh.enyo@chu-so.tg",      "Enyo",   "Kodjo",  UserType.Staff,        "HR_MANAGER"),
+                ("qualite.koffi","qualite.koffi@chu-so.tg","Kofi",   "Noe",    UserType.Staff,        "QUALITY_OFFICER"),
+                ("dpo.mawu",     "dpo.mawu@chu-so.tg",     "Mawuli", "Tsé",    UserType.Staff,        "AUDITOR_DPO"),
+            };
+            foreach (var d in demo)
+            {
+                if (await users.ExistsAsync(d.Email, d.Username, cancellationToken)) continue;
+                var u = User.Create(d.Username, d.Email, hasher.Hash(DemoPassword), hasher.Algorithm, d.Type,
+                    firstName: d.First, lastName: d.Last, displayName: $"{d.First} {d.Last}");
+                await users.AddAsync(u, cancellationToken);
+                await users.AddEstablishmentAsync(u.Id, ChuId, ChuName, isDefault: true, cancellationToken);
+                await users.AssignRoleAsync(u.Id, d.Role, $"facility:{ChuId}", cancellationToken);
+            }
+            logger.LogInformation("Profils métier de développement vérifiés ({Count}).", demo.Length);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Seed du compte admin de développement ignoré (erreur non bloquante).");
+            logger.LogWarning(ex, "Seed des comptes de développement ignoré (erreur non bloquante).");
         }
     }
 

@@ -10,7 +10,7 @@ namespace Lafie.Identity.Infrastructure;
 /// <summary>Émission de JWT signés (HMAC-SHA256).</summary>
 public sealed class JwtTokenService(JwtOptions options) : IJwtTokenService
 {
-    public AccessToken Create(User user, IReadOnlyList<string> roles, IReadOnlyList<string> permissions)
+    public AccessToken Create(User user, IReadOnlyList<string> roles, IReadOnlyList<string> permissions, Guid? activeFacilityId)
     {
         var now = DateTimeOffset.UtcNow;
         var expires = now.AddMinutes(options.AccessTokenMinutes);
@@ -23,7 +23,12 @@ public sealed class JwtTokenService(JwtOptions options) : IJwtTokenService
             new("preferred_username", user.Username),
             new("name", user.DisplayName ?? user.Username),
         };
-        if (user.TenantId is { } tenant) claims.Add(new Claim("tenant", tenant));
+        if (activeFacilityId is { } facility)
+        {
+            // Tenant = établissement actif choisi à la connexion.
+            claims.Add(new Claim("tenant", facility.ToString()));
+            claims.Add(new Claim("facility", facility.ToString()));
+        }
         foreach (var role in roles) claims.Add(new Claim(ClaimTypes.Role, role));
         foreach (var perm in permissions) claims.Add(new Claim("perm", perm));
 
