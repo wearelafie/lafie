@@ -10,6 +10,7 @@ using Lafie.Interop.Api;
 using Lafie.Organization.Api;
 using Lafie.Patient.Api;
 using Lafie.Terminology.Api;
+using Lafie.Web.Authorization;
 using Lafie.Web.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -63,6 +64,7 @@ builder.Services.AddSingleton<IJwtTokenService>(_ => new JwtTokenService(jwtOpti
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+builder.Services.AddScoped<IEstablishmentGuard, EstablishmentGuard>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -84,6 +86,8 @@ builder.Services
 // Par défaut tout endpoint exige un utilisateur authentifié ; /auth/login, /health et la doc sont en AllowAnonymous.
 builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+// Policies dynamiques "perm:<code>" (RBAC fin).
+builder.Services.AddLafiePermissionAuthorization();
 
 var app = builder.Build();
 

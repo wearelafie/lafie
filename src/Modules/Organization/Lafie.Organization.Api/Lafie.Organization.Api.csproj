@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Lafie.Organization.Application\Lafie.Organization.Application.csproj" />
     <ProjectReference Include="..\Lafie.Organization.Infrastructure\Lafie.Organization.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Lafie.Web\Lafie.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
