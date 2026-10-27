@@ -1,4 +1,5 @@
 using Lafie.Organization.Application.References;
+using Lafie.Web.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -12,10 +13,10 @@ public static class ReferenceEndpoints
     public static IEndpointRouteBuilder MapReferenceEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/reference-values/{category}", async (string category, IMediator mediator, CancellationToken ct) =>
-            Results.Ok(await mediator.Send(new GetReferenceValuesQuery(category), ct))).WithTags("Reference");
+            Results.Ok(await mediator.Send(new GetReferenceValuesQuery(category), ct))).WithTags("Reference").RequirePermission("reference.read");
 
         endpoints.MapGet("/geo-divisions", async (string level, string? parentCode, IMediator mediator, CancellationToken ct) =>
-            Results.Ok(await mediator.Send(new GetGeoDivisionsQuery(level, parentCode), ct))).WithTags("Reference");
+            Results.Ok(await mediator.Send(new GetGeoDivisionsQuery(level, parentCode), ct))).WithTags("Reference").RequirePermission("reference.read");
 
         return endpoints;
     }

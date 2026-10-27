@@ -83,35 +83,71 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(sql, new { email, username }, cancellationToken: cancellationToken));
     }
 
-    public async Task<IReadOnlyList<string>> GetRoleCodesAsync(Guid userId, CancellationToken cancellationToken = default)
+    // scope '' = rôle plateforme ; 'facility:<id>' = rôle dans un établissement.
+    private static string FacilityScope(Guid? facilityId) => facilityId is { } f ? $"facility:{f}" : "";
+
+    public async Task<IReadOnlyList<string>> GetRoleCodesAsync(Guid userId, Guid? activeFacilityId = null, CancellationToken cancellationToken = default)
     {
-        const string sql = "select r.code from identity.user_roles ur join identity.roles r on r.id = ur.role_id where ur.user_id = @userId order by r.code";
+        const string sql = """
+            select r.code from identity.user_roles ur join identity.roles r on r.id = ur.role_id
+            where ur.user_id = @userId and (ur.scope = '' or ur.scope = @scope) order by r.code
+            """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
-        return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken))).ToList();
+        return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId, scope = FacilityScope(activeFacilityId) }, cancellationToken: cancellationToken))).ToList();
     }
 
-    public async Task<IReadOnlyList<string>> GetPermissionCodesAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetPermissionCodesAsync(Guid userId, Guid? activeFacilityId = null, CancellationToken cancellationToken = default)
     {
         const string sql = """
             select distinct rp.permission_code
             from identity.user_roles ur
             join identity.role_permissions rp on rp.role_id = ur.role_id
-            where ur.user_id = @userId
+            where ur.user_id = @userId and (ur.scope = '' or ur.scope = @scope)
             order by rp.permission_code
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
-        return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken))).ToList();
+        return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId, scope = FacilityScope(activeFacilityId) }, cancellationToken: cancellationToken))).ToList();
     }
 
-    public async Task AssignRoleAsync(Guid userId, string roleCode, CancellationToken cancellationToken = default)
+    public async Task AssignRoleAsync(Guid userId, string roleCode, string scope = "", CancellationToken cancellationToken = default)
     {
         const string sql = """
             insert into identity.user_roles (user_id, role_id, scope, created_on_utc)
-            select @userId, r.id, '', now() from identity.roles r where r.code = @roleCode and r.tenant_id is null
+            select @userId, r.id, @scope, now() from identity.roles r where r.code = @roleCode and r.tenant_id is null
             on conflict (user_id, role_id, scope) do nothing
             """;
         var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(sql, new { userId, roleCode }, cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition(sql, new { userId, roleCode, scope }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<IReadOnlyList<EstablishmentRef>> GetEstablishmentsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            select facility_id as "FacilityId", facility_name as "Name", is_default as "IsDefault", (status = 'Active') as "Active"
+            from identity.user_establishments
+            where user_id = @userId and status = 'Active'
+            order by is_default desc, facility_name
+            """;
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return (await connection.QueryAsync<EstablishmentRef>(new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken))).ToList();
+    }
+
+    public async Task<bool> IsMemberAsync(Guid userId, Guid facilityId, CancellationToken cancellationToken = default)
+    {
+        const string sql = "select exists(select 1 from identity.user_establishments where user_id = @userId and facility_id = @facilityId and status = 'Active')";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(sql, new { userId, facilityId }, cancellationToken: cancellationToken));
+    }
+
+    public async Task AddEstablishmentAsync(Guid userId, Guid facilityId, string facilityName, bool isDefault, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            insert into identity.user_establishments (user_id, facility_id, facility_name, is_default, status, created_on_utc)
+            values (@userId, @facilityId, @facilityName, @isDefault, 'Active', now())
+            on conflict (user_id, facility_id) do nothing
+            """;
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(sql, new { userId, facilityId, facilityName, isDefault }, cancellationToken: cancellationToken));
     }
 
     private static object ToParams(User u) => new
