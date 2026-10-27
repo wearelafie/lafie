@@ -24,6 +24,7 @@ public sealed class DevDataSeeder(
     private const string AdminEmail = "admin@lafie.local";
     private const string AdminUsername = "admin";
     private const string AdminPassword = "Admin123!"; // DEV uniquement.
+    private const string DemoPassword = "Lafie123!"; // DEV uniquement (profils métier).
 
     // Établissements seedés par dev_infrastructure.sql (ids fixes).
     private static readonly Guid ChuId = Guid.Parse("0a000000-0000-4000-8000-000000000001");
@@ -100,6 +101,31 @@ public sealed class DevDataSeeder(
                 await users.AssignRoleAsync(fadmin.Id, "FACILITY_ADMIN", $"facility:{ChuId}", cancellationToken);
                 logger.LogInformation("Compte admin établissement de développement créé (admin.chu@chu-so.tg).");
             }
+
+            // 4) Profils métier au CHU (un par rôle) pour couvrir les permissions.
+            var demo = new (string Username, string Email, string First, string Last, UserType Type, string Role)[]
+            {
+                ("inf.adjo",     "inf.adjo@chu-so.tg",     "Adjo",   "Agbeko", UserType.Practitioner, "NURSE"),
+                ("sage.afia",    "sage.afia@chu-so.tg",    "Afia",   "Kouma",  UserType.Practitioner, "MIDWIFE"),
+                ("phar.kossi",   "phar.kossi@chu-so.tg",   "Kossi",  "Amegan", UserType.Practitioner, "PHARMACIST"),
+                ("labo.ama",     "labo.ama@chu-so.tg",     "Ama",    "Dossou", UserType.Practitioner, "LAB_TECH"),
+                ("accueil.yawa", "accueil.yawa@chu-so.tg", "Yawa",   "Lawson", UserType.Staff,        "RECEPTIONIST"),
+                ("caisse.edem",  "caisse.edem@chu-so.tg",  "Edem",   "Akakpo", UserType.Staff,        "CASHIER"),
+                ("compta.sena",  "compta.sena@chu-so.tg",  "Sena",   "Bruce",  UserType.Staff,        "ACCOUNTANT"),
+                ("rh.enyo",      "rh.enyo@chu-so.tg",      "Enyo",   "Kodjo",  UserType.Staff,        "HR_MANAGER"),
+                ("qualite.koffi","qualite.koffi@chu-so.tg","Kofi",   "Noe",    UserType.Staff,        "QUALITY_OFFICER"),
+                ("dpo.mawu",     "dpo.mawu@chu-so.tg",     "Mawuli", "Tsé",    UserType.Staff,        "AUDITOR_DPO"),
+            };
+            foreach (var d in demo)
+            {
+                if (await users.ExistsAsync(d.Email, d.Username, cancellationToken)) continue;
+                var u = User.Create(d.Username, d.Email, hasher.Hash(DemoPassword), hasher.Algorithm, d.Type,
+                    firstName: d.First, lastName: d.Last, displayName: $"{d.First} {d.Last}");
+                await users.AddAsync(u, cancellationToken);
+                await users.AddEstablishmentAsync(u.Id, ChuId, ChuName, isDefault: true, cancellationToken);
+                await users.AssignRoleAsync(u.Id, d.Role, $"facility:{ChuId}", cancellationToken);
+            }
+            logger.LogInformation("Profils métier de développement vérifiés ({Count}).", demo.Length);
         }
         catch (Exception ex)
         {
