@@ -127,6 +127,8 @@ const resources = {
       common: { comingSoon: 'Module en cours de construction.', overview: "Vue d'ensemble", yes: 'Oui', no: 'Non' },
       auth: {
         title: 'Connexion',
+        login: 'E-mail ou nom d’utilisateur',
+        loginRequired: 'Identifiant requis.',
         email: 'E-mail',
         emailInvalid: 'Adresse e-mail invalide.',
         password: 'Mot de passe',
@@ -548,6 +550,8 @@ const resources = {
       common: { comingSoon: 'Module under construction.', overview: 'Overview', yes: 'Yes', no: 'No' },
       auth: {
         title: 'Sign in',
+        login: 'Email or username',
+        loginRequired: 'Identifier required.',
         email: 'Email',
         emailInvalid: 'Invalid email address.',
         password: 'Password',

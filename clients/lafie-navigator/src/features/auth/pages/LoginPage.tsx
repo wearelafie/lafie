@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import {
   Button, Field, Input, Menu, MenuItem, MenuList, MenuPopover, MenuTrigger, Spinner,
@@ -84,7 +84,7 @@ function LanguageMenu({ className }: { className?: string }) {
 }
 
 const schema = z.object({
-  email: z.string().trim().email(),
+  login: z.string().trim().min(1),
   password: z.string().min(1),
 })
 type FormValues = z.infer<typeof schema>
@@ -93,17 +93,22 @@ export function LoginPage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [show, setShow] = useState(false)
 
   const { handleSubmit, setValue, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { login: '', password: '' },
   })
   const v = watch()
 
   const mutation = useMutation({
-    mutationFn: (vals: FormValues) => login(vals),
-    onSuccess: (res) => { setToken(res.token); void navigate({ to: '/' }) },
+    mutationFn: (vals: FormValues) => login({ login: vals.login, password: vals.password }),
+    onSuccess: async (res) => {
+      setToken(res.token)
+      queryClient.setQueryData(['me'], res.user)
+      void navigate({ to: '/' })
+    },
   })
 
   const onSubmit = handleSubmit((vals) => mutation.mutate(vals))
@@ -116,10 +121,10 @@ export function LoginPage() {
           <LafieLogo />
           <h1 className={styles.title}>{t('auth.title')}</h1>
 
-          <Field className={styles.field} label={t('auth.email')}
-            validationMessage={formState.errors.email ? t('auth.emailInvalid') : undefined}>
-            <Input type="email" autoComplete="username" value={v.email}
-              onChange={(_, d) => setValue('email', d.value, { shouldValidate: formState.isSubmitted })} />
+          <Field className={styles.field} label={t('auth.login')}
+            validationMessage={formState.errors.login ? t('auth.loginRequired') : undefined}>
+            <Input type="text" autoComplete="username" value={v.login}
+              onChange={(_, d) => setValue('login', d.value, { shouldValidate: formState.isSubmitted })} />
           </Field>
 
           <Field className={styles.field} label={t('auth.password')}
