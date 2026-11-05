@@ -29,3 +29,8 @@ packages/
 .DS_Store
 Thumbs.db
 docker-compose.override.yml
+
+# Variables d'environnement (locales, non versionnées) — garder uniquement les .example
+.env
+.env.*
+!.env.example
