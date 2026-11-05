@@ -15,9 +15,10 @@ export default defineConfig(({ mode }) => {
     // Icônes Iconify (fluent-color) importées offline + tree-shakées via ~icons/*.
     Icons({ compiler: 'jsx', jsx: 'react' }),
     VitePWA({
-      // Désactivée hors production : en dev le service worker mettait en cache
-      // le shell et faisait voir d'anciennes versions de l'app.
-      disable: !isProd,
+      // Hors production : on n'active PAS la vraie PWA mais on émet un service worker
+      // AUTO-DESTRUCTEUR. Il désinscrit tout SW déjà installé et vide ses caches à la
+      // prochaine visite — sinon un ancien SW continue de servir un shell obsolète en dev.
+      selfDestroying: !isProd,
       registerType: 'autoUpdate',
       // PWA : app installable + cache des assets (shell offline).
       // NB : l'offline des DONNÉES cliniques (cache API + sync) est un chantier séparé.
