@@ -250,7 +250,7 @@ export function OrganizationFormDialog({
                     <Dropdown value={v.defaultCurrencyCode ? `${v.defaultCurrencyCode} — ${refItemLabel(currencies.data, v.defaultCurrencyCode!)}` : ''}
                       selectedOptions={v.defaultCurrencyCode ? [v.defaultCurrencyCode] : []}
                       onOptionSelect={(_, d) => setValue('defaultCurrencyCode', d.optionValue!)}>
-                      {(currencies.data ?? []).map((c) => <Option key={c.code} value={c.code}>{c.code} — {refLabel(c, lang)}</Option>)}
+                      {(currencies.data ?? []).map((c) => <Option key={c.code} value={c.code}>{`${c.code} — ${refLabel(c, lang)}`}</Option>)}
                     </Dropdown></Field>
                   <Field className={styles.grow} label={t('organization.fields.language')}><Input {...txt('defaultLanguageCode')} /></Field>
                 </div>
