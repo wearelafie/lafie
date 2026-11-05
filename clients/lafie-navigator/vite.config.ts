@@ -6,12 +6,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 import Icons from 'unplugin-icons/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+// mode : 'production' pour l'image de prod, 'development' pour la stack de dev (Docker override).
+export default defineConfig(({ mode }) => {
+  const isProd = mode === 'production'
+  return {
   plugins: [
     react(),
     // Icônes Iconify (fluent-color) importées offline + tree-shakées via ~icons/*.
     Icons({ compiler: 'jsx', jsx: 'react' }),
     VitePWA({
+      // Désactivée hors production : en dev le service worker mettait en cache
+      // le shell et faisait voir d'anciennes versions de l'app.
+      disable: !isProd,
       registerType: 'autoUpdate',
       // PWA : app installable + cache des assets (shell offline).
       // NB : l'offline des DONNÉES cliniques (cache API + sync) est un chantier séparé.
@@ -52,4 +58,5 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
   },
+  }
 })
