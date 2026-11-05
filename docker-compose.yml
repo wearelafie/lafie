@@ -3,17 +3,17 @@ services:
     image: postgres:17
     container_name: lafie-postgres
     environment:
-      POSTGRES_USER: lafie
-      POSTGRES_PASSWORD: lafie
-      POSTGRES_DB: lafie
+      POSTGRES_USER: ${POSTGRES_USER:-lafie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lafie}
+      POSTGRES_DB: ${POSTGRES_DB:-lafie}
     ports:
-      # 5432 est occupé par Laragon sur l'hôte -> on expose sur 5433.
-      - "5433:5432"
+      # 5432 est occupé par Laragon sur l'hôte -> on expose sur 5433 (override via POSTGRES_PORT).
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - lafie_pgdata:/var/lib/postgresql/data
       # Schéma géré par le runner de migrations de l'API (db/migrations, embarqué).
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lafie -d lafie"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lafie} -d ${POSTGRES_DB:-lafie}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -25,22 +25,28 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=lafie;Username=lafie;Password=lafie"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-lafie};Username=${POSTGRES_USER:-lafie};Password=${POSTGRES_PASSWORD:-lafie}"
+      Jwt__Issuer: ${JWT_ISSUER:-lafie}
+      Jwt__Audience: ${JWT_AUDIENCE:-lafie}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-lafie-dev-signing-key-change-me-0123456789}
+      Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-480}
     ports:
-      # 8080 souvent pris sur l'hôte -> exposition sur 8081.
-      - "8081:8080"
+      # 8080 souvent pris sur l'hôte -> exposition sur 8081 (override via API_PORT).
+      - "${API_PORT:-8081}:8080"
 
   web:
     build:
       context: ./clients/lafie-navigator
       args:
-        APP_ENV: production
+        # BUILD-TIME : pilote le mode Vite (PWA off en dev) + la conf nginx servie.
+        # Changement => relancer `docker compose build web`. Défaut : production.
+        APP_ENV: ${APP_ENV:-production}
     container_name: lafie-web
     depends_on:
       - api
     ports:
-      - "3000:80"
+      - "${WEB_PORT:-3000}:80"
 
 volumes:
   lafie_pgdata:
