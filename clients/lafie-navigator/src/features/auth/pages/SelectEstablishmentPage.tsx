@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Button, Spinner, makeStyles, tokens } from '@fluentui/react-components'
+import { Spinner, makeStyles, tokens } from '@fluentui/react-components'
 import { Building20Regular, ChevronRight20Regular } from '@fluentui/react-icons'
 import { useThemeMode } from '@app/providers/ThemeModeProvider'
 import { selectEstablishment, setToken } from '../api'
