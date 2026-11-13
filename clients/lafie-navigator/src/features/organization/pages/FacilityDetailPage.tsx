@@ -7,8 +7,9 @@ import { BuildingsPage } from '@features/building'
 import { ServicesPage } from '@features/service'
 import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
 import { getOrganization } from '../api'
+import { FacilityPlan } from '../components/FacilityPlan'
 
-const TABS = ['overview', 'buildings', 'services'] as const
+const TABS = ['overview', 'plan', 'buildings', 'services'] as const
 type TabKey = (typeof TABS)[number]
 
 const useStyles = makeStyles({
@@ -97,6 +98,7 @@ export function FacilityDetailPage() {
       <DetailHeader title={o.officialName} crumbs={crumbs} />
       <TabList selectedValue={tab} onTabSelect={(_, dt) => setTab(dt.value as TabKey)}>
         <Tab value="overview">{t('organization.tabs.overview')}</Tab>
+        <Tab value="plan">{t('organization.tabs.plan')}</Tab>
         <Tab value="buildings">{t('organization.tabs.buildings')}</Tab>
         <Tab value="services">{t('organization.tabs.services')}</Tab>
       </TabList>
@@ -111,6 +113,7 @@ export function FacilityDetailPage() {
             ))}
           </div>
         )}
+        {tab === 'plan' && <FacilityPlan facilityId={o.id} />}
         {tab === 'buildings' && <BuildingsPage />}
         {tab === 'services' && <ServicesPage />}
       </div>
