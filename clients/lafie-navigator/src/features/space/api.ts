@@ -64,6 +64,12 @@ export function createSpace(floorId: string, input: SpaceInput): Promise<{ id: s
   return postJson<{ id: string }>(`/api/floors/${floorId}/spaces`, input)
 }
 
+/** Tous les espaces d'un établissement (tous bâtiments/étages), pour la vue plan. */
+export function getSpacesByFacility(facilityId: string, pageSize = 200): Promise<PagedResult<Space>> {
+  const q = new URLSearchParams({ page: '1', pageSize: String(pageSize) })
+  return getJson<PagedResult<Space>>(`/api/facilities/${facilityId}/spaces?${q.toString()}`)
+}
+
 export async function updateSpace(id: string, input: SpaceInput): Promise<void> {
   await send(`/api/spaces/${id}`, 'PUT', input)
 }
