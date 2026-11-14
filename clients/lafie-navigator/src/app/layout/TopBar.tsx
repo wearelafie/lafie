@@ -48,6 +48,7 @@ const useStyles = makeStyles({
     padding: `0 ${tokens.spacingHorizontalM}`,
     backgroundColor: tokens.colorBrandBackground,
     color: tokens.colorNeutralForegroundOnBrand,
+    minWidth: 0,
   },
   logoBtn: {
     padding: 0,
@@ -61,9 +62,16 @@ const useStyles = makeStyles({
     ':hover': { opacity: 0.85 },
   },
   logo: { height: '28px', width: 'auto', display: 'block' },
-  searchWrap: { flex: 1, display: 'flex', justifyContent: 'center' },
-  search: { width: '100%', maxWidth: '480px' },
-  right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS },
+  searchWrap: {
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    minWidth: 0,
+    // Mobile : pas de barre de recherche dans l'app bar (geste/écran dédié).
+    '@media (max-width: 768px)': { display: 'none' },
+  },
+  search: { width: '100%', maxWidth: '480px', minWidth: 0 },
+  right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS, flexShrink: 0 },
   onBrand: {
     color: tokens.colorNeutralForegroundOnBrand,
     ':hover': {
@@ -89,6 +97,8 @@ const useStyles = makeStyles({
     fontSize: tokens.fontSizeBase200,
     lineHeight: '16px',
     whiteSpace: 'nowrap',
+    flexShrink: 0,
+    '@media (max-width: 480px)': { display: 'none' },
   },
   dot: { width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0 },
   dotOnline: { backgroundColor: '#2ecc71' },
