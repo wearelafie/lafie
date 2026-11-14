@@ -20,6 +20,7 @@ import {
   setEquipmentStatus, type Equipment, type EquipmentFilter, type EquipmentStatus,
 } from '../api'
 import { EquipmentFormDialog } from '../components/EquipmentFormDialog'
+import { EquipmentDashboard } from '../components/EquipmentDashboard'
 
 const PAGE_SIZE = 10
 const ANY = '__any__'
@@ -86,7 +87,8 @@ export function EquipmentPage() {
 
   const openNew = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (e: Equipment) => { setEditing(e); setFormOpen(true) }
-  const openDetail = (e: Equipment) => { setSelectedEquipment(e.id); void navigate({ to: '/admin/equipment-item' as never }) }
+  const openDetailById = (id: string) => { setSelectedEquipment(id); void navigate({ to: '/admin/equipment-item' as never }) }
+  const openDetail = (e: Equipment) => openDetailById(e.id)
 
   const total = query.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -135,6 +137,8 @@ export function EquipmentPage() {
         </div>
         <Button appearance="primary" icon={<Add20Regular />} onClick={openNew}>{t('equipment.new')}</Button>
       </div>
+
+      <EquipmentDashboard facilityId={facilityId} onOpenEquipment={openDetailById} />
 
       <div className={styles.filters}>
         <div className={styles.filterField}>
