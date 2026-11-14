@@ -2,6 +2,7 @@ using Lafie.Organization.Application;
 using Lafie.Organization.Application.Buildings;
 using Lafie.Organization.Application.CareUnits;
 using Lafie.Organization.Application.Equipment;
+using Lafie.Organization.Application.Equipment.Dashboard;
 using Lafie.Organization.Application.Equipment.Maintenance;
 using Lafie.Organization.Application.Equipment.Movements;
 using Lafie.Organization.Application.Floors;
@@ -27,6 +28,7 @@ public static class OrganizationModule
         services.AddScoped<IEquipmentRepository, EquipmentRepository>();
         services.AddScoped<IEquipmentMovementRepository, EquipmentMovementRepository>();
         services.AddScoped<IEquipmentMaintenanceRepository, EquipmentMaintenanceRepository>();
+        services.AddScoped<IEquipmentDashboardRepository, EquipmentDashboardRepository>();
         services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         return services;
     }

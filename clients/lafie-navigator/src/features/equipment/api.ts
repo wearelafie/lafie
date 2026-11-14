@@ -208,3 +208,55 @@ export function setMaintenanceStatus(id: string, status: MaintenanceStatus): Pro
 export function deleteMaintenance(id: string): Promise<void> {
   return del(`/api/equipment/maintenance/${id}`)
 }
+
+// --- Phase 3 : tableau de bord (synthèse + alertes) ---
+
+export type EquipmentCategoryCount = { category: string; count: number }
+
+export type WarrantyAlert = {
+  equipmentId: string
+  inventoryNumber: string
+  name: string
+  category: string
+  status: EquipmentStatus
+  warrantyEnd: string
+  daysRemaining: number
+}
+
+export type MaintenanceAlert = {
+  maintenanceId: string
+  equipmentId: string
+  inventoryNumber: string
+  equipmentName: string
+  type: MaintenanceType
+  status: MaintenanceStatus
+  scheduledOn: string
+  daysRemaining: number
+  description: string
+}
+
+export type EquipmentDashboard = {
+  total: number
+  operational: number
+  underMaintenance: number
+  outOfService: number
+  decommissioned: number
+  byCategory: EquipmentCategoryCount[]
+  warrantyExpired: WarrantyAlert[]
+  warrantyExpiring: WarrantyAlert[]
+  maintenanceOverdue: MaintenanceAlert[]
+  maintenanceUpcoming: MaintenanceAlert[]
+}
+
+export const dashboardKeys = {
+  all: (facilityId: string) => ['equipment', facilityId, 'dashboard'] as const,
+}
+
+export function getEquipmentDashboard(
+  facilityId: string,
+  warrantyWindow = 60,
+  maintenanceWindow = 30,
+): Promise<EquipmentDashboard> {
+  const q = new URLSearchParams({ warrantyWindow: String(warrantyWindow), maintenanceWindow: String(maintenanceWindow) })
+  return getJson<EquipmentDashboard>(`/api/facilities/${facilityId}/equipment/dashboard?${q.toString()}`)
+}

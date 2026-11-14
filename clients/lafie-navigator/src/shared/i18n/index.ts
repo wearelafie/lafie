@@ -235,6 +235,28 @@ const resources = {
             provider: 'Prestataire', cost: 'Coût', description: 'Description',
           },
         },
+        dashboard: {
+          title: 'Tableau de bord',
+          loadError: 'Impossible de charger le tableau de bord.',
+          kpis: { total: 'Total', operational: 'En service', underMaintenance: 'En maintenance', outOfService: 'Hors service' },
+          warranty: {
+            title: 'Garanties',
+            expired: 'Garanties expirées',
+            expiring: 'Garanties à échéance (≤ {{days}} j)',
+            none: 'Aucune alerte de garantie.',
+            expiredBadge: 'Expirée depuis {{days}} j',
+            remainingBadge: 'Dans {{days}} j',
+          },
+          maintenance: {
+            title: 'Maintenance',
+            overdue: 'Interventions en retard',
+            upcoming: 'Interventions à venir (≤ {{days}} j)',
+            none: 'Aucune alerte de maintenance.',
+            overdueBadge: 'En retard de {{days}} j',
+            upcomingBadge: 'Dans {{days}} j',
+            dueToday: 'Aujourd\'hui',
+          },
+        },
         statuses: {
           Operational: 'En service',
           UnderMaintenance: 'En maintenance',
@@ -801,6 +823,28 @@ const resources = {
           fields: {
             type: 'Type', status: 'Status', scheduledOn: 'Scheduled', performedOn: 'Performed',
             provider: 'Provider', cost: 'Cost', description: 'Description',
+          },
+        },
+        dashboard: {
+          title: 'Dashboard',
+          loadError: 'Unable to load the dashboard.',
+          kpis: { total: 'Total', operational: 'Operational', underMaintenance: 'Under maintenance', outOfService: 'Out of service' },
+          warranty: {
+            title: 'Warranties',
+            expired: 'Expired warranties',
+            expiring: 'Warranties due (≤ {{days}} d)',
+            none: 'No warranty alert.',
+            expiredBadge: 'Expired {{days}} d ago',
+            remainingBadge: 'In {{days}} d',
+          },
+          maintenance: {
+            title: 'Maintenance',
+            overdue: 'Overdue interventions',
+            upcoming: 'Upcoming interventions (≤ {{days}} d)',
+            none: 'No maintenance alert.',
+            overdueBadge: '{{days}} d overdue',
+            upcomingBadge: 'In {{days}} d',
+            dueToday: 'Today',
           },
         },
         statuses: {
