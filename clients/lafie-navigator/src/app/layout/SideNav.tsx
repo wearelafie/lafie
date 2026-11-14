@@ -33,6 +33,14 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorBrandBackground2,
     color: tokens.colorBrandForeground1,
   },
+  sectionHeader: {
+    display: 'block',
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalS} ${tokens.spacingVerticalXXS}`,
+    marginTop: tokens.spacingVerticalXS,
+    color: tokens.colorNeutralForeground3,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+  },
   empty: {
     padding: tokens.spacingVerticalM,
     color: tokens.colorNeutralForeground3,
@@ -78,9 +86,12 @@ export function SideNav({
         </Tooltip>
       )}
 
-      {/* Sous-modules du grand module actif */}
-      {children.map((c) => {
+      {/* Sous-modules du grand module actif (avec intertitres de section) */}
+      {children.map((c, i) => {
         const childLabel = t(c.labelKey)
+        // Intertitre quand la section change (vue déployée uniquement).
+        const prevSection = i > 0 ? children[i - 1].section : undefined
+        const showSection = expanded && c.section != null && c.section !== prevSection
         const btn = (
           <Link to={c.to} className={styles.link} onClick={onItemClick}>
             <Button
@@ -96,8 +107,17 @@ export function SideNav({
             </Button>
           </Link>
         )
+        const header = showSection ? (
+          <Text as="span" className={styles.sectionHeader} weight="semibold" size={100}>
+            {t(c.section!)}
+          </Text>
+        ) : null
+
         return expanded ? (
-          <div key={c.key}>{btn}</div>
+          <div key={c.key}>
+            {header}
+            {btn}
+          </div>
         ) : (
           <Tooltip key={c.key} content={childLabel} relationship="label" positioning="after">
             {btn}
