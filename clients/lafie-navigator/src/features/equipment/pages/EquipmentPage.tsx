@@ -6,8 +6,9 @@ import {
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   Title3, makeStyles, mergeClasses, tokens,
 } from '@fluentui/react-components'
+import { useNavigate } from '@tanstack/react-router'
 import {
-  Add20Regular, Edit20Regular, Search20Regular, Wrench20Regular, CheckmarkCircle20Regular,
+  Add20Regular, Edit20Regular, Eye20Regular, Search20Regular, Wrench20Regular, CheckmarkCircle20Regular,
   PlugDisconnected20Regular, DismissCircle20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
@@ -45,7 +46,9 @@ export function EquipmentPage() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { me } = useCurrentUser()
+  const setSelectedEquipment = useAppStore((s) => s.setSelectedEquipment)
   const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   // Les équipements sont scopés à l'établissement actif (garde API) : on s'appuie
   // d'abord sur l'établissement actif du profil, avec repli sur la sélection locale.
@@ -83,6 +86,7 @@ export function EquipmentPage() {
 
   const openNew = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (e: Equipment) => { setEditing(e); setFormOpen(true) }
+  const openDetail = (e: Equipment) => { setSelectedEquipment(e.id); void navigate({ to: '/admin/equipment-item' as never }) }
 
   const total = query.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -98,6 +102,7 @@ export function EquipmentPage() {
 
   const rowActions = (e: Equipment) => {
     const primary: RowAction[] = [
+      { key: 'view', label: t('actions.show'), icon: <Eye20Regular />, onClick: () => openDetail(e) },
       { key: 'edit', label: t('actions.edit'), icon: <Edit20Regular />, onClick: () => openEdit(e) },
     ]
     const menu: RowAction[] = EQUIPMENT_STATUSES.filter((s) => s !== e.status).map((s) => ({

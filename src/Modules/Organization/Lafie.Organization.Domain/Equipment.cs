@@ -151,6 +151,13 @@ public sealed class Equipment : AggregateRoot<Guid>
         Touch();
     }
 
+    /// <summary>Met à jour la localisation courante (suite à un déplacement enregistré).</summary>
+    public void Relocate(Guid? spaceId)
+    {
+        SpaceId = Nullable(spaceId);
+        Touch();
+    }
+
     public void Archive() { ArchivedOnUtc ??= DateTimeOffset.UtcNow; Touch(); }
     public void Restore() { ArchivedOnUtc = null; Touch(); }
 

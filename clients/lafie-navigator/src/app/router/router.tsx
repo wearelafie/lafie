@@ -11,7 +11,7 @@ import { CareUnitDetailPage } from '@features/care-unit'
 import { LoginPage, SelectEstablishmentPage } from '@features/auth'
 import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage'
 import { ReferenceValuesPage, GeoDivisionsPage } from '@features/admin'
-import { EquipmentPage } from '@features/equipment'
+import { EquipmentPage, EquipmentDetailPage } from '@features/equipment'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -55,6 +55,7 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/service', component: ServiceDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/care-unit', component: CareUnitDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-item', component: EquipmentDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/forgot-password', component: ForgotPasswordPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/select-establishment', component: SelectEstablishmentPage }),
