@@ -23,6 +23,8 @@ public class SpaceHandlersTests
         public Task<SpaceDto?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult<SpaceDto?>(null);
         public Task<PagedResult<SpaceDto>> SearchByFloorAsync(Guid f, SpaceFilter filter, CancellationToken ct = default)
             => Task.FromResult(new PagedResult<SpaceDto>([], filter.SafePage, filter.SafePageSize, 0));
+        public Task<PagedResult<SpaceDto>> SearchByFacilityAsync(Guid f, SpaceFilter filter, CancellationToken ct = default)
+            => Task.FromResult(new PagedResult<SpaceDto>([], filter.SafePage, filter.SafePageSize, 0));
         public Task<bool> CodeExistsAsync(Guid f, string code, Guid? excludeId = null, CancellationToken ct = default)
             => Task.FromResult(ExistingCodes.Contains(code));
         public Task DeleteAsync(Guid id, CancellationToken ct = default) => Task.CompletedTask;
