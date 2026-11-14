@@ -110,6 +110,7 @@ app.MapFloorEndpoints();
 app.MapSpaceEndpoints();
 app.MapServiceEndpoints();
 app.MapCareUnitEndpoints();
+app.MapEquipmentEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();
