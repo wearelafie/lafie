@@ -69,20 +69,20 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
 
     public async Task AddAsync(DomainOrganization o, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(InsertSql, ToParams(o), cancellationToken: cancellationToken));
     }
 
     public async Task UpdateAsync(DomainOrganization o, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(UpdateSql, ToParams(o), cancellationToken: cancellationToken));
     }
 
     public async Task<OrganizationDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from organization.organizations where id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<OrganizationDto>(
             new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
     }
@@ -132,7 +132,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             $"select count(*) from organization.organizations {where}", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<OrganizationDto>(new CommandDefinition(
@@ -144,7 +144,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from organization.organizations where id = @id", new { id }, cancellationToken: cancellationToken));
     }
@@ -152,7 +152,7 @@ public sealed class OrganizationRepository(IDbConnectionFactory connectionFactor
     public async Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from organization.organizations where lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(
             sql, new { code, excludeId }, cancellationToken: cancellationToken));
     }

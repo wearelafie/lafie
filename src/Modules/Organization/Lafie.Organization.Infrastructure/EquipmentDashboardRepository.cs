@@ -9,7 +9,7 @@ public sealed class EquipmentDashboardRepository(IDbConnectionFactory connection
 {
     public async Task<EquipmentDashboardDto> GetAsync(Guid facilityId, EquipmentDashboardOptions options, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var p = new
         {
             facilityId,

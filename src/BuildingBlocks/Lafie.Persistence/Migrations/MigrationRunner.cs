@@ -14,7 +14,7 @@ public sealed class MigrationRunner(IDbConnectionFactory connectionFactory, Asse
 
     public async Task<IReadOnlyList<string>> RunAsync(CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
 
         await connection.ExecuteAsync(new CommandDefinition(
             """

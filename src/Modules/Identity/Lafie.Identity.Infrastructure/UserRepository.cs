@@ -24,7 +24,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
     public async Task<User?> FindByLoginAsync(string emailOrUsername, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from identity.users where lower(email) = lower(@login) or lower(username) = lower(@login)";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition(sql, new { login = emailOrUsername }, cancellationToken: cancellationToken));
         return row?.ToDomain();
     }
@@ -32,7 +32,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
     public async Task<User?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from identity.users where id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<UserRow>(new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
         return row?.ToDomain();
     }
@@ -53,7 +53,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
                  @FirstName, @LastName, @Title, @DisplayName, @AvatarUrl, @PreferredLanguage, @TimeZone,
                  @PractitionerId, @EmployeeId, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(user), cancellationToken: cancellationToken));
     }
 
@@ -72,14 +72,14 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
                 updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(user), cancellationToken: cancellationToken));
     }
 
     public async Task<bool> ExistsAsync(string email, string username, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from identity.users where lower(email) = lower(@email) or lower(username) = lower(@username))";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(sql, new { email, username }, cancellationToken: cancellationToken));
     }
 
@@ -92,7 +92,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
             select r.code from identity.user_roles ur join identity.roles r on r.id = ur.role_id
             where ur.user_id = @userId and (ur.scope = '' or ur.scope = @scope) order by r.code
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId, scope = FacilityScope(activeFacilityId) }, cancellationToken: cancellationToken))).ToList();
     }
 
@@ -105,7 +105,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
             where ur.user_id = @userId and (ur.scope = '' or ur.scope = @scope)
             order by rp.permission_code
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { userId, scope = FacilityScope(activeFacilityId) }, cancellationToken: cancellationToken))).ToList();
     }
 
@@ -116,7 +116,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
             select @userId, r.id, @scope, now() from identity.roles r where r.code = @roleCode and r.tenant_id is null
             on conflict (user_id, role_id, scope) do nothing
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, new { userId, roleCode, scope }, cancellationToken: cancellationToken));
     }
 
@@ -128,14 +128,14 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
             where user_id = @userId and status = 'Active'
             order by is_default desc, facility_name
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return (await connection.QueryAsync<EstablishmentRef>(new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken))).ToList();
     }
 
     public async Task<bool> IsMemberAsync(Guid userId, Guid facilityId, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from identity.user_establishments where user_id = @userId and facility_id = @facilityId and status = 'Active')";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(sql, new { userId, facilityId }, cancellationToken: cancellationToken));
     }
 
@@ -146,7 +146,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
             values (@userId, @facilityId, @facilityName, @isDefault, 'Active', now())
             on conflict (user_id, facility_id) do nothing
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, new { userId, facilityId, facilityName, isDefault }, cancellationToken: cancellationToken));
     }
 

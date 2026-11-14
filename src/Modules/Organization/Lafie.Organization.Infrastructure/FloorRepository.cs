@@ -24,7 +24,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
             values
                 (@Id, @BuildingId, @Code, @Name, @Level, @DisplayOrder, @Description, @Status, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(f), cancellationToken: cancellationToken));
     }
 
@@ -36,7 +36,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
                 description = @Description, status = @Status, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(f), cancellationToken: cancellationToken));
     }
 
@@ -55,7 +55,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
     public async Task<FloorDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from organization.floors where id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<FloorDto>(
             new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
     }
@@ -80,7 +80,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             $"select count(*) from organization.floors {where}", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<FloorDto>(new CommandDefinition(
@@ -92,7 +92,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from organization.floors where id = @id", new { id }, cancellationToken: cancellationToken));
     }
@@ -100,7 +100,7 @@ public sealed class FloorRepository(IDbConnectionFactory connectionFactory) : IF
     public async Task<bool> CodeExistsAsync(Guid buildingId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from organization.floors where building_id = @buildingId and lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(
             sql, new { buildingId, code, excludeId }, cancellationToken: cancellationToken));
     }
