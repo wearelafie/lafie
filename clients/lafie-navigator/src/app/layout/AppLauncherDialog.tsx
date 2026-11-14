@@ -40,10 +40,23 @@ const useStyles = makeStyles({
     padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalL}`,
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     backgroundColor: tokens.colorNeutralBackground1,
+    // Mobile : titre + fermer sur la 1re ligne, recherche repliée en dessous.
+    '@media (max-width: 768px)': { flexWrap: 'wrap', rowGap: tokens.spacingVerticalS },
   },
-  title: { flexShrink: 0 },
-  searchWrap: { flex: 1, display: 'flex', justifyContent: 'center' },
-  search: { width: '100%', maxWidth: '420px' },
+  title: {
+    flexShrink: 0,
+    '@media (max-width: 768px)': { flexGrow: 1 },
+  },
+  searchWrap: {
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+    minWidth: 0,
+    '@media (max-width: 768px)': { order: 2, flexBasis: '100%' },
+  },
+  search: { width: '100%', maxWidth: '420px', minWidth: 0 },
+  // Bouton fermer : sur la 1re ligne (après le titre) en mobile.
+  closeBtn: { flexShrink: 0, '@media (max-width: 768px)': { order: 1 } },
   grid: {
     flex: 1,
     overflowY: 'auto',
@@ -122,7 +135,7 @@ export function AppLauncherDialog({
             />
           </div>
           <DialogTrigger disableButtonEnhancement>
-            <Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} />
+            <Button className={styles.closeBtn} appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} />
           </DialogTrigger>
         </div>
 

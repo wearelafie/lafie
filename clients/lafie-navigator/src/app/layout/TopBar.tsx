@@ -35,7 +35,7 @@ import {
   SignOut20Regular,
 } from '@fluentui/react-icons'
 import { SettingsDialog } from '@features/settings'
-import { useConnectionStatus } from '@shared/hooks'
+import { useConnectionStatus, useIsMobile } from '@shared/hooks'
 import { clearToken, selectEstablishment, setToken, useCurrentUser } from '@features/auth'
 import { AppLauncherDialog } from './AppLauncherDialog'
 
@@ -71,7 +71,7 @@ const useStyles = makeStyles({
     '@media (max-width: 768px)': { display: 'none' },
   },
   search: { width: '100%', maxWidth: '480px', minWidth: 0 },
-  right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS, flexShrink: 0 },
+  right: { display: 'flex', alignItems: 'center', columnGap: tokens.spacingHorizontalXS, flexShrink: 0, marginLeft: 'auto' },
   onBrand: {
     color: tokens.colorNeutralForegroundOnBrand,
     ':hover': {
@@ -136,6 +136,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [launcherOpen, setLauncherOpen] = useState(false)
   const status = useConnectionStatus()
+  const isMobile = useIsMobile()
   const isFr = i18n.language.startsWith('fr')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -208,7 +209,9 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                 icon={<Building20Regular />}
                 aria-label={t('auth.establishment')}
               >
-                <span className={styles.langLabel}>{me.activeEstablishment?.name ?? t('auth.establishment')}</span>
+                {isMobile ? null : (
+                  <span className={styles.langLabel}>{me.activeEstablishment?.name ?? t('auth.establishment')}</span>
+                )}
               </Button>
             </MenuTrigger>
             <MenuPopover>
@@ -236,7 +239,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
               icon={<Globe20Regular />}
               aria-label={t('topbar.language')}
             >
-              <span className={styles.langLabel}>{isFr ? 'FR' : 'EN'}</span>
+              {isMobile ? null : <span className={styles.langLabel}>{isFr ? 'FR' : 'EN'}</span>}
             </Button>
           </MenuTrigger>
           <MenuPopover>
