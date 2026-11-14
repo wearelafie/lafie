@@ -6,15 +6,23 @@ import { getToken } from '@features/auth'
 import { TopBar } from './TopBar'
 import { CommandBar } from './CommandBar'
 import { SideNav } from './SideNav'
+import { BottomNav } from './BottomNav'
 
 const useStyles = makeStyles({
   shell: {
     display: 'grid',
     gridTemplateRows: 'auto auto 1fr',
+    gridTemplateColumns: 'minmax(0, 1fr)',
     height: '100vh',
+    width: '100%',
+    maxWidth: '100vw',
+    overflowX: 'hidden',
   },
   body: { display: 'grid', minHeight: 0 },
   content: { overflowY: 'auto', minWidth: 0 },
+  // Mobile : grille à 2 rangées (contenu défilant + barre d'onglets fixe).
+  mobileBody: { display: 'grid', gridTemplateRows: '1fr auto', minHeight: 0 },
+  mobileContent: { overflowY: 'auto', minWidth: 0, WebkitOverflowScrolling: 'touch' },
   drawerBody: { padding: 0 },
 })
 
@@ -51,8 +59,11 @@ export function AppShell() {
       <CommandBar />
 
       {isMobile ? (
-        <div className={styles.content}>
-          <Outlet />
+        <div className={styles.mobileBody}>
+          <div className={styles.mobileContent}>
+            <Outlet />
+          </div>
+          <BottomNav />
           <OverlayDrawer
             open={mobileNavOpen}
             onOpenChange={(_, d) => setMobileNavOpen(d.open)}
