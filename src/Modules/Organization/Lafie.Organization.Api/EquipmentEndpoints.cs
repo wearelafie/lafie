@@ -1,5 +1,6 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Equipment;
+using Lafie.Organization.Application.Equipment.Dashboard;
 using Lafie.Web.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
@@ -28,6 +29,15 @@ public static class EquipmentEndpoints
     public static IEndpointRouteBuilder MapEquipmentEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var byFacility = endpoints.MapGroup("/facilities/{facilityId:guid}/equipment").WithTags("Equipment");
+
+        byFacility.MapGet("/dashboard", async (
+            Guid facilityId, int? warrantyWindow, int? maintenanceWindow,
+            IEstablishmentGuard guard, IMediator mediator, CancellationToken ct) =>
+        {
+            guard.EnsureActiveFacility(facilityId);
+            var options = new EquipmentDashboardOptions(warrantyWindow ?? 60, maintenanceWindow ?? 30);
+            return Results.Ok(await mediator.Send(new GetEquipmentDashboardQuery(facilityId, options), ct));
+        }).RequirePermission("infrastructure.read");
 
         byFacility.MapGet("", async (
             Guid facilityId, string? search, string? category, string? status, Guid? spaceId, Guid? serviceId,
