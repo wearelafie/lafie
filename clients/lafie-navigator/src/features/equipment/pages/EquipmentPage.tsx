@@ -138,7 +138,11 @@ export function EquipmentPage() {
         <Button appearance="primary" icon={<Add20Regular />} onClick={openNew}>{t('equipment.new')}</Button>
       </div>
 
-      <EquipmentDashboard facilityId={facilityId} onOpenEquipment={openDetailById} />
+      <EquipmentDashboard
+        facilityId={facilityId}
+        onOpenWarranties={() => navigate({ to: '/admin/equipment-warranties' as never })}
+        onOpenMaintenance={() => navigate({ to: '/admin/equipment-maintenance' as never })}
+      />
 
       <div className={styles.filters}>
         <div className={styles.filterField}>
