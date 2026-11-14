@@ -15,9 +15,8 @@ import { useAppStore } from '@app/store/appStore'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   FACILITY_TYPES, OPERATIONAL_STATUSES, archiveOrganization, deleteOrganization, getOrganizations,
-  organizationKeys, restoreOrganization, setOrganizationStatus, type Organization, type OrganizationFilter,
+  organizationKeys, restoreOrganization, setOrganizationStatus, type OrganizationFilter,
 } from '../api'
-import { OrganizationFormDialog } from '../components/OrganizationFormDialog'
 
 const PAGE_SIZE = 10
 const ANY = '__any__'
@@ -51,11 +50,12 @@ export function OrganizationsPage() {
   const selectedId = useAppStore((s) => s.selectedFacilityId)
   const setSelected = useAppStore((s) => s.setSelectedFacility)
   const setInfraTab = useAppStore((s) => s.setInfraTab)
+  const setFacilityFormId = useAppStore((s) => s.setFacilityFormId)
 
   const [draft, setDraft] = useState<{ search: string; type: string; status: string; archived: boolean }>({ search: '', type: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<OrganizationFilter>({ page: 1, pageSize: PAGE_SIZE })
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Organization | null>(null)
+
+  const openForm = (id: string | null) => { setFacilityFormId(id); void navigate({ to: '/admin/facility-form' }) }
 
   const query = useQuery({ queryKey: organizationKeys.list(applied), queryFn: () => getOrganizations(applied) })
   const invalidate = () => queryClient.invalidateQueries({ queryKey: organizationKeys.all })
@@ -83,7 +83,7 @@ export function OrganizationsPage() {
     <div className={styles.root}>
       <div className={styles.header}>
         <Title3>{t('organization.title')}</Title3>
-        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setEditing(null); setFormOpen(true) }}>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => openForm(null)}>
           {t('organization.new')}
         </Button>
       </div>
@@ -133,7 +133,7 @@ export function OrganizationsPage() {
                 const primary: RowAction[] = [
                   { key: 'show', label: t('actions.show'), icon: <Eye20Regular />, color: tokens.colorPaletteBlueForeground2, onClick: () => openFacility(o.id, 'overview') },
                   { key: 'buildings', label: t('organization.buildings'), icon: <Building20Regular />, color: tokens.colorBrandForeground1, onClick: () => openFacility(o.id, 'buildings') },
-                  { key: 'edit', label: t('organization.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => { setEditing(o); setFormOpen(true) } },
+                  { key: 'edit', label: t('organization.edit'), icon: <Edit20Regular />, color: tokens.colorPaletteTealForeground2, onClick: () => openForm(o.id) },
                 ]
                 const statusItem: RowAction = o.operationalStatus === 'Active'
                   ? { key: 'close', label: t('organization.close'), icon: <PlugDisconnected20Regular />, color: tokens.colorPaletteYellowForeground1, onClick: () => statusMut.mutate({ id: o.id, status: 'TemporarilyClosed' }) }
@@ -168,7 +168,6 @@ export function OrganizationsPage() {
         </>
       )}
 
-      <OrganizationFormDialog open={formOpen} onOpenChange={setFormOpen} organization={editing} />
     </div>
   )
 }

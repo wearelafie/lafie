@@ -2,7 +2,7 @@ import type { ReactElement } from 'react'
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import { AppShell } from '@app/layout/AppShell'
 import { DashboardPage } from '@features/dashboard'
-import { OrganizationsPage, FacilityDetailPage } from '@features/organization'
+import { OrganizationsPage, FacilityDetailPage, OrganizationFormPage } from '@features/organization'
 import { BuildingDetailPage } from '@features/building'
 import { FloorDetailPage } from '@features/floor'
 import { SpaceDetailPage } from '@features/space'
@@ -11,7 +11,7 @@ import { CareUnitDetailPage } from '@features/care-unit'
 import { LoginPage, SelectEstablishmentPage } from '@features/auth'
 import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage'
 import { ReferenceValuesPage, GeoDivisionsPage } from '@features/admin'
-import { EquipmentPage, EquipmentDetailPage, EquipmentWarrantiesPage, EquipmentMaintenancePage } from '@features/equipment'
+import { EquipmentPage, EquipmentDetailPage, EquipmentWarrantiesPage, EquipmentMaintenancePage, EquipmentFormPage } from '@features/equipment'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -50,6 +50,7 @@ const moduleRoutes = flatRoutes
 // Routes additionnelles (hors navModel) : écrans de détail/sous-ressources.
 const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/facility', component: FacilityDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/facility-form', component: OrganizationFormPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/building', component: BuildingDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/floor', component: FloorDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/space', component: SpaceDetailPage }),
@@ -58,6 +59,7 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-item', component: EquipmentDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-warranties', component: EquipmentWarrantiesPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-maintenance', component: EquipmentMaintenancePage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-form', component: EquipmentFormPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/forgot-password', component: ForgotPasswordPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/select-establishment', component: SelectEstablishmentPage }),
