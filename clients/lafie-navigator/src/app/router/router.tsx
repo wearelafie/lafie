@@ -11,6 +11,7 @@ import { CareUnitDetailPage } from '@features/care-unit'
 import { LoginPage, SelectEstablishmentPage } from '@features/auth'
 import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage'
 import { ReferenceValuesPage, GeoDivisionsPage } from '@features/admin'
+import { EquipmentPage } from '@features/equipment'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -19,6 +20,7 @@ import { flatRoutes } from '@app/nav/navModel'
 // onglets des fiches détail (voir extraRoutes), scopés à leur établissement parent.
 const implemented: Record<string, () => ReactElement> = {
   '/admin': OrganizationsPage,
+  '/admin/equipment': EquipmentPage,
   '/admin/terminology': ReferenceValuesPage,
   '/admin/geography': GeoDivisionsPage,
 }
