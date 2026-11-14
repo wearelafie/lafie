@@ -19,7 +19,6 @@ import {
   EQUIPMENT_STATUSES, EQUIPMENT_CATEGORY_REFERENCE, deleteEquipment, equipmentKeys, getEquipmentList,
   setEquipmentStatus, type Equipment, type EquipmentFilter, type EquipmentStatus,
 } from '../api'
-import { EquipmentFormDialog } from '../components/EquipmentFormDialog'
 import { EquipmentDashboard } from '../components/EquipmentDashboard'
 
 const PAGE_SIZE = 10
@@ -50,6 +49,7 @@ export function EquipmentPage() {
   const navigate = useNavigate()
   const { me } = useCurrentUser()
   const setSelectedEquipment = useAppStore((s) => s.setSelectedEquipment)
+  const setEquipmentFormId = useAppStore((s) => s.setEquipmentFormId)
   const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   // Les équipements sont scopés à l'établissement actif (garde API) : on s'appuie
   // d'abord sur l'établissement actif du profil, avec repli sur la sélection locale.
@@ -57,8 +57,6 @@ export function EquipmentPage() {
 
   const [draft, setDraft] = useState<{ search: string; category: string; status: string; archived: boolean }>({ search: '', category: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<EquipmentFilter>({ page: 1, pageSize: PAGE_SIZE })
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Equipment | null>(null)
 
   const categories = useQuery({
     queryKey: ['reference', 'values', EQUIPMENT_CATEGORY_REFERENCE],
@@ -85,8 +83,8 @@ export function EquipmentPage() {
     includeArchived: draft.archived || undefined,
   })
 
-  const openNew = () => { setEditing(null); setFormOpen(true) }
-  const openEdit = (e: Equipment) => { setEditing(e); setFormOpen(true) }
+  const openNew = () => { setEquipmentFormId(null); void navigate({ to: '/admin/equipment-form' as never }) }
+  const openEdit = (e: Equipment) => { setEquipmentFormId(e.id); void navigate({ to: '/admin/equipment-form' as never }) }
   const openDetailById = (id: string) => { setSelectedEquipment(id); void navigate({ to: '/admin/equipment-item' as never }) }
   const openDetail = (e: Equipment) => openDetailById(e.id)
 
@@ -217,8 +215,6 @@ export function EquipmentPage() {
         <Button size="small" appearance="subtle" disabled={page <= 1} onClick={() => go(page - 1)}>{t('equipment.prev')}</Button>
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('equipment.next')}</Button>
       </div>
-
-      <EquipmentFormDialog open={formOpen} onOpenChange={setFormOpen} facilityId={facilityId} editing={editing} />
     </div>
   )
 }

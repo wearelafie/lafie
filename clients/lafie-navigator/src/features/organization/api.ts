@@ -1,4 +1,4 @@
-import { getJson, postJson } from '@shared/api/http'
+import { del, getJson, postJson, putJson } from '@shared/api/http'
 
 // Codes "suggérés" (deviendront des référentiels configurables). Le backend stocke du texte.
 export const FACILITY_TYPES = [
@@ -126,32 +126,13 @@ export function createOrganization(input: OrganizationInput): Promise<{ id: stri
 }
 
 export async function updateOrganization(id: string, input: OrganizationInput): Promise<void> {
-  await send(`/api/organizations/${id}`, 'PUT', input)
+  await putJson(`/api/organizations/${id}`, input)
 }
 
 export async function setOrganizationStatus(id: string, operationalStatus: OperationalStatus): Promise<void> {
-  await send(`/api/organizations/${id}/status`, 'PUT', { operationalStatus })
+  await putJson(`/api/organizations/${id}/status`, { operationalStatus })
 }
 
-export async function archiveOrganization(id: string): Promise<void> { await send(`/api/organizations/${id}/archive`, 'POST', {}) }
-export async function restoreOrganization(id: string): Promise<void> { await send(`/api/organizations/${id}/restore`, 'POST', {}) }
-export async function deleteOrganization(id: string): Promise<void> {
-  const res = await fetch(`/api/organizations/${id}`, { method: 'DELETE' })
-  if (!res.ok) {
-    let message = `HTTP ${res.status}`
-    try { const d = (await res.json()) as { error?: string }; message = d.error ?? message } catch { /* keep */ }
-    throw new Error(message)
-  }
-}
-
-async function send(url: string, method: string, body: unknown): Promise<void> {
-  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  if (!res.ok) {
-    let message = `HTTP ${res.status}`
-    try {
-      const d = (await res.json()) as { error?: string; title?: string }
-      message = d.error ?? d.title ?? message
-    } catch { /* keep http code */ }
-    throw new Error(message)
-  }
-}
+export async function archiveOrganization(id: string): Promise<void> { await postJson<void>(`/api/organizations/${id}/archive`, {}) }
+export async function restoreOrganization(id: string): Promise<void> { await postJson<void>(`/api/organizations/${id}/restore`, {}) }
+export async function deleteOrganization(id: string): Promise<void> { await del(`/api/organizations/${id}`) }

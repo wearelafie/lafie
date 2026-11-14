@@ -28,6 +28,12 @@ type AppState = {
   /** Onglet à ouvrir sur la prochaine fiche infra (drill vers les enfants). Consommé puis remis à null. */
   infraTab: string | null
   setInfraTab: (tab: string | null) => void
+  /** Cible du formulaire établissement (page) : null = création, id = édition. */
+  facilityFormId: string | null
+  setFacilityFormId: (id: string | null) => void
+  /** Cible du formulaire équipement (page) : null = création, id = édition. */
+  equipmentFormId: string | null
+  setEquipmentFormId: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -49,6 +55,10 @@ export const useAppStore = create<AppState>()(
       setSelectedEquipment: (id) => set({ selectedEquipmentId: id }),
       infraTab: null,
       setInfraTab: (tab) => set({ infraTab: tab }),
+      facilityFormId: null,
+      setFacilityFormId: (id) => set({ facilityFormId: id }),
+      equipmentFormId: null,
+      setEquipmentFormId: (id) => set({ equipmentFormId: id }),
     }),
     { name: 'lafie.app' },
   ),
