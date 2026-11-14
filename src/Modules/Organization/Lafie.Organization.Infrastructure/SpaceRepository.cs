@@ -25,7 +25,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
             values
                 (@Id, @FacilityId, @BuildingId, @FloorId, @Code, @Name, @Type, @Description, @Area, @MaxCapacity, @Accessible, @Status, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(s), cancellationToken: cancellationToken));
     }
 
@@ -38,7 +38,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
                 status = @Status, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(s), cancellationToken: cancellationToken));
     }
 
@@ -58,7 +58,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
     public async Task<SpaceDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from organization.spaces where id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<SpaceDto>(
             new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
     }
@@ -88,7 +88,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             $"select count(*) from organization.spaces {where}", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<SpaceDto>(new CommandDefinition(
@@ -123,7 +123,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             $"select count(*) from organization.spaces {where}", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<SpaceDto>(new CommandDefinition(
@@ -135,7 +135,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from organization.spaces where id = @id", new { id }, cancellationToken: cancellationToken));
     }
@@ -143,7 +143,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
     public async Task<bool> CodeExistsAsync(Guid facilityId, string code, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         const string sql = "select exists(select 1 from organization.spaces where facility_id = @facilityId and lower(code) = lower(@code) and (@excludeId is null or id <> @excludeId))";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(
             sql, new { facilityId, code, excludeId }, cancellationToken: cancellationToken));
     }

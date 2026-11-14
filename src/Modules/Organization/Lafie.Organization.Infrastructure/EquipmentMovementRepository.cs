@@ -31,7 +31,7 @@ public sealed class EquipmentMovementRepository(IDbConnectionFactory connectionF
             values
                 (@Id, @EquipmentId, @MovedOn, @FromSpaceId, @ToSpaceId, @Reason, @PerformedBy, @Notes, @CreatedOnUtc)
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
             m.Id, m.EquipmentId, m.MovedOn, m.FromSpaceId, m.ToSpaceId, m.Reason, m.PerformedBy, m.Notes, m.CreatedOnUtc,
@@ -41,7 +41,7 @@ public sealed class EquipmentMovementRepository(IDbConnectionFactory connectionF
     public async Task<EquipmentMovementDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {SelectColumns} {FromJoins} where m.id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<EquipmentMovementDto>(
             new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
     }
@@ -53,7 +53,7 @@ public sealed class EquipmentMovementRepository(IDbConnectionFactory connectionF
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             "select count(*) from organization.equipment_movements where equipment_id = @equipmentId", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<EquipmentMovementDto>(new CommandDefinition(
@@ -65,7 +65,7 @@ public sealed class EquipmentMovementRepository(IDbConnectionFactory connectionF
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from organization.equipment_movements where id = @id", new { id }, cancellationToken: cancellationToken));
     }
