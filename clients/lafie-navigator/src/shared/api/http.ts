@@ -47,5 +47,29 @@ export async function postJson<T>(url: string, body: unknown): Promise<T> {
     }
     throw new Error(message)
   }
-  return res.json() as Promise<T>
+  // Réponse sans corps (204 No Content, ou corps vide) : rien à parser.
+  if (res.status === 204) return undefined as T
+  const text = await res.text()
+  return (text ? JSON.parse(text) : undefined) as T
+}
+
+// Erreur enrichie pour les écritures (extrait le message { error } du backend).
+async function ensureOk(res: Response): Promise<void> {
+  if (res.status === 401) { onUnauthorized(); throw new Error('HTTP 401') }
+  if (res.ok) return
+  let message = `HTTP ${res.status}`
+  try { const d = (await res.json()) as { error?: string; title?: string }; message = d.error ?? d.title ?? message } catch { /* garde le code */ }
+  throw new Error(message)
+}
+
+/** PUT JSON authentifié (réponse sans corps attendue). */
+export async function putJson(url: string, body: unknown): Promise<void> {
+  const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify(body) })
+  await ensureOk(res)
+}
+
+/** DELETE authentifié. */
+export async function del(url: string): Promise<void> {
+  const res = await fetch(url, { method: 'DELETE', headers: { ...authHeader() } })
+  await ensureOk(res)
 }

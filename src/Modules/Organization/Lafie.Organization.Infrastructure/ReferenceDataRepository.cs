@@ -41,4 +41,127 @@ public sealed class ReferenceDataRepository(IDbConnectionFactory connectionFacto
         return (await connection.QueryAsync<GeoDivisionDto>(
             new CommandDefinition(sql, new { level, parentCode }, cancellationToken: cancellationToken))).ToList();
     }
+
+    // ---------------------------------------------------------------- Administration : valeurs de référence
+
+    public async Task<IReadOnlyList<ReferenceCategoryDto>> GetReferenceCategoriesAsync(CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            select category as "Category", count(*)::int as "Count"
+            from organization.reference_values
+            group by category
+            order by category
+            """;
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return (await connection.QueryAsync<ReferenceCategoryDto>(
+            new CommandDefinition(sql, cancellationToken: cancellationToken))).ToList();
+    }
+
+    public async Task<IReadOnlyList<ReferenceValueAdminDto>> GetReferenceValuesAdminAsync(string category, string? search, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        var sql = """
+            select category as "Category", code as "Code", label_fr as "LabelFr", label_en as "LabelEn",
+                   display_order as "DisplayOrder", active as "Active"
+            from organization.reference_values
+            where category = @category
+            """
+            + (includeInactive ? "" : " and active")
+            + (string.IsNullOrWhiteSpace(search) ? "" : " and (code ilike @like or label_fr ilike @like or label_en ilike @like)")
+            + " order by display_order, label_fr";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return (await connection.QueryAsync<ReferenceValueAdminDto>(
+            new CommandDefinition(sql, new { category, like = $"%{search}%" }, cancellationToken: cancellationToken))).ToList();
+    }
+
+    public async Task<bool> ReferenceValueCodeTakenAsync(string category, string code, CancellationToken cancellationToken = default)
+    {
+        const string sql = "select exists(select 1 from organization.reference_values where category = @category and code = @code)";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<bool>(
+            new CommandDefinition(sql, new { category, code }, cancellationToken: cancellationToken));
+    }
+
+    public async Task CreateReferenceValueAsync(string category, string code, string labelFr, string labelEn, int displayOrder, bool active, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            insert into organization.reference_values (category, code, label_fr, label_en, display_order, active)
+            values (@category, @code, @labelFr, @labelEn, @displayOrder, @active)
+            """;
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(sql, new { category, code, labelFr, labelEn, displayOrder, active }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<bool> UpdateReferenceValueAsync(string category, string code, string labelFr, string labelEn, int displayOrder, bool active, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            update organization.reference_values
+            set label_fr = @labelFr, label_en = @labelEn, display_order = @displayOrder, active = @active
+            where category = @category and code = @code
+            """;
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, new { category, code, labelFr, labelEn, displayOrder, active }, cancellationToken: cancellationToken)) > 0;
+    }
+
+    public async Task<bool> SetReferenceValueActiveAsync(string category, string code, bool active, CancellationToken cancellationToken = default)
+    {
+        const string sql = "update organization.reference_values set active = @active where category = @category and code = @code";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, new { category, code, active }, cancellationToken: cancellationToken)) > 0;
+    }
+
+    public async Task<bool> DeleteReferenceValueAsync(string category, string code, CancellationToken cancellationToken = default)
+    {
+        const string sql = "delete from organization.reference_values where category = @category and code = @code";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, new { category, code }, cancellationToken: cancellationToken)) > 0;
+    }
+
+    // ---------------------------------------------------------------- Administration : divisions géographiques
+
+    public async Task<bool> GeoDivisionCodeTakenAsync(string code, CancellationToken cancellationToken = default)
+    {
+        const string sql = "select exists(select 1 from organization.geo_divisions where code = @code)";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(sql, new { code }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<Guid?> GetGeoDivisionIdByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        const string sql = "select id from organization.geo_divisions where code = @code limit 1";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<Guid?>(new CommandDefinition(sql, new { code }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<Guid> CreateGeoDivisionAsync(string level, string code, string name, Guid? parentId, int displayOrder, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            insert into organization.geo_divisions (id, level, code, name, parent_id, display_order)
+            values (@id, @level, @code, @name, @parentId, @displayOrder)
+            """;
+        var id = Guid.NewGuid();
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(sql, new { id, level, code, name, parentId, displayOrder }, cancellationToken: cancellationToken));
+        return id;
+    }
+
+    public async Task<bool> UpdateGeoDivisionAsync(Guid id, string name, Guid? parentId, int displayOrder, CancellationToken cancellationToken = default)
+    {
+        const string sql = "update organization.geo_divisions set name = @name, parent_id = @parentId, display_order = @displayOrder where id = @id";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, new { id, name, parentId, displayOrder }, cancellationToken: cancellationToken)) > 0;
+    }
+
+    public async Task<int> CountGeoChildrenAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        const string sql = "select count(*)::int from organization.geo_divisions where parent_id = @id";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<bool> DeleteGeoDivisionAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        const string sql = "delete from organization.geo_divisions where id = @id";
+        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken)) > 0;
+    }
 }

@@ -40,6 +40,7 @@ import {
   BuildingMultiple20Regular,
   PeopleTeam20Regular,
   BookGlobe20Regular,
+  Globe20Regular,
   ArrowSync20Regular,
   Settings20Regular,
   People20Regular,
@@ -60,6 +61,10 @@ export type NavSubItem = {
   to: string
   labelKey: string
   icon: ReactElement
+  // Regroupe visuellement les sous-items sous un intertitre (clé i18n). Un item
+  // sans `section` hérite de la section précédente ; le premier d'une nouvelle
+  // section fait apparaître son intertitre dans la sidebar (vue déployée).
+  section?: string
 }
 
 export type NavItem = {
@@ -201,9 +206,10 @@ export const navItems: NavItem[] = [
     labelKey: 'nav.admin',
     icon: <AdminIcon />,
     children: [
-      { key: 'users', to: '/admin/users', labelKey: 'nav.sub.admin.users', icon: <PeopleTeam20Regular /> },
-      { key: 'terminology', to: '/admin/terminology', labelKey: 'nav.sub.admin.terminology', icon: <BookGlobe20Regular /> },
-      { key: 'interop', to: '/admin/interop', labelKey: 'nav.sub.admin.interop', icon: <ArrowSync20Regular /> },
+      { key: 'users', to: '/admin/users', labelKey: 'nav.sub.admin.users', icon: <PeopleTeam20Regular />, section: 'nav.section.admin.access' },
+      { key: 'terminology', to: '/admin/terminology', labelKey: 'nav.sub.admin.terminology', icon: <BookGlobe20Regular />, section: 'nav.section.admin.reference' },
+      { key: 'geography', to: '/admin/geography', labelKey: 'nav.sub.admin.geography', icon: <Globe20Regular /> },
+      { key: 'interop', to: '/admin/interop', labelKey: 'nav.sub.admin.interop', icon: <ArrowSync20Regular />, section: 'nav.section.admin.system' },
       { key: 'audit', to: '/admin/audit', labelKey: 'nav.sub.admin.audit', icon: <History20Regular /> },
       { key: 'settings', to: '/admin/settings', labelKey: 'nav.sub.admin.settings', icon: <Settings20Regular /> },
     ],
@@ -224,13 +230,27 @@ export const navItems: NavItem[] = [
 ]
 
 // Grand module actif selon la route courante (sidebar dynamique).
-// Correspondance la plus spécifique ; '/' => Accueil.
+// On évalue chaque module sur TOUTES ses routes (lui-même + ses enfants) et on
+// retient le module dont la route correspondante est la plus spécifique (la plus
+// longue). Indispensable car plusieurs modules partagent le préfixe « /admin »
+// (Infrastructure = /admin, Administration = /admin/users, /admin/terminology…) :
+// un simple préfixe sur `module.to` faisait gagner Infrastructure à tort.
 export function findActiveModule(pathname: string): NavItem {
-  const matches = navItems.filter((it) =>
-    it.to === '/' ? pathname === '/' : pathname === it.to || pathname.startsWith(`${it.to}/`),
-  )
-  const nonRoot = matches.filter((m) => m.to !== '/').sort((a, b) => b.to.length - a.to.length)
-  return nonRoot[0] ?? navItems[0]
+  if (pathname === '/') return navItems[0]
+  const matchLen = (to: string): number =>
+    to !== '/' && (pathname === to || pathname.startsWith(`${to}/`)) ? to.length : -1
+
+  let best: NavItem | null = null
+  let bestLen = -1
+  for (const item of navItems) {
+    const routes = [item.to, ...(item.children ?? []).map((c) => c.to)]
+    const len = Math.max(...routes.map(matchLen))
+    if (len > bestLen) {
+      bestLen = len
+      best = item
+    }
+  }
+  return best ?? navItems[0]
 }
 
 // Liste à plat de toutes les routes (parents + enfants), pour générer le routeur.
