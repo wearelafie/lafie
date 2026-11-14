@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Equipment;
 using Lafie.Organization.Application.Equipment.Dashboard;
+using Lafie.Organization.Application.Equipment.Reports;
 using Lafie.Web.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
@@ -37,6 +38,24 @@ public static class EquipmentEndpoints
             guard.EnsureActiveFacility(facilityId);
             var options = new EquipmentDashboardOptions(warrantyWindow ?? 60, maintenanceWindow ?? 30);
             return Results.Ok(await mediator.Send(new GetEquipmentDashboardQuery(facilityId, options), ct));
+        }).RequirePermission("infrastructure.read");
+
+        byFacility.MapGet("/warranties", async (
+            Guid facilityId, string? search, string? state, int? warrantyWindow, int? page, int? pageSize,
+            IEstablishmentGuard guard, IMediator mediator, CancellationToken ct) =>
+        {
+            guard.EnsureActiveFacility(facilityId);
+            var filter = new EquipmentWarrantyFilter(search, state, warrantyWindow ?? 60, page ?? 1, pageSize ?? 20);
+            return Results.Ok(await mediator.Send(new GetEquipmentWarrantiesQuery(facilityId, filter), ct));
+        }).RequirePermission("infrastructure.read");
+
+        byFacility.MapGet("/maintenance", async (
+            Guid facilityId, string? search, string? type, string? status, int? page, int? pageSize,
+            IEstablishmentGuard guard, IMediator mediator, CancellationToken ct) =>
+        {
+            guard.EnsureActiveFacility(facilityId);
+            var filter = new FacilityMaintenanceFilter(search, type, status, page ?? 1, pageSize ?? 20);
+            return Results.Ok(await mediator.Send(new GetFacilityMaintenanceQuery(facilityId, filter), ct));
         }).RequirePermission("infrastructure.read");
 
         byFacility.MapGet("", async (

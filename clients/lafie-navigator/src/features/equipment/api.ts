@@ -260,3 +260,67 @@ export function getEquipmentDashboard(
   const q = new URLSearchParams({ warrantyWindow: String(warrantyWindow), maintenanceWindow: String(maintenanceWindow) })
   return getJson<EquipmentDashboard>(`/api/facilities/${facilityId}/equipment/dashboard?${q.toString()}`)
 }
+
+// --- Vues globales : garanties & maintenance (établissement) ---
+
+export const WARRANTY_STATES = ['Expired', 'Expiring', 'Valid', 'None'] as const
+export type WarrantyState = (typeof WARRANTY_STATES)[number]
+
+export type EquipmentWarranty = {
+  equipmentId: string
+  inventoryNumber: string
+  name: string
+  category: string
+  status: EquipmentStatus
+  spaceName: string | null
+  serviceName: string | null
+  warrantyEnd: string | null
+  daysRemaining: number | null
+  warrantyState: WarrantyState
+}
+
+export type WarrantyFilter = { search?: string; state?: string; warrantyWindow?: number; page?: number; pageSize?: number }
+
+export type FacilityMaintenance = {
+  id: string
+  equipmentId: string
+  inventoryNumber: string
+  equipmentName: string
+  type: MaintenanceType
+  status: MaintenanceStatus
+  scheduledOn: string | null
+  performedOn: string | null
+  provider: string | null
+  cost: number | null
+  description: string
+  createdOnUtc: string
+}
+
+export type FacilityMaintenanceFilter = { search?: string; type?: string; status?: string; page?: number; pageSize?: number }
+
+export const warrantyKeys = {
+  list: (facilityId: string, f: WarrantyFilter) => ['equipment', facilityId, 'warranties', f] as const,
+}
+export const facilityMaintenanceKeys = {
+  list: (facilityId: string, f: FacilityMaintenanceFilter) => ['equipment', facilityId, 'maintenance-list', f] as const,
+}
+
+export function getEquipmentWarranties(facilityId: string, filter: WarrantyFilter): Promise<PagedResult<EquipmentWarranty>> {
+  const q = new URLSearchParams()
+  if (filter.search) q.set('search', filter.search)
+  if (filter.state) q.set('state', filter.state)
+  if (filter.warrantyWindow) q.set('warrantyWindow', String(filter.warrantyWindow))
+  q.set('page', String(filter.page ?? 1))
+  q.set('pageSize', String(filter.pageSize ?? 20))
+  return getJson<PagedResult<EquipmentWarranty>>(`/api/facilities/${facilityId}/equipment/warranties?${q.toString()}`)
+}
+
+export function getFacilityMaintenance(facilityId: string, filter: FacilityMaintenanceFilter): Promise<PagedResult<FacilityMaintenance>> {
+  const q = new URLSearchParams()
+  if (filter.search) q.set('search', filter.search)
+  if (filter.type) q.set('type', filter.type)
+  if (filter.status) q.set('status', filter.status)
+  q.set('page', String(filter.page ?? 1))
+  q.set('pageSize', String(filter.pageSize ?? 20))
+  return getJson<PagedResult<FacilityMaintenance>>(`/api/facilities/${facilityId}/equipment/maintenance?${q.toString()}`)
+}
