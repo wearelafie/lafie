@@ -28,6 +28,7 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     rowGap: tokens.spacingVerticalL,
   },
+  heading: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalXXS },
   subtitle: { color: tokens.colorNeutralForeground3 },
   kpis: {
     display: 'grid',
@@ -58,7 +59,7 @@ export function DashboardPage() {
 
   return (
     <main className={styles.root}>
-      <div>
+      <div className={styles.heading}>
         <Title3>{t('dashboard.welcome')}</Title3>
         <Caption1 className={styles.subtitle}>{t('dashboard.subtitle')}</Caption1>
       </div>
