@@ -25,7 +25,7 @@ public sealed class EquipmentMaintenanceRepository(IDbConnectionFactory connecti
             values
                 (@Id, @EquipmentId, @Type, @Status, @ScheduledOn, @PerformedOn, @Provider, @Cost, @Description, @Notes, @CreatedOnUtc, @UpdatedOnUtc)
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(m), cancellationToken: cancellationToken));
     }
 
@@ -38,7 +38,7 @@ public sealed class EquipmentMaintenanceRepository(IDbConnectionFactory connecti
                 updated_on_utc = @UpdatedOnUtc
             where id = @Id
             """;
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(m), cancellationToken: cancellationToken));
     }
 
@@ -56,7 +56,7 @@ public sealed class EquipmentMaintenanceRepository(IDbConnectionFactory connecti
     public async Task<EquipmentMaintenanceDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var sql = $"select {Columns} from organization.equipment_maintenances where id = @id";
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         return await connection.QuerySingleOrDefaultAsync<EquipmentMaintenanceDto>(
             new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
     }
@@ -80,7 +80,7 @@ public sealed class EquipmentMaintenanceRepository(IDbConnectionFactory connecti
         p.Add("limit", filter.SafePageSize);
         p.Add("offset", filter.Offset);
 
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         var total = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
             $"select count(*) from organization.equipment_maintenances {where}", p, cancellationToken: cancellationToken));
         var items = (await connection.QueryAsync<EquipmentMaintenanceDto>(new CommandDefinition(
@@ -92,7 +92,7 @@ public sealed class EquipmentMaintenanceRepository(IDbConnectionFactory connecti
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+        using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from organization.equipment_maintenances where id = @id", new { id }, cancellationToken: cancellationToken));
     }

@@ -45,7 +45,7 @@ public sealed class DevDataSeeder(
         try
         {
             var sql = await ReadSeedScriptAsync(cancellationToken);
-            var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
+            using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
             await connection.ExecuteAsync(new CommandDefinition(sql, cancellationToken: cancellationToken));
 
             var facilities = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
