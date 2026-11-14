@@ -11,6 +11,7 @@ import {
   PlugDisconnected20Regular, DismissCircle20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
+import { useCurrentUser } from '@features/auth'
 import { RowActions, type RowAction } from '@shared/components'
 import { getReferenceValues, refLabel, type ReferenceValue } from '@features/reference/api'
 import {
@@ -44,7 +45,11 @@ export function EquipmentPage() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const queryClient = useQueryClient()
-  const facilityId = useAppStore((s) => s.selectedFacilityId)
+  const { me } = useCurrentUser()
+  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
+  // Les équipements sont scopés à l'établissement actif (garde API) : on s'appuie
+  // d'abord sur l'établissement actif du profil, avec repli sur la sélection locale.
+  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
 
   const [draft, setDraft] = useState<{ search: string; category: string; status: string; archived: boolean }>({ search: '', category: ANY, status: ANY, archived: false })
   const [applied, setApplied] = useState<EquipmentFilter>({ page: 1, pageSize: PAGE_SIZE })
