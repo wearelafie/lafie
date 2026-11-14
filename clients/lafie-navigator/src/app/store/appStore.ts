@@ -22,6 +22,9 @@ type AppState = {
   /** Unité de soins active (navigation vers son détail / ses espaces). */
   selectedCareUnitId: string | null
   setSelectedCareUnit: (id: string | null) => void
+  /** Équipement actif (navigation vers sa fiche : déplacements, maintenance). */
+  selectedEquipmentId: string | null
+  setSelectedEquipment: (id: string | null) => void
   /** Onglet à ouvrir sur la prochaine fiche infra (drill vers les enfants). Consommé puis remis à null. */
   infraTab: string | null
   setInfraTab: (tab: string | null) => void
@@ -42,6 +45,8 @@ export const useAppStore = create<AppState>()(
       setSelectedService: (id) => set({ selectedServiceId: id }),
       selectedCareUnitId: null,
       setSelectedCareUnit: (id) => set({ selectedCareUnitId: id }),
+      selectedEquipmentId: null,
+      setSelectedEquipment: (id) => set({ selectedEquipmentId: id }),
       infraTab: null,
       setInfraTab: (tab) => set({ infraTab: tab }),
     }),
