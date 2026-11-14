@@ -5,11 +5,12 @@ import { Badge, Spinner, Subtitle2, Tab, TabList, makeStyles, tokens } from '@fl
 import { useAppStore } from '@app/store/appStore'
 import { BuildingsPage } from '@features/building'
 import { ServicesPage } from '@features/service'
+import { FacilityEquipmentPanel } from '@features/equipment'
 import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
 import { getOrganization } from '../api'
 import { FacilityPlan } from '../components/FacilityPlan'
 
-const TABS = ['overview', 'plan', 'buildings', 'services'] as const
+const TABS = ['overview', 'plan', 'buildings', 'services', 'equipment'] as const
 type TabKey = (typeof TABS)[number]
 
 const useStyles = makeStyles({
@@ -101,6 +102,7 @@ export function FacilityDetailPage() {
         <Tab value="plan">{t('organization.tabs.plan')}</Tab>
         <Tab value="buildings">{t('organization.tabs.buildings')}</Tab>
         <Tab value="services">{t('organization.tabs.services')}</Tab>
+        <Tab value="equipment">{t('organization.tabs.equipment')}</Tab>
       </TabList>
       <div className={styles.tabContent}>
         {tab === 'overview' && (
@@ -116,6 +118,7 @@ export function FacilityDetailPage() {
         {tab === 'plan' && <FacilityPlan facilityId={o.id} />}
         {tab === 'buildings' && <BuildingsPage />}
         {tab === 'services' && <ServicesPage />}
+        {tab === 'equipment' && <FacilityEquipmentPanel facilityId={o.id} />}
       </div>
     </div>
   )

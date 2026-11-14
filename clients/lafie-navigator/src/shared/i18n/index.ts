@@ -352,7 +352,7 @@ const resources = {
         next: 'Suivant',
         pager: 'Page {{page}} / {{totalPages}} · {{total}} au total',
         filters: { search: 'Recherche', searchPlaceholder: 'Nom ou code…', all: 'Tous', apply: 'Rechercher' },
-        tabs: { overview: 'Aperçu', plan: 'Plan', buildings: 'Bâtiments', services: 'Services' },
+        tabs: { overview: 'Aperçu', plan: 'Plan', buildings: 'Bâtiments', services: 'Services', equipment: 'Équipements' },
         plan: {
           summary: { buildings: 'Bâtiments', floors: 'Étages', rooms: 'Chambres & espaces', beds: 'Lits' },
           legend: 'Légende',
@@ -971,7 +971,7 @@ const resources = {
         next: 'Next',
         pager: 'Page {{page}} / {{totalPages}} · {{total}} total',
         filters: { search: 'Search', searchPlaceholder: 'Name or code…', all: 'All', apply: 'Search' },
-        tabs: { overview: 'Overview', plan: 'Plan', buildings: 'Buildings', services: 'Services' },
+        tabs: { overview: 'Overview', plan: 'Plan', buildings: 'Buildings', services: 'Services', equipment: 'Equipment' },
         plan: {
           summary: { buildings: 'Buildings', floors: 'Floors', rooms: 'Rooms & spaces', beds: 'Beds' },
           legend: 'Legend',
