@@ -38,6 +38,7 @@ import {
   ShieldTask20Regular,
   Tag20Regular,
   BuildingMultiple20Regular,
+  Toolbox20Regular,
   PeopleTeam20Regular,
   BookGlobe20Regular,
   Globe20Regular,
@@ -198,6 +199,7 @@ export const navItems: NavItem[] = [
       // Les bâtiments/étages/espaces sont imbriqués dans l'établissement : on y accède
       // par la fiche établissement (onglets + drill), pas par des entrées plates ici.
       { key: 'facilities', to: '/admin', labelKey: 'nav.sub.infrastructure.facilities', icon: <BuildingMultiple20Regular /> },
+      { key: 'equipment', to: '/admin/equipment', labelKey: 'nav.sub.infrastructure.equipment', icon: <Toolbox20Regular /> },
     ],
   },
   {
