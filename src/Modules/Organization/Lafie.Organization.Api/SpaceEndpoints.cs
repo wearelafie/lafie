@@ -11,6 +11,7 @@ namespace Lafie.Organization.Api;
 public sealed record CreateSpaceRequest(string Code, string Name, string Type, string? Description, decimal? Area, int? MaxCapacity, bool Accessible);
 public sealed record UpdateSpaceRequest(string Code, string Name, string Type, string? Description, decimal? Area, int? MaxCapacity, bool Accessible);
 public sealed record SetSpaceStatusRequest(string Status);
+public sealed record SetSpaceOperationalStateRequest(string State);
 
 /// <summary>Endpoints HTTP des espaces.</summary>
 public static class SpaceEndpoints
@@ -64,6 +65,12 @@ public static class SpaceEndpoints
             var result = await mediator.Send(new SetSpaceStatusCommand(id, r.Status), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
+
+        byId.MapPut("/{id:guid}/operational-state", async (Guid id, SetSpaceOperationalStateRequest r, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new SetSpaceOperationalStateCommand(id, r.State), ct);
+            return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
+        }).RequirePermission("hygiene.manage");
 
         byId.MapPost("/{id:guid}/archive", async (Guid id, IMediator mediator, CancellationToken ct) =>
             await mediator.Send(new ArchiveSpaceCommand(id), ct) is { IsSuccess: true } ? Results.NoContent() : Results.BadRequest()).RequirePermission("infrastructure.manage");
