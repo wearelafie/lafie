@@ -7,6 +7,7 @@ using Lafie.Organization.Application.Equipment.Maintenance;
 using Lafie.Organization.Application.Equipment.Movements;
 using Lafie.Organization.Application.Equipment.Reports;
 using Lafie.Organization.Application.Floors;
+using Lafie.Organization.Application.Hygiene.Cleaning;
 using Lafie.Organization.Application.Maintenance.Tickets;
 using Lafie.Organization.Application.References;
 using Lafie.Organization.Application.Services;
@@ -34,6 +35,7 @@ public static class OrganizationModule
         services.AddScoped<IEquipmentReportsRepository, EquipmentReportsRepository>();
         services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         services.AddScoped<IMaintenanceTicketRepository, MaintenanceTicketRepository>();
+        services.AddScoped<ICleaningTaskRepository, CleaningTaskRepository>();
         return services;
     }
 }

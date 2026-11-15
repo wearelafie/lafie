@@ -40,6 +40,7 @@ import {
   BuildingMultiple20Regular,
   Toolbox20Regular,
   Wrench20Regular,
+  Broom20Regular,
   PeopleTeam20Regular,
   BookGlobe20Regular,
   Globe20Regular,
@@ -202,6 +203,7 @@ export const navItems: NavItem[] = [
       { key: 'facilities', to: '/admin', labelKey: 'nav.sub.infrastructure.facilities', icon: <BuildingMultiple20Regular /> },
       { key: 'equipment', to: '/admin/equipment', labelKey: 'nav.sub.infrastructure.equipment', icon: <Toolbox20Regular /> },
       { key: 'maintenance', to: '/admin/maintenance', labelKey: 'nav.sub.infrastructure.maintenance', icon: <Wrench20Regular /> },
+      { key: 'hygiene', to: '/admin/hygiene', labelKey: 'nav.sub.infrastructure.hygiene', icon: <Broom20Regular /> },
     ],
   },
   {

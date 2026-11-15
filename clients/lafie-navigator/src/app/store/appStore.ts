@@ -37,6 +37,9 @@ type AppState = {
   /** Ticket de maintenance (GMAO) actif : navigation vers sa fiche détail. */
   selectedTicketId: string | null
   setSelectedTicket: (id: string | null) => void
+  /** Tâche de bio-nettoyage (hygiène) active : navigation vers sa fiche détail. */
+  selectedCleaningTaskId: string | null
+  setSelectedCleaningTask: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -64,6 +67,8 @@ export const useAppStore = create<AppState>()(
       setEquipmentFormId: (id) => set({ equipmentFormId: id }),
       selectedTicketId: null,
       setSelectedTicket: (id) => set({ selectedTicketId: id }),
+      selectedCleaningTaskId: null,
+      setSelectedCleaningTask: (id) => set({ selectedCleaningTaskId: id }),
     }),
     { name: 'lafie.app' },
   ),
