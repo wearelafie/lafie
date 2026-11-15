@@ -1,10 +1,13 @@
+using Lafie.Organization.Application.Equipment;
 using Lafie.Organization.Application.Equipment.Maintenance;
 using Lafie.Organization.Application.Equipment.Movements;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lafie.Organization.Api;
 
@@ -20,7 +23,9 @@ public static class EquipmentHistoryEndpoints
     public static IEndpointRouteBuilder MapEquipmentHistoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         // --- Déplacements ---
-        var mv = endpoints.MapGroup("/equipment/{equipmentId:guid}/movements").WithTags("Equipment");
+        var mv = endpoints.MapGroup("/equipment/{equipmentId:guid}/movements").WithTags("Equipment")
+            .RequireFacilityScope<IEquipmentRepository>("equipmentId",
+                async (repo, equipmentId, ct) => (await repo.GetByIdAsync(equipmentId, ct))?.FacilityId);
 
         mv.MapGet("", async (Guid equipmentId, int? page, int? pageSize, IMediator mediator, CancellationToken ct) =>
             Results.Ok(await mediator.Send(new GetEquipmentMovementsQuery(equipmentId, new EquipmentMovementFilter(page ?? 1, pageSize ?? 20)), ct)))
@@ -35,14 +40,19 @@ public static class EquipmentHistoryEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        endpoints.MapDelete("/equipment/movements/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        var mvById = endpoints.MapGroup("/equipment/movements").WithTags("Equipment")
+            .RequireFacilityScope("id", FacilityOfMovement);
+
+        mvById.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(new DeleteEquipmentMovementCommand(id), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(new { error = result.Error });
-        }).WithTags("Equipment").RequirePermission("infrastructure.manage");
+        }).RequirePermission("infrastructure.manage");
 
         // --- Maintenance ---
-        var mt = endpoints.MapGroup("/equipment/{equipmentId:guid}/maintenance").WithTags("Equipment");
+        var mt = endpoints.MapGroup("/equipment/{equipmentId:guid}/maintenance").WithTags("Equipment")
+            .RequireFacilityScope<IEquipmentRepository>("equipmentId",
+                async (repo, equipmentId, ct) => (await repo.GetByIdAsync(equipmentId, ct))?.FacilityId);
 
         mt.MapGet("", async (Guid equipmentId, string? type, string? status, int? page, int? pageSize, IMediator mediator, CancellationToken ct) =>
             Results.Ok(await mediator.Send(new GetEquipmentMaintenanceQuery(equipmentId, new EquipmentMaintenanceFilter(type, status, page ?? 1, pageSize ?? 20)), ct)))
@@ -57,7 +67,8 @@ public static class EquipmentHistoryEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        var mtById = endpoints.MapGroup("/equipment/maintenance").WithTags("Equipment");
+        var mtById = endpoints.MapGroup("/equipment/maintenance").WithTags("Equipment")
+            .RequireFacilityScope("id", FacilityOfMaintenance);
 
         mtById.MapPut("/{id:guid}", async (Guid id, UpdateMaintenanceRequest r, IMediator mediator, CancellationToken ct) =>
         {
@@ -78,5 +89,21 @@ public static class EquipmentHistoryEndpoints
         }).RequirePermission("infrastructure.manage");
 
         return endpoints;
+    }
+
+    /// <summary>Établissement d'une intervention (intervention → équipement → établissement).</summary>
+    private static async ValueTask<Guid?> FacilityOfMaintenance(Guid maintenanceId, IServiceProvider sp, CancellationToken ct)
+    {
+        var maintenance = await sp.GetRequiredService<IEquipmentMaintenanceRepository>().GetByIdAsync(maintenanceId, ct);
+        if (maintenance is null) return null;
+        return (await sp.GetRequiredService<IEquipmentRepository>().GetByIdAsync(maintenance.EquipmentId, ct))?.FacilityId;
+    }
+
+    /// <summary>Établissement d'un déplacement (déplacement → équipement → établissement).</summary>
+    private static async ValueTask<Guid?> FacilityOfMovement(Guid movementId, IServiceProvider sp, CancellationToken ct)
+    {
+        var movement = await sp.GetRequiredService<IEquipmentMovementRepository>().GetByIdAsync(movementId, ct);
+        if (movement is null) return null;
+        return (await sp.GetRequiredService<IEquipmentRepository>().GetByIdAsync(movement.EquipmentId, ct))?.FacilityId;
     }
 }

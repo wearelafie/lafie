@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Waste.Slips;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -41,7 +42,9 @@ public static class WasteSlipEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("waste.manage");
 
-        var byId = endpoints.MapGroup("/waste/slips").WithTags("Waste");
+        var byId = endpoints.MapGroup("/waste/slips").WithTags("Waste")
+            .RequireFacilityScope<IWasteSlipRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

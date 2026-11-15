@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Sterilization.Sets;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -41,7 +42,9 @@ public static class InstrumentSetEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("sterilization.manage");
 
-        var byId = endpoints.MapGroup("/sterilization/instrument-sets").WithTags("Sterilization");
+        var byId = endpoints.MapGroup("/sterilization/instrument-sets").WithTags("Sterilization")
+            .RequireFacilityScope<IInstrumentSetRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

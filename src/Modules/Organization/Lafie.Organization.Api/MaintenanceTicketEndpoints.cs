@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Maintenance.Tickets;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -45,7 +46,9 @@ public static class MaintenanceTicketEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("maintenance.ticket.create");
 
-        var byId = endpoints.MapGroup("/maintenance/tickets").WithTags("Maintenance");
+        var byId = endpoints.MapGroup("/maintenance/tickets").WithTags("Maintenance")
+            .RequireFacilityScope<IMaintenanceTicketRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

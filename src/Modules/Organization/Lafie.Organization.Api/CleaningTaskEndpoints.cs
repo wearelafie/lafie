@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Hygiene.Cleaning;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -43,7 +44,9 @@ public static class CleaningTaskEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("hygiene.manage");
 
-        var byId = endpoints.MapGroup("/hygiene/cleaning-tasks").WithTags("Hygiene");
+        var byId = endpoints.MapGroup("/hygiene/cleaning-tasks").WithTags("Hygiene")
+            .RequireFacilityScope<ICleaningTaskRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Services;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -37,7 +38,9 @@ public static class ServiceEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        var byId = endpoints.MapGroup("/services").WithTags("Service");
+        var byId = endpoints.MapGroup("/services").WithTags("Service")
+            .RequireFacilityScope<IServiceRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
