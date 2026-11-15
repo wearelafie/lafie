@@ -46,6 +46,9 @@ type AppState = {
   /** Cycle de stérilisation (CSSD) actif : navigation vers sa fiche détail. */
   selectedCycleId: string | null
   setSelectedCycle: (id: string | null) => void
+  /** Bordereau d'élimination (déchets) actif : navigation vers sa fiche détail. */
+  selectedWasteSlipId: string | null
+  setSelectedWasteSlip: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -79,6 +82,8 @@ export const useAppStore = create<AppState>()(
       setSelectedInstrumentSet: (id) => set({ selectedInstrumentSetId: id }),
       selectedCycleId: null,
       setSelectedCycle: (id) => set({ selectedCycleId: id }),
+      selectedWasteSlipId: null,
+      setSelectedWasteSlip: (id) => set({ selectedWasteSlipId: id }),
     }),
     { name: 'lafie.app' },
   ),
