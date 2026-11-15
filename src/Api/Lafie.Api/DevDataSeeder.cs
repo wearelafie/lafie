@@ -20,7 +20,7 @@ public sealed class DevDataSeeder(
     IServiceScopeFactory scopeFactory,
     ILogger<DevDataSeeder> logger) : IHostedService
 {
-    private const string ResourceSuffix = ".Seed.dev_infrastructure.sql";
+    private const string SeedResourceMarker = ".Seed.";
     private const string AdminEmail = "admin@lafie.local";
     private const string AdminUsername = "admin";
     private const string AdminPassword = "Admin123!"; // DEV uniquement.
@@ -44,9 +44,15 @@ public sealed class DevDataSeeder(
     {
         try
         {
-            var sql = await ReadSeedScriptAsync(cancellationToken);
             using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
-            await connection.ExecuteAsync(new CommandDefinition(sql, cancellationToken: cancellationToken));
+
+            // Tous les scripts de seed embarqués, exécutés par ordre de nom (dev_infrastructure avant
+            // dev_services_techniques, qui réutilise les espaces du premier). Chaque script est idempotent.
+            foreach (var (name, sql) in await ReadSeedScriptsAsync(cancellationToken))
+            {
+                await connection.ExecuteAsync(new CommandDefinition(sql, cancellationToken: cancellationToken));
+                logger.LogInformation("Script de seed de développement appliqué : {Script}.", name);
+            }
 
             var facilities = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
                 "select count(*) from organization.organizations where archived_on_utc is null",
@@ -133,15 +139,24 @@ public sealed class DevDataSeeder(
         }
     }
 
-    private static async Task<string> ReadSeedScriptAsync(CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<(string Name, string Sql)>> ReadSeedScriptsAsync(CancellationToken cancellationToken)
     {
         var assembly = typeof(DevDataSeeder).Assembly;
-        var resource = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(ResourceSuffix, StringComparison.OrdinalIgnoreCase))
-            ?? throw new InvalidOperationException($"Script de seed introuvable (ressource *{ResourceSuffix}).");
+        var resources = assembly.GetManifestResourceNames()
+            .Where(n => n.Contains(SeedResourceMarker, StringComparison.OrdinalIgnoreCase)
+                     && n.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (resources.Count == 0)
+            throw new InvalidOperationException($"Aucun script de seed trouvé (ressources *{SeedResourceMarker}*.sql).");
 
-        await using var stream = assembly.GetManifestResourceStream(resource)!;
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync(cancellationToken);
+        var scripts = new List<(string, string)>(resources.Count);
+        foreach (var resource in resources)
+        {
+            await using var stream = assembly.GetManifestResourceStream(resource)!;
+            using var reader = new StreamReader(stream);
+            scripts.Add((resource, await reader.ReadToEndAsync(cancellationToken)));
+        }
+        return scripts;
     }
 }
