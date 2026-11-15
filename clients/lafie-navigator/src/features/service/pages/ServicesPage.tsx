@@ -12,6 +12,7 @@ import {
   PlugConnected20Regular, PlugDisconnected20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
+import { useActiveFacility } from '@features/auth'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   SERVICE_CATEGORIES, SERVICE_STATUSES, archiveService, deleteService, getServices, restoreService,
@@ -45,7 +46,7 @@ export function ServicesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const facilityId = useAppStore((s) => s.selectedFacilityId)
+  const facilityId = useActiveFacility()
   const setSelectedService = useAppStore((s) => s.setSelectedService)
   const setInfraTab = useAppStore((s) => s.setInfraTab)
   const openService = (id: string, tab: string) => { setSelectedService(id); setInfraTab(tab); void navigate({ to: '/admin/service' as never }) }

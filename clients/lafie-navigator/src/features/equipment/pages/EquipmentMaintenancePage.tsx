@@ -9,7 +9,7 @@ import {
 } from '@fluentui/react-components'
 import { ArrowLeft20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility } from '@features/auth'
 import {
   MAINTENANCE_TYPES, MAINTENANCE_STATUSES, getFacilityMaintenance, facilityMaintenanceKeys,
   type FacilityMaintenance, type FacilityMaintenanceFilter, type MaintenanceStatus,
@@ -40,10 +40,8 @@ export function EquipmentMaintenancePage() {
   const styles = useStyles()
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { me } = useCurrentUser()
   const setSelectedEquipment = useAppStore((s) => s.setSelectedEquipment)
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [draft, setDraft] = useState<{ search: string; type: string; status: string }>({ search: '', type: ANY, status: ANY })
   const [applied, setApplied] = useState<FacilityMaintenanceFilter>({ page: 1, pageSize: PAGE_SIZE })

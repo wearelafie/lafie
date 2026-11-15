@@ -12,6 +12,7 @@ import {
   Layer20Regular, Wrench20Regular, PlugConnected20Regular, PlugDisconnected20Regular,
 } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
+import { useActiveFacility } from '@features/auth'
 import { RowActions, type RowAction } from '@shared/components'
 import {
   BUILDING_STATUSES, archiveBuilding, buildingKeys, deleteBuilding, getBuildings, restoreBuilding,
@@ -40,7 +41,7 @@ export function BuildingsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const facilityId = useAppStore((s) => s.selectedFacilityId)
+  const facilityId = useActiveFacility()
   const setSelectedBuilding = useAppStore((s) => s.setSelectedBuilding)
   const setInfraTab = useAppStore((s) => s.setInfraTab)
   // Drill vers la fiche bâtiment, en ouvrant directement l'onglet voulu (aperçu ou étages).
