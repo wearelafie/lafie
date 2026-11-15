@@ -14,6 +14,8 @@ using Lafie.Organization.Application.Services;
 using Lafie.Organization.Application.Spaces;
 using Lafie.Organization.Application.Sterilization.Cycles;
 using Lafie.Organization.Application.Sterilization.Sets;
+using Lafie.Organization.Application.Waste.Collections;
+using Lafie.Organization.Application.Waste.Slips;
 using Lafie.Organization.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,6 +42,8 @@ public static class OrganizationModule
         services.AddScoped<ICleaningTaskRepository, CleaningTaskRepository>();
         services.AddScoped<IInstrumentSetRepository, InstrumentSetRepository>();
         services.AddScoped<ISterilizationCycleRepository, SterilizationCycleRepository>();
+        services.AddScoped<IWasteCollectionRepository, WasteCollectionRepository>();
+        services.AddScoped<IWasteSlipRepository, WasteSlipRepository>();
         return services;
     }
 }
