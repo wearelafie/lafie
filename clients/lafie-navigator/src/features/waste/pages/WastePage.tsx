@@ -10,7 +10,7 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, DismissCircle20Regular, Edit20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility, useCurrentUser } from '@features/auth'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   WASTE_STREAMS, COLLECTION_STATUSES, SLIP_STATUSES, WASTE_TREATMENTS,
@@ -57,9 +57,8 @@ export function WastePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { me } = useCurrentUser()
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedSlip = useAppStore((s) => s.setSelectedWasteSlip)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [tab, setTab] = useState<'collections' | 'slips'>('collections')
 

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Avatar,
   Button,
@@ -36,7 +36,9 @@ import {
 } from '@fluentui/react-icons'
 import { SettingsDialog } from '@features/settings'
 import { useConnectionStatus, useIsMobile } from '@shared/hooks'
-import { clearToken, selectEstablishment, setToken, useCurrentUser } from '@features/auth'
+import { clearToken, isGlobalAdmin, selectEstablishment, setToken, useCurrentUser } from '@features/auth'
+import { getOrganizations, organizationKeys } from '@features/organization/api'
+import { useAppStore } from '@app/store/appStore'
 import { AppLauncherDialog } from './AppLauncherDialog'
 
 const useStyles = makeStyles({
@@ -158,6 +160,47 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
     void navigate({ to: '/' as never })
   }
 
+  // --- Sélecteur d'établissement ---
+  const globalAdmin = isGlobalAdmin(me)
+  const selectedFacilityId = useAppStore((s) => s.selectedFacilityId)
+  const setSelectedFacility = useAppStore((s) => s.setSelectedFacility)
+
+  // Admin système : tous les établissements (le cloisonnement serveur passe par le bypass '*').
+  const orgsQuery = useQuery({
+    queryKey: organizationKeys.list({ page: 1, pageSize: 100 }),
+    queryFn: () => getOrganizations({ page: 1, pageSize: 100 }),
+    enabled: globalAdmin,
+    staleTime: 5 * 60 * 1000,
+  })
+  const globalEstablishments = (orgsQuery.data?.items ?? []).map((o) => ({
+    facilityId: o.id,
+    name: o.displayName ?? o.officialName,
+  }))
+
+  // Défaut : premier établissement tant que l'admin système n'a rien choisi.
+  useEffect(() => {
+    if (globalAdmin && !selectedFacilityId && globalEstablishments.length > 0) {
+      setSelectedFacility(globalEstablishments[0].facilityId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalAdmin, selectedFacilityId, orgsQuery.data])
+
+  const onPickGlobalEstablishment = async (facilityId: string) => {
+    if (facilityId === selectedFacilityId) return
+    setSelectedFacility(facilityId) // pas de nouveau jeton : le bypass '*' autorise tout établissement
+    await queryClient.invalidateQueries()
+    void navigate({ to: '/' as never })
+  }
+
+  // Liste + libellé courant unifiés (admin système vs utilisateur scopé).
+  const switcherItems = globalAdmin ? globalEstablishments : (me?.establishments ?? [])
+  const activeFacilityId = globalAdmin ? selectedFacilityId : me?.activeEstablishment?.facilityId
+  const currentFacilityName =
+    switcherItems.find((e) => e.facilityId === activeFacilityId)?.name ??
+    me?.activeEstablishment?.name ??
+    t('auth.establishment')
+  const onPickEstablishment = globalAdmin ? onPickGlobalEstablishment : onSwitchEstablishment
+
   const statusDot = mergeClasses(
     styles.dot,
     status === 'online' ? styles.dotOnline : status === 'offline' ? styles.dotOffline : styles.dotConnecting,
@@ -199,8 +242,8 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
           <span>{t(`topbar.status.${status}`)}</span>
         </span>
 
-        {/* Établissement actif — sélecteur (multi-établissements) */}
-        {me && me.establishments.length > 0 && (
+        {/* Établissement actif — sélecteur (admin système : tous ; scopé : ses appartenances) */}
+        {me && switcherItems.length > 0 && (
           <Menu>
             <MenuTrigger disableButtonEnhancement>
               <Button
@@ -209,18 +252,16 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
                 icon={<Building20Regular />}
                 aria-label={t('auth.establishment')}
               >
-                {isMobile ? null : (
-                  <span className={styles.langLabel}>{me.activeEstablishment?.name ?? t('auth.establishment')}</span>
-                )}
+                {isMobile ? null : <span className={styles.langLabel}>{currentFacilityName}</span>}
               </Button>
             </MenuTrigger>
             <MenuPopover>
               <MenuList>
-                {me.establishments.map((e) => (
+                {switcherItems.map((e) => (
                   <MenuItem
                     key={e.facilityId}
-                    icon={e.facilityId === me.activeEstablishment?.facilityId ? <Checkmark16Regular /> : undefined}
-                    onClick={() => onSwitchEstablishment(e.facilityId)}
+                    icon={e.facilityId === activeFacilityId ? <Checkmark16Regular /> : undefined}
+                    onClick={() => onPickEstablishment(e.facilityId)}
                   >
                     {e.name}
                   </MenuItem>

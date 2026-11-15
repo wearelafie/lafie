@@ -10,7 +10,7 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility, useCurrentUser } from '@features/auth'
 import {
   SET_STATUSES, CYCLE_STATUSES, setKeys, cycleKeys, createInstrumentSet, createCycle, getInstrumentSets, getCycles,
   type InstrumentSet, type InstrumentSetFilter, type SterilizationCycle, type SterilizationCycleFilter,
@@ -54,10 +54,9 @@ export function SterilizationPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { me } = useCurrentUser()
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedSet = useAppStore((s) => s.setSelectedInstrumentSet)
   const setSelectedCycle = useAppStore((s) => s.setSelectedCycle)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [tab, setTab] = useState<'sets' | 'cycles'>('sets')
 

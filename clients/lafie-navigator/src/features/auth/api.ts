@@ -61,3 +61,8 @@ export function hasPermission(me: Me | undefined | null, code: string): boolean 
   if (!me) return false
   return me.permissions.includes('*') || me.permissions.includes(code)
 }
+
+/** Vrai pour un admin système (permission `*`) : vue globale, choix libre de l'établissement. */
+export function isGlobalAdmin(me: Me | undefined | null): boolean {
+  return !!me && me.permissions.includes('*')
+}

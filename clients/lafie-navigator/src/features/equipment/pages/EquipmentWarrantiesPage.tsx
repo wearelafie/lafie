@@ -9,7 +9,7 @@ import {
 } from '@fluentui/react-components'
 import { ArrowLeft20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility } from '@features/auth'
 import { getReferenceValues, refLabel } from '@features/reference/api'
 import {
   EQUIPMENT_CATEGORY_REFERENCE, WARRANTY_STATES, getEquipmentWarranties, warrantyKeys,
@@ -42,10 +42,8 @@ export function EquipmentWarrantiesPage() {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const navigate = useNavigate()
-  const { me } = useCurrentUser()
   const setSelectedEquipment = useAppStore((s) => s.setSelectedEquipment)
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [draft, setDraft] = useState<{ search: string; stateFilter: string }>({ search: '', stateFilter: ANY })
   const [applied, setApplied] = useState<WarrantyFilter>({ page: 1, pageSize: PAGE_SIZE })
