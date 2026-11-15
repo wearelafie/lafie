@@ -14,16 +14,16 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         id as "Id", facility_id as "FacilityId", building_id as "BuildingId", floor_id as "FloorId",
         code as "Code", name as "Name", type as "Type", description as "Description",
         area as "Area", max_capacity as "MaxCapacity", accessible as "Accessible",
-        status as "Status", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc", archived_on_utc as "ArchivedOnUtc"
+        status as "Status", operational_state as "OperationalState", created_on_utc as "CreatedOnUtc", updated_on_utc as "UpdatedOnUtc", archived_on_utc as "ArchivedOnUtc"
         """;
 
     public async Task AddAsync(Space s, CancellationToken cancellationToken = default)
     {
         const string sql = """
             insert into organization.spaces
-                (id, facility_id, building_id, floor_id, code, name, type, description, area, max_capacity, accessible, status, created_on_utc, updated_on_utc, archived_on_utc)
+                (id, facility_id, building_id, floor_id, code, name, type, description, area, max_capacity, accessible, status, operational_state, created_on_utc, updated_on_utc, archived_on_utc)
             values
-                (@Id, @FacilityId, @BuildingId, @FloorId, @Code, @Name, @Type, @Description, @Area, @MaxCapacity, @Accessible, @Status, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
+                (@Id, @FacilityId, @BuildingId, @FloorId, @Code, @Name, @Type, @Description, @Area, @MaxCapacity, @Accessible, @Status, @OperationalState, @CreatedOnUtc, @UpdatedOnUtc, @ArchivedOnUtc)
             """;
         using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, ToParams(s), cancellationToken: cancellationToken));
@@ -35,7 +35,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
             update organization.spaces set
                 code = @Code, name = @Name, type = @Type, description = @Description,
                 area = @Area, max_capacity = @MaxCapacity, accessible = @Accessible,
-                status = @Status, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
+                status = @Status, operational_state = @OperationalState, updated_on_utc = @UpdatedOnUtc, archived_on_utc = @ArchivedOnUtc
             where id = @Id
             """;
         using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
@@ -49,7 +49,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         return Space.Rehydrate(
             dto.Id, dto.FacilityId, dto.BuildingId, dto.FloorId, dto.Code, dto.Name,
             Enum.Parse<SpaceType>(dto.Type), dto.Description, dto.Area, dto.MaxCapacity, dto.Accessible,
-            Enum.Parse<SpaceStatus>(dto.Status),
+            Enum.Parse<SpaceStatus>(dto.Status), Enum.Parse<SpaceOperationalState>(dto.OperationalState),
             new DateTimeOffset(dto.CreatedOnUtc, TimeSpan.Zero),
             dto.UpdatedOnUtc is { } u ? new DateTimeOffset(u, TimeSpan.Zero) : null,
             dto.ArchivedOnUtc is { } a ? new DateTimeOffset(a, TimeSpan.Zero) : null);
@@ -162,6 +162,7 @@ public sealed class SpaceRepository(IDbConnectionFactory connectionFactory) : IS
         s.MaxCapacity,
         s.Accessible,
         Status = s.Status.ToString(),
+        OperationalState = s.OperationalState.ToString(),
         s.CreatedOnUtc,
         s.UpdatedOnUtc,
         s.ArchivedOnUtc,

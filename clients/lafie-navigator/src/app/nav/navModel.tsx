@@ -39,6 +39,7 @@ import {
   Tag20Regular,
   BuildingMultiple20Regular,
   Toolbox20Regular,
+  Wrench20Regular,
   PeopleTeam20Regular,
   BookGlobe20Regular,
   Globe20Regular,
@@ -200,6 +201,7 @@ export const navItems: NavItem[] = [
       // par la fiche établissement (onglets + drill), pas par des entrées plates ici.
       { key: 'facilities', to: '/admin', labelKey: 'nav.sub.infrastructure.facilities', icon: <BuildingMultiple20Regular /> },
       { key: 'equipment', to: '/admin/equipment', labelKey: 'nav.sub.infrastructure.equipment', icon: <Toolbox20Regular /> },
+      { key: 'maintenance', to: '/admin/maintenance', labelKey: 'nav.sub.infrastructure.maintenance', icon: <Wrench20Regular /> },
     ],
   },
   {
