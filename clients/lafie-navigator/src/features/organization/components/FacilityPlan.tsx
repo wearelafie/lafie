@@ -120,6 +120,13 @@ const useStyles = makeStyles({
   roomType: { color: tokens.colorNeutralForeground2, fontSize: tokens.fontSizeBase200 },
   roomTags: { display: 'flex', alignItems: 'center', columnGap: '4px', rowGap: '4px', flexWrap: 'wrap', marginTop: '2px' },
 
+  // Badge « tag » : un peu d'air interne (le small Fluent colle le contenu aux bords).
+  tag: {
+    height: 'auto', minHeight: '22px',
+    ...shorthands.padding('2px', tokens.spacingHorizontalS),
+    columnGap: tokens.spacingHorizontalXS,
+  },
+
   empty: { color: tokens.colorNeutralForeground4, fontSize: tokens.fontSizeBase200, fontStyle: 'italic', ...shorthands.padding(tokens.spacingVerticalXS, '0') },
 })
 
@@ -203,9 +210,9 @@ export function FacilityPlan({ facilityId }: { facilityId: string }) {
                   <span className={styles.code}>{b.code}</span>
                 </div>
                 <div className={styles.buildingTags}>
-                  <Badge appearance="tint" color="informative" size="small" icon={<Layer20Regular />}>{t('organization.plan.floorsCount', { count: floors.length })}</Badge>
-                  <Badge appearance="tint" color="informative" size="small" icon={<Door20Regular />}>{t('organization.plan.roomsCount', { count: roomCount })}</Badge>
-                  <Badge appearance="filled" color={statusColor(b.status)} icon={statusIcon(b.status)}>{t(`space.status.${b.status}`)}</Badge>
+                  <Badge className={styles.tag} appearance="tint" color="informative" size="small" icon={<Layer20Regular />}>{t('organization.plan.floorsCount', { count: floors.length })}</Badge>
+                  <Badge className={styles.tag} appearance="tint" color="informative" size="small" icon={<Door20Regular />}>{t('organization.plan.roomsCount', { count: roomCount })}</Badge>
+                  <Badge className={styles.tag} appearance="filled" color={statusColor(b.status)} icon={statusIcon(b.status)}>{t(`space.status.${b.status}`)}</Badge>
                 </div>
               </header>
 
@@ -222,8 +229,8 @@ export function FacilityPlan({ facilityId }: { facilityId: string }) {
                           <span className={styles.floorName}>{f.name}</span>
                         </div>
                         <div className={styles.floorTags}>
-                          <Badge appearance="outline" size="small">{f.level != null ? t('organization.plan.level', { level: f.level }) : f.code}</Badge>
-                          <Badge appearance="ghost" size="small" color={statusColor(f.status)} icon={statusIcon(f.status)}>{t(`space.status.${f.status}`)}</Badge>
+                          <Badge className={styles.tag} appearance="outline" size="small">{f.level != null ? t('organization.plan.level', { level: f.level }) : f.code}</Badge>
+                          <Badge className={styles.tag} appearance="ghost" size="small" color={statusColor(f.status)} icon={statusIcon(f.status)}>{t(`space.status.${f.status}`)}</Badge>
                         </div>
                       </div>
                       {rooms.length === 0 ? (
@@ -245,15 +252,15 @@ export function FacilityPlan({ facilityId }: { facilityId: string }) {
                                   <span className={styles.roomType}>{typeLabel(r.type)}</span>
                                   <div className={styles.roomTags}>
                                     {r.maxCapacity != null && (
-                                      <Badge appearance="tint" color="brand" size="small" icon={isBed ? <Bed16Regular /> : <People16Regular />}>
+                                      <Badge className={styles.tag} appearance="tint" color="brand" size="small" icon={isBed ? <Bed16Regular /> : <People16Regular />}>
                                         {isBed ? t('organization.plan.beds', { count: r.maxCapacity }) : t('organization.plan.capacity', { count: r.maxCapacity })}
                                       </Badge>
                                     )}
                                     {r.area != null && (
-                                      <Badge appearance="outline" size="small" icon={<Ruler16Regular />}>{t('organization.plan.area', { area: r.area })}</Badge>
+                                      <Badge className={styles.tag} appearance="outline" size="small" icon={<Ruler16Regular />}>{t('organization.plan.area', { area: r.area })}</Badge>
                                     )}
                                     {r.accessible && (
-                                      <Badge appearance="tint" color="success" size="small" icon={<Accessibility16Regular />}>{t('organization.plan.accessibleTag')}</Badge>
+                                      <Badge className={styles.tag} appearance="tint" color="success" size="small" icon={<Accessibility16Regular />}>{t('organization.plan.accessibleTag')}</Badge>
                                     )}
                                   </div>
                                 </div>
