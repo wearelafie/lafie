@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Waste.Collections;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -43,7 +44,9 @@ public static class WasteCollectionEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("waste.manage");
 
-        var byId = endpoints.MapGroup("/waste/collections").WithTags("Waste");
+        var byId = endpoints.MapGroup("/waste/collections").WithTags("Waste")
+            .RequireFacilityScope<IWasteCollectionRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapPut("/{id:guid}", async (Guid id, UpdateWasteCollectionRequest r, IMediator mediator, CancellationToken ct) =>
         {

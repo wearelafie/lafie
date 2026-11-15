@@ -1,6 +1,7 @@
 using Lafie.Core.Context;
 using Lafie.Organization.Application.Buildings;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,9 @@ public static class BuildingEndpoints
         }).RequirePermission("infrastructure.manage");
 
         // Accès direct par identifiant de bâtiment.
-        var byId = endpoints.MapGroup("/buildings").WithTags("Building");
+        var byId = endpoints.MapGroup("/buildings").WithTags("Building")
+            .RequireFacilityScope<IBuildingRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

@@ -1,6 +1,10 @@
 using Lafie.Core.Context;
+using Lafie.Organization.Application.Buildings;
+using Lafie.Organization.Application.Floors;
 using Lafie.Organization.Application.Spaces;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
+using Microsoft.Extensions.DependencyInjection;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +22,8 @@ public static class SpaceEndpoints
 {
     public static IEndpointRouteBuilder MapSpaceEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var byFloor = endpoints.MapGroup("/floors/{floorId:guid}/spaces").WithTags("Space");
+        var byFloor = endpoints.MapGroup("/floors/{floorId:guid}/spaces").WithTags("Space")
+            .RequireFacilityScope("floorId", FacilityOfFloor);
 
         byFloor.MapGet("", async (
             Guid floorId, string? search, string? type, string? status, bool? includeArchived, int? page, int? pageSize,
@@ -46,7 +51,9 @@ public static class SpaceEndpoints
             return Results.Ok(await mediator.Send(new GetSpacesByFacilityQuery(facilityId, filter), ct));
         }).WithTags("Space").RequirePermission("infrastructure.read");
 
-        var byId = endpoints.MapGroup("/spaces").WithTags("Space");
+        var byId = endpoints.MapGroup("/spaces").WithTags("Space")
+            .RequireFacilityScope<ISpaceRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
@@ -83,5 +90,13 @@ public static class SpaceEndpoints
         }).RequirePermission("infrastructure.manage");
 
         return endpoints;
+    }
+
+    /// <summary>Établissement d'un étage (étage → bâtiment → établissement).</summary>
+    internal static async ValueTask<Guid?> FacilityOfFloor(Guid floorId, IServiceProvider sp, CancellationToken ct)
+    {
+        var floor = await sp.GetRequiredService<IFloorRepository>().GetByIdAsync(floorId, ct);
+        if (floor is null) return null;
+        return (await sp.GetRequiredService<IBuildingRepository>().GetByIdAsync(floor.BuildingId, ct))?.FacilityId;
     }
 }
