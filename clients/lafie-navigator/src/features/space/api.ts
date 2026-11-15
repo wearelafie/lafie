@@ -11,6 +11,10 @@ export type SpaceType = (typeof SPACE_TYPES)[number]
 export const SPACE_STATUSES = ['Active', 'Inactive', 'Maintenance'] as const
 export type SpaceStatus = (typeof SPACE_STATUSES)[number]
 
+// État opérationnel runtime (distinct du statut cycle de vie) : piloté par la GMAO/hygiène.
+export const SPACE_OPERATIONAL_STATES = ['Available', 'Occupied', 'Cleaning', 'Blocked'] as const
+export type SpaceOperationalState = (typeof SPACE_OPERATIONAL_STATES)[number]
+
 export type Space = {
   id: string
   facilityId: string
@@ -24,6 +28,7 @@ export type Space = {
   maxCapacity: number | null
   accessible: boolean
   status: SpaceStatus
+  operationalState: SpaceOperationalState
   createdOnUtc: string
   updatedOnUtc: string | null
   archivedOnUtc: string | null

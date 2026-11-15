@@ -34,6 +34,9 @@ type AppState = {
   /** Cible du formulaire équipement (page) : null = création, id = édition. */
   equipmentFormId: string | null
   setEquipmentFormId: (id: string | null) => void
+  /** Ticket de maintenance (GMAO) actif : navigation vers sa fiche détail. */
+  selectedTicketId: string | null
+  setSelectedTicket: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -59,6 +62,8 @@ export const useAppStore = create<AppState>()(
       setFacilityFormId: (id) => set({ facilityFormId: id }),
       equipmentFormId: null,
       setEquipmentFormId: (id) => set({ equipmentFormId: id }),
+      selectedTicketId: null,
+      setSelectedTicket: (id) => set({ selectedTicketId: id }),
     }),
     { name: 'lafie.app' },
   ),

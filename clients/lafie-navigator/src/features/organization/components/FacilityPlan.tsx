@@ -262,6 +262,12 @@ export function FacilityPlan({ facilityId }: { facilityId: string }) {
                                     {r.accessible && (
                                       <Badge className={styles.tag} appearance="tint" color="success" size="small" icon={<Accessibility16Regular />}>{t('organization.plan.accessibleTag')}</Badge>
                                     )}
+                                    {r.operationalState && r.operationalState !== 'Available' && (
+                                      <Badge className={styles.tag} appearance="filled" size="small"
+                                        color={r.operationalState === 'Blocked' ? 'danger' : r.operationalState === 'Cleaning' ? 'warning' : 'informative'}>
+                                        {t(`space.operational.${r.operationalState}`)}
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               </Tooltip>
