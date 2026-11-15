@@ -204,6 +204,7 @@ export const navItems: NavItem[] = [
       { key: 'equipment', to: '/admin/equipment', labelKey: 'nav.sub.infrastructure.equipment', icon: <Toolbox20Regular /> },
       { key: 'maintenance', to: '/admin/maintenance', labelKey: 'nav.sub.infrastructure.maintenance', icon: <Wrench20Regular /> },
       { key: 'hygiene', to: '/admin/hygiene', labelKey: 'nav.sub.infrastructure.hygiene', icon: <Broom20Regular /> },
+      { key: 'sterilization', to: '/admin/sterilization', labelKey: 'nav.sub.infrastructure.sterilization', icon: <Beaker20Regular /> },
     ],
   },
   {
