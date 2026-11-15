@@ -3,6 +3,7 @@ using Lafie.Organization.Application.Equipment;
 using Lafie.Organization.Application.Equipment.Dashboard;
 using Lafie.Organization.Application.Equipment.Reports;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -80,7 +81,9 @@ public static class EquipmentEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        var byId = endpoints.MapGroup("/equipment").WithTags("Equipment");
+        var byId = endpoints.MapGroup("/equipment").WithTags("Equipment")
+            .RequireFacilityScope<IEquipmentRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

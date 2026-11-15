@@ -1,5 +1,7 @@
 using Lafie.Organization.Application.CareUnits;
+using Lafie.Organization.Application.Services;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +19,9 @@ public static class CareUnitEndpoints
 {
     public static IEndpointRouteBuilder MapCareUnitEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var byService = endpoints.MapGroup("/services/{serviceId:guid}/care-units").WithTags("CareUnit");
+        var byService = endpoints.MapGroup("/services/{serviceId:guid}/care-units").WithTags("CareUnit")
+            .RequireFacilityScope<IServiceRepository>("serviceId",
+                async (repo, serviceId, ct) => (await repo.GetByIdAsync(serviceId, ct))?.FacilityId);
 
         byService.MapGet("", async (
             Guid serviceId, string? search, string? type, string? status, bool? includeArchived, int? page, int? pageSize,
@@ -35,7 +39,9 @@ public static class CareUnitEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        var byId = endpoints.MapGroup("/care-units").WithTags("CareUnit");
+        var byId = endpoints.MapGroup("/care-units").WithTags("CareUnit")
+            .RequireFacilityScope<ICareUnitRepository>("id",
+                async (repo, id, ct) => (await repo.GetByIdAsync(id, ct))?.FacilityId);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

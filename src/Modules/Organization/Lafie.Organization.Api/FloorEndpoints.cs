@@ -1,5 +1,7 @@
+using Lafie.Organization.Application.Buildings;
 using Lafie.Organization.Application.Floors;
 using Lafie.Web.Authorization;
+using Lafie.Web.Context;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +18,9 @@ public static class FloorEndpoints
 {
     public static IEndpointRouteBuilder MapFloorEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var byBuilding = endpoints.MapGroup("/buildings/{buildingId:guid}/floors").WithTags("Floor");
+        var byBuilding = endpoints.MapGroup("/buildings/{buildingId:guid}/floors").WithTags("Floor")
+            .RequireFacilityScope<IBuildingRepository>("buildingId",
+                async (repo, buildingId, ct) => (await repo.GetByIdAsync(buildingId, ct))?.FacilityId);
 
         byBuilding.MapGet("", async (
             Guid buildingId, string? search, string? status, bool? includeArchived, int? page, int? pageSize,
@@ -34,7 +38,8 @@ public static class FloorEndpoints
                 : Results.BadRequest(new { error = result.Error });
         }).RequirePermission("infrastructure.manage");
 
-        var byId = endpoints.MapGroup("/floors").WithTags("Floor");
+        var byId = endpoints.MapGroup("/floors").WithTags("Floor")
+            .RequireFacilityScope("id", SpaceEndpoints.FacilityOfFloor);
 
         byId.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
