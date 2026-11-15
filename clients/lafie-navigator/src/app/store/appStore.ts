@@ -40,6 +40,12 @@ type AppState = {
   /** Tâche de bio-nettoyage (hygiène) active : navigation vers sa fiche détail. */
   selectedCleaningTaskId: string | null
   setSelectedCleaningTask: (id: string | null) => void
+  /** Boîte d'instruments (CSSD) active : navigation vers sa fiche détail. */
+  selectedInstrumentSetId: string | null
+  setSelectedInstrumentSet: (id: string | null) => void
+  /** Cycle de stérilisation (CSSD) actif : navigation vers sa fiche détail. */
+  selectedCycleId: string | null
+  setSelectedCycle: (id: string | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -69,6 +75,10 @@ export const useAppStore = create<AppState>()(
       setSelectedTicket: (id) => set({ selectedTicketId: id }),
       selectedCleaningTaskId: null,
       setSelectedCleaningTask: (id) => set({ selectedCleaningTaskId: id }),
+      selectedInstrumentSetId: null,
+      setSelectedInstrumentSet: (id) => set({ selectedInstrumentSetId: id }),
+      selectedCycleId: null,
+      setSelectedCycle: (id) => set({ selectedCycleId: id }),
     }),
     { name: 'lafie.app' },
   ),
