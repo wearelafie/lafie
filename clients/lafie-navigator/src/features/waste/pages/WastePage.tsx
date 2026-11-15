@@ -120,12 +120,13 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
   const spaceLabel = f.spaceId === '' ? '' : (spaceOptions.find((o) => o.id === f.spaceId)?.label ?? '')
 
   const mutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const input: WasteCollectionInput = {
         stream: f.stream, weightKg: Number.parseFloat(f.weightKg) || 0, containerCount: Number.parseInt(f.containerCount, 10) || 0,
         spaceId: f.spaceId || null, collectedOn: f.collectedOn || null, collectedBy: f.collectedBy.trim() || null, notes: f.notes.trim() || null,
       }
-      return f.id ? updateWasteCollection(f.id, input) : createWasteCollection(facilityId, input)
+      if (f.id) await updateWasteCollection(f.id, input)
+      else await createWasteCollection(facilityId, input)
     },
     onSuccess: () => { invalidate(); setOpen(false); setF(emptyColl(defaultCollector)) },
   })
