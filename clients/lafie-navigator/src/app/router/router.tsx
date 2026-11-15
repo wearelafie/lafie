@@ -13,6 +13,7 @@ import { ForgotPasswordPage } from '@features/auth/pages/ForgotPasswordPage'
 import { ReferenceValuesPage, GeoDivisionsPage } from '@features/admin'
 import { EquipmentPage, EquipmentDetailPage, EquipmentWarrantiesPage, EquipmentMaintenancePage, EquipmentFormPage } from '@features/equipment'
 import { MaintenancePage, MaintenanceTicketDetailPage } from '@features/maintenance'
+import { HygienePage, CleaningTaskDetailPage } from '@features/hygiene'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -23,6 +24,7 @@ const implemented: Record<string, () => ReactElement> = {
   '/admin': OrganizationsPage,
   '/admin/equipment': EquipmentPage,
   '/admin/maintenance': MaintenancePage,
+  '/admin/hygiene': HygienePage,
   '/admin/terminology': ReferenceValuesPage,
   '/admin/geography': GeoDivisionsPage,
 }
@@ -63,6 +65,7 @@ const extraRoutes = [
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-maintenance', component: EquipmentMaintenancePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/equipment-form', component: EquipmentFormPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/admin/maintenance-ticket', component: MaintenanceTicketDetailPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/admin/cleaning-task', component: CleaningTaskDetailPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/login', component: LoginPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/forgot-password', component: ForgotPasswordPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/select-establishment', component: SelectEstablishmentPage }),

@@ -113,6 +113,7 @@ app.MapCareUnitEndpoints();
 app.MapEquipmentEndpoints();
 app.MapEquipmentHistoryEndpoints();
 app.MapMaintenanceTicketEndpoints();
+app.MapCleaningTaskEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();
