@@ -10,7 +10,7 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility } from '@features/auth'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   CLEANING_PROTOCOLS, CLEANING_STATUSES, CLEANING_TRIGGERS, cleaningKeys, createCleaningTask, getCleaningTasks,
@@ -50,10 +50,8 @@ export function HygienePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const { me } = useCurrentUser()
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedCleaningTask = useAppStore((s) => s.setSelectedCleaningTask)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [draft, setDraft] = useState<{ search: string; status: string; protocol: string; activeOnly: boolean }>({ search: '', status: ANY, protocol: ANY, activeOnly: true })
   const [applied, setApplied] = useState<CleaningFilter>({ page: 1, pageSize: PAGE_SIZE, activeOnly: true })

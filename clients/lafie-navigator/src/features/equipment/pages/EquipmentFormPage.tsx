@@ -6,7 +6,8 @@ import {
   Button, Divider, Dropdown, Field, Input, Option, Spinner, Textarea, makeStyles, tokens,
 } from '@fluentui/react-components'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { isGlobalAdmin, useActiveFacility, useCurrentUser } from '@features/auth'
+import { getOrganizations, organizationKeys } from '@features/organization/api'
 import { DetailHeader, type Crumb } from '@shared/components'
 import {
   EQUIPMENT_STATUSES, EQUIPMENT_CATEGORY_REFERENCE, createEquipment, equipmentKeys, getEquipmentItem, updateEquipment,
@@ -67,14 +68,38 @@ export function EquipmentFormPage() {
   const navigate = useNavigate()
   const { me } = useCurrentUser()
   const editId = useAppStore((s) => s.equipmentFormId)
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const activeFacilityId = useActiveFacility()
+  const globalAdmin = isGlobalAdmin(me)
   const isEdit = editId != null
 
   const [f, setF] = useState<FormState>(empty)
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }))
 
   const editing = useQuery({ queryKey: equipmentKeys.item(editId ?? ''), queryFn: () => getEquipmentItem(editId!), enabled: isEdit })
+
+  // Établissement cible : en création, l'établissement actif (modifiable par l'admin système) ;
+  // en édition, celui — figé — de l'équipement (on ne déplace pas un actif entre établissements ici).
+  const [facilityId, setFacilityId] = useState<string | null>(activeFacilityId)
+  useEffect(() => {
+    if (isEdit) { if (editing.data) setFacilityId(editing.data.facilityId) }
+    else setFacilityId(activeFacilityId)
+  }, [isEdit, editing.data, activeFacilityId])
+
+  // Liste des établissements pour le sélecteur (admin système, en création uniquement).
+  const orgs = useQuery({
+    queryKey: organizationKeys.list({ page: 1, pageSize: 100 }),
+    queryFn: () => getOrganizations({ page: 1, pageSize: 100 }),
+    enabled: globalAdmin,
+    staleTime: 5 * 60 * 1000,
+  })
+  const selectedOrg = globalAdmin ? orgs.data?.items.find((o) => o.id === facilityId) : undefined
+  const establishmentName = selectedOrg
+    ? (selectedOrg.displayName ?? selectedOrg.officialName)
+    : (me?.activeEstablishment?.name ?? '')
+  const onPickFacility = (id: string) => {
+    setFacilityId(id)
+    setF((s) => ({ ...s, spaceId: '', serviceId: '', careUnitId: '' })) // les cibles sont scopées : on réinitialise
+  }
 
   useEffect(() => {
     if (!isEdit) { setF(empty); return }
@@ -158,6 +183,25 @@ export function EquipmentFormPage() {
     <div className={styles.root}>
       <DetailHeader title={t(isEdit ? 'equipment.form.edit' : 'equipment.form.new')} crumbs={crumbs} />
       <div className={styles.form}>
+        {/* Établissement d'appartenance */}
+        <span className={styles.sectionTitle}>{t('auth.establishment')}</span>
+        <Field label={t('auth.establishment')} required>
+          {globalAdmin && !isEdit ? (
+            <Dropdown
+              value={establishmentName}
+              selectedOptions={facilityId ? [facilityId] : []}
+              placeholder={orgs.isLoading ? t('equipment.loading') : t('auth.establishment')}
+              onOptionSelect={(_, d) => d.optionValue && onPickFacility(d.optionValue)}>
+              {(orgs.data?.items ?? []).map((o) => (
+                <Option key={o.id} value={o.id}>{o.displayName ?? o.officialName}</Option>
+              ))}
+            </Dropdown>
+          ) : (
+            <Input value={establishmentName} disabled />
+          )}
+        </Field>
+
+        <Divider />
         {/* Identification */}
         <span className={styles.sectionTitle}>{t('equipment.form.sections.identification')}</span>
         <div className={styles.row}>

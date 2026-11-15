@@ -10,7 +10,7 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useCurrentUser } from '@features/auth'
+import { useActiveFacility } from '@features/auth'
 import { getEquipmentList } from '@features/equipment/api'
 import { getSpacesByFacility } from '@features/space/api'
 import {
@@ -51,10 +51,8 @@ export function MaintenancePage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const { me } = useCurrentUser()
-  const storeFacilityId = useAppStore((s) => s.selectedFacilityId)
   const setSelectedTicket = useAppStore((s) => s.setSelectedTicket)
-  const facilityId = me?.activeEstablishment?.facilityId ?? storeFacilityId
+  const facilityId = useActiveFacility()
 
   const [draft, setDraft] = useState<{ search: string; status: string; criticality: string; openOnly: boolean }>({ search: '', status: ANY, criticality: ANY, openOnly: true })
   const [applied, setApplied] = useState<TicketFilter>({ page: 1, pageSize: PAGE_SIZE, openOnly: true })
