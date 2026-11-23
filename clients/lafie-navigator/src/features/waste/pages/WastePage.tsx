@@ -10,7 +10,8 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, DismissCircle20Regular, Edit20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useActiveFacility, useCurrentUser } from '@features/auth'
+import { useActiveFacility, useCurrentUser, useFacilitySelector } from '@features/auth'
+import { EstablishmentField } from '@shared/components'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   WASTE_STREAMS, COLLECTION_STATUSES, SLIP_STATUSES, WASTE_TREATMENTS,
@@ -54,7 +55,6 @@ const useStyles = makeStyles({
 export function WastePage() {
   const styles = useStyles()
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { me } = useCurrentUser()
   const setSelectedSlip = useAppStore((s) => s.setSelectedWasteSlip)
@@ -82,13 +82,11 @@ export function WastePage() {
         <CollectionsTab
           facilityId={facilityId}
           defaultCollector={me?.displayName ?? me?.username ?? ''}
-          invalidate={() => queryClient.invalidateQueries({ queryKey: collectionKeys.all(facilityId) })}
         />
       ) : (
         <SlipsTab
           facilityId={facilityId}
           onOpen={(s) => { setSelectedSlip(s.id); void navigate({ to: '/admin/waste-slip' as never }) }}
-          invalidate={() => queryClient.invalidateQueries({ queryKey: slipKeys.all(facilityId) })}
         />
       )}
     </div>
@@ -98,9 +96,12 @@ export function WastePage() {
 type CollForm = { id: string | null; stream: WasteStream; weightKg: string; containerCount: string; spaceId: string; collectedOn: string; collectedBy: string; notes: string }
 const emptyColl = (collector: string): CollForm => ({ id: null, stream: 'Dasri', weightKg: '', containerCount: '1', spaceId: '', collectedOn: '', collectedBy: collector, notes: '' })
 
-function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facilityId: string; defaultCollector: string; invalidate: () => void }) {
+function CollectionsTab({ facilityId, defaultCollector }: { facilityId: string; defaultCollector: string }) {
   const styles = useStyles()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  // Établissement du formulaire : figé pour un admin d'établissement (et en édition), choisi par l'admin système en création.
+  const { facilityId: formFacilityId, setFacilityId: setFormFacilityId, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; stream: string; status: string; unassignedOnly: boolean }>({ search: '', stream: ANY, status: ANY, unassignedOnly: false })
   const [applied, setApplied] = useState<WasteCollectionFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -111,13 +112,14 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
   const query = useQuery({ queryKey: collectionKeys.list(facilityId, applied), queryFn: () => getWasteCollections(facilityId, applied) })
 
   const spaces = useQuery({
-    queryKey: ['spaces', facilityId, 'all-targets'],
-    queryFn: () => getSpacesByFacility(facilityId),
-    enabled: open,
+    queryKey: ['spaces', formFacilityId, 'all-targets'],
+    queryFn: () => getSpacesByFacility(formFacilityId!),
+    enabled: !!formFacilityId && open,
   })
   const spaceOptions = (spaces.data?.items ?? []).map((s) => ({ id: s.id, label: `${s.code} · ${s.name}` }))
   const spaceLabel = f.spaceId === '' ? '' : (spaceOptions.find((o) => o.id === f.spaceId)?.label ?? '')
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: collectionKeys.all(formFacilityId ?? '') })
   const mutation = useMutation({
     mutationFn: async () => {
       const input: WasteCollectionInput = {
@@ -125,11 +127,14 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
         spaceId: f.spaceId || null, collectedOn: f.collectedOn || null, collectedBy: f.collectedBy.trim() || null, notes: f.notes.trim() || null,
       }
       if (f.id) await updateWasteCollection(f.id, input)
-      else await createWasteCollection(facilityId, input)
+      else await createWasteCollection(formFacilityId!, input)
     },
     onSuccess: () => { invalidate(); setOpen(false); setF(emptyColl(defaultCollector)) },
   })
   const cancelMut = useMutation({ mutationFn: (id: string) => cancelWasteCollection(id), onSuccess: invalidate })
+
+  // Changement d'établissement (admin système, en création) : l'espace source dépend de l'établissement, on le réinitialise.
+  const onPickFacility = (id: string) => { setFormFacilityId(id); set('spaceId', '') }
 
   const runSearch = () => setApplied({
     page: 1, pageSize: PAGE_SIZE,
@@ -139,8 +144,9 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
     unassignedOnly: draft.unassignedOnly || undefined,
   })
 
-  const openNew = () => { setF(emptyColl(defaultCollector)); setOpen(true) }
+  const openNew = () => { resetFacility(); setF(emptyColl(defaultCollector)); setOpen(true) }
   const openEdit = (c: WasteCollection) => {
+    resetFacility() // l'établissement n'est pas modifiable en édition : il reste celui (actif) de la collecte
     setF({ id: c.id, stream: c.stream, weightKg: String(c.weightKg), containerCount: String(c.containerCount),
       spaceId: c.spaceId ?? '', collectedOn: c.collectedOn ? c.collectedOn.slice(0, 10) : '', collectedBy: c.collectedBy ?? '', notes: c.notes ?? '' })
     setOpen(true)
@@ -150,7 +156,7 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
-  const canSubmit = Number.parseFloat(f.weightKg) >= 0 && f.weightKg !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && Number.parseFloat(f.weightKg) >= 0 && f.weightKg !== '' && !mutation.isPending
 
   return (
     <>
@@ -237,6 +243,15 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
             <DialogTitle>{f.id ? t('waste.collections.edit') : t('waste.collections.create')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                  readOnly={f.id != null}
+                />
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('waste.fields.stream')} required>
                     <Dropdown value={t(`waste.streams.${f.stream}`)} selectedOptions={[f.stream]}
@@ -290,9 +305,12 @@ function CollectionsTab({ facilityId, defaultCollector, invalidate }: { facility
 type SlipForm = { reference: string; stream: WasteStream; carrier: string; destination: string; treatment: string }
 const emptySlip: SlipForm = { reference: '', stream: 'Dasri', carrier: '', destination: '', treatment: NONE }
 
-function SlipsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpen: (s: WasteSlip) => void; invalidate: () => void }) {
+function SlipsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: WasteSlip) => void }) {
   const styles = useStyles()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  // Établissement du formulaire : figé pour un admin d'établissement, choisi par l'admin système.
+  const { facilityId: formFacilityId, setFacilityId: onPickFacility, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; stream: string; status: string; openOnly: boolean }>({ search: '', stream: ANY, status: ANY, openOnly: false })
   const [applied, setApplied] = useState<WasteSlipFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -308,9 +326,12 @@ function SlipsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOp
         reference: f.reference.trim(), stream: f.stream, carrier: f.carrier.trim() || null,
         destination: f.destination.trim() || null, treatment: f.treatment === NONE ? null : (f.treatment as WasteTreatment),
       }
-      return createWasteSlip(facilityId, input)
+      return createWasteSlip(formFacilityId!, input)
     },
-    onSuccess: () => { invalidate(); setOpen(false); setF(emptySlip) },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: slipKeys.all(formFacilityId ?? '') })
+      setOpen(false); setF(emptySlip)
+    },
   })
 
   const runSearch = () => setApplied({
@@ -325,7 +346,7 @@ function SlipsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOp
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
-  const canSubmit = f.reference.trim() !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && f.reference.trim() !== '' && !mutation.isPending
 
   return (
     <>
@@ -355,7 +376,7 @@ function SlipsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOp
           </div>
           <Button appearance="primary" icon={<Search20Regular />} onClick={runSearch}>{t('waste.filters.apply')}</Button>
         </div>
-        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setF(emptySlip); setOpen(true) }}>{t('waste.slips.create')}</Button>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { resetFacility(); setF(emptySlip); setOpen(true) }}>{t('waste.slips.create')}</Button>
       </div>
 
       {query.isLoading ? (
@@ -403,6 +424,14 @@ function SlipsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOp
             <DialogTitle>{t('waste.slips.create')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                />
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('waste.fields.reference')} required>
                     <Input value={f.reference} onChange={(_, d) => set('reference', d.value)} placeholder={t('waste.form.referencePlaceholder')} />

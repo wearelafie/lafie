@@ -10,7 +10,8 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useActiveFacility, useCurrentUser } from '@features/auth'
+import { useActiveFacility, useCurrentUser, useFacilitySelector } from '@features/auth'
+import { EstablishmentField } from '@shared/components'
 import {
   SET_STATUSES, CYCLE_STATUSES, setKeys, cycleKeys, createInstrumentSet, createCycle, getInstrumentSets, getCycles,
   type InstrumentSet, type InstrumentSetFilter, type SterilizationCycle, type SterilizationCycleFilter,
@@ -51,7 +52,6 @@ const emptyCycleForm: CycleForm = { autoclave: '', cycleNumber: '', program: '',
 export function SterilizationPage() {
   const styles = useStyles()
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { me } = useCurrentUser()
   const setSelectedSet = useAppStore((s) => s.setSelectedInstrumentSet)
@@ -80,23 +80,24 @@ export function SterilizationPage() {
         <SetsTab
           facilityId={facilityId}
           onOpen={(s) => { setSelectedSet(s.id); void navigate({ to: '/admin/instrument-set' as never }) }}
-          invalidate={() => queryClient.invalidateQueries({ queryKey: setKeys.all(facilityId) })}
         />
       ) : (
         <CyclesTab
           facilityId={facilityId}
           defaultOperator={me?.displayName ?? me?.username ?? ''}
           onOpen={(c) => { setSelectedCycle(c.id); void navigate({ to: '/admin/sterilization-cycle' as never }) }}
-          invalidate={() => queryClient.invalidateQueries({ queryKey: cycleKeys.all(facilityId) })}
         />
       )}
     </div>
   )
 }
 
-function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpen: (s: InstrumentSet) => void; invalidate: () => void }) {
+function SetsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: InstrumentSet) => void }) {
   const styles = useStyles()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  // Établissement du formulaire : figé pour un admin d'établissement, choisi par l'admin système.
+  const { facilityId: formFacilityId, setFacilityId: onPickFacility, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; status: string; category: string }>({ search: '', status: ANY, category: '' })
   const [applied, setApplied] = useState<InstrumentSetFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -115,9 +116,12 @@ function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpe
         code: f.code.trim(), name: f.name.trim(), category: f.category.trim() || null,
         itemCount: Number.parseInt(f.itemCount, 10) || 0, description: f.description.trim() || null,
       }
-      return createInstrumentSet(facilityId, input)
+      return createInstrumentSet(formFacilityId!, input)
     },
-    onSuccess: () => { invalidate(); setOpen(false); setF(emptySetForm) },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: setKeys.all(formFacilityId ?? '') })
+      setOpen(false); setF(emptySetForm)
+    },
   })
 
   const runSearch = () => setApplied({
@@ -131,7 +135,7 @@ function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpe
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
-  const canSubmit = f.code.trim() !== '' && f.name.trim() !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && f.code.trim() !== '' && f.name.trim() !== '' && !mutation.isPending
 
   return (
     <>
@@ -158,7 +162,7 @@ function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpe
           </div>
           <Button appearance="primary" icon={<Search20Regular />} onClick={runSearch}>{t('sterilization.filters.apply')}</Button>
         </div>
-        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setF(emptySetForm); setOpen(true) }}>{t('sterilization.sets.create')}</Button>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { resetFacility(); setF(emptySetForm); setOpen(true) }}>{t('sterilization.sets.create')}</Button>
       </div>
 
       {query.isLoading ? (
@@ -206,6 +210,14 @@ function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpe
             <DialogTitle>{t('sterilization.sets.create')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                />
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('sterilization.fields.code')} required>
                     <Input value={f.code} onChange={(_, d) => set('code', d.value)} />
@@ -239,9 +251,12 @@ function SetsTab({ facilityId, onOpen, invalidate }: { facilityId: string; onOpe
   )
 }
 
-function CyclesTab({ facilityId, defaultOperator, onOpen, invalidate }: { facilityId: string; defaultOperator: string; onOpen: (c: SterilizationCycle) => void; invalidate: () => void }) {
+function CyclesTab({ facilityId, defaultOperator, onOpen }: { facilityId: string; defaultOperator: string; onOpen: (c: SterilizationCycle) => void }) {
   const styles = useStyles()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  // Établissement du formulaire : figé pour un admin d'établissement, choisi par l'admin système.
+  const { facilityId: formFacilityId, setFacilityId: onPickFacility, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; status: string; openOnly: boolean }>({ search: '', status: ANY, openOnly: false })
   const [applied, setApplied] = useState<SterilizationCycleFilter>({ page: 1, pageSize: PAGE_SIZE })
@@ -260,9 +275,12 @@ function CyclesTab({ facilityId, defaultOperator, onOpen, invalidate }: { facili
         autoclave: f.autoclave.trim(), cycleNumber: f.cycleNumber.trim() || null,
         program: f.program.trim(), operator: f.operator.trim() || null,
       }
-      return createCycle(facilityId, input)
+      return createCycle(formFacilityId!, input)
     },
-    onSuccess: () => { invalidate(); setOpen(false); setF(emptyCycleForm) },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: cycleKeys.all(formFacilityId ?? '') })
+      setOpen(false); setF(emptyCycleForm)
+    },
   })
 
   const runSearch = () => setApplied({
@@ -276,7 +294,7 @@ function CyclesTab({ facilityId, defaultOperator, onOpen, invalidate }: { facili
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
-  const canSubmit = f.autoclave.trim() !== '' && f.program.trim() !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && f.autoclave.trim() !== '' && f.program.trim() !== '' && !mutation.isPending
 
   return (
     <>
@@ -298,7 +316,7 @@ function CyclesTab({ facilityId, defaultOperator, onOpen, invalidate }: { facili
           </div>
           <Button appearance="primary" icon={<Search20Regular />} onClick={runSearch}>{t('sterilization.filters.apply')}</Button>
         </div>
-        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { setF({ ...emptyCycleForm, operator: defaultOperator }); setOpen(true) }}>{t('sterilization.cycles.create')}</Button>
+        <Button appearance="primary" icon={<Add20Regular />} onClick={() => { resetFacility(); setF({ ...emptyCycleForm, operator: defaultOperator }); setOpen(true) }}>{t('sterilization.cycles.create')}</Button>
       </div>
 
       {query.isLoading ? (
@@ -346,6 +364,14 @@ function CyclesTab({ facilityId, defaultOperator, onOpen, invalidate }: { facili
             <DialogTitle>{t('sterilization.cycles.create')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                />
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('sterilization.fields.autoclave')} required>
                     <Input value={f.autoclave} onChange={(_, d) => set('autoclave', d.value)} />
