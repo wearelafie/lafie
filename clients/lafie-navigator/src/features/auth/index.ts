@@ -6,3 +6,4 @@ export {
 } from './api'
 export { useCurrentUser } from './useCurrentUser'
 export { useActiveFacility } from './useActiveFacility'
+export { useFacilitySelector, type FacilityOption } from './useFacilitySelector'
