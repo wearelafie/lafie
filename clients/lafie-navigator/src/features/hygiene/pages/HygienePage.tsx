@@ -10,7 +10,8 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useActiveFacility } from '@features/auth'
+import { useActiveFacility, useFacilitySelector } from '@features/auth'
+import { EstablishmentField } from '@shared/components'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   CLEANING_PROTOCOLS, CLEANING_STATUSES, CLEANING_TRIGGERS, cleaningKeys, createCleaningTask, getCleaningTasks,
@@ -52,6 +53,8 @@ export function HygienePage() {
   const navigate = useNavigate()
   const setSelectedCleaningTask = useAppStore((s) => s.setSelectedCleaningTask)
   const facilityId = useActiveFacility()
+  // Établissement du formulaire : figé pour un admin d'établissement, choisi par l'admin système.
+  const { facilityId: formFacilityId, setFacilityId: setFormFacilityId, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; status: string; protocol: string; activeOnly: boolean }>({ search: '', status: ANY, protocol: ANY, activeOnly: true })
   const [applied, setApplied] = useState<CleaningFilter>({ page: 1, pageSize: PAGE_SIZE, activeOnly: true })
@@ -66,21 +69,24 @@ export function HygienePage() {
   })
 
   const spaces = useQuery({
-    queryKey: ['spaces', facilityId, 'all-targets'],
-    queryFn: () => getSpacesByFacility(facilityId!),
-    enabled: !!facilityId && open,
+    queryKey: ['spaces', formFacilityId, 'all-targets'],
+    queryFn: () => getSpacesByFacility(formFacilityId!),
+    enabled: !!formFacilityId && open,
   })
   const spaceOptions = (spaces.data?.items ?? []).map((s) => ({ id: s.id, label: `${s.code} · ${s.name}` }))
   const spaceLabel = spaceOptions.find((o) => o.id === f.spaceId)?.label ?? ''
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: cleaningKeys.all(facilityId ?? '') })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: cleaningKeys.all(formFacilityId ?? '') })
   const mutation = useMutation({
     mutationFn: () => {
       const input: CreateCleaningInput = { spaceId: f.spaceId, protocol: f.protocol, trigger: f.trigger, notes: f.notes.trim() || null }
-      return createCleaningTask(facilityId!, input)
+      return createCleaningTask(formFacilityId!, input)
     },
     onSuccess: () => { invalidate(); setOpen(false); setF(emptyForm) },
   })
+
+  // Changement d'établissement (admin système) : l'espace cible dépend de l'établissement, on le réinitialise.
+  const onPickFacility = (id: string) => { setFormFacilityId(id); set('spaceId', '') }
 
   const runSearch = () => setApplied({
     page: 1, pageSize: PAGE_SIZE,
@@ -91,14 +97,14 @@ export function HygienePage() {
   })
 
   const openDetail = (tk: CleaningTask) => { setSelectedCleaningTask(tk.id); void navigate({ to: '/admin/cleaning-task' as never }) }
-  const openNew = () => { setF(emptyForm); setOpen(true) }
+  const openNew = () => { resetFacility(); setF(emptyForm); setOpen(true) }
 
   const total = query.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
 
-  const canSubmit = f.spaceId !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && f.spaceId !== '' && !mutation.isPending
 
   if (!facilityId) return <div className={styles.root}><div className={styles.state}>{t('hygiene.noFacility')}</div></div>
 
@@ -186,6 +192,14 @@ export function HygienePage() {
             <DialogTitle>{t('hygiene.declare')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                />
                 <Field label={t('hygiene.fields.space')} required>
                   <Dropdown value={spaceLabel} selectedOptions={[f.spaceId]} placeholder={t('hygiene.form.selectSpace')}
                     onOptionSelect={(_, d) => set('spaceId', d.optionValue ?? '')}>

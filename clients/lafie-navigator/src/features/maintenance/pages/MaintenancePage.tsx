@@ -10,7 +10,8 @@ import {
 } from '@fluentui/react-components'
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { useActiveFacility } from '@features/auth'
+import { useActiveFacility, useFacilitySelector } from '@features/auth'
+import { EstablishmentField } from '@shared/components'
 import { getEquipmentList } from '@features/equipment/api'
 import { getSpacesByFacility } from '@features/space/api'
 import {
@@ -53,6 +54,8 @@ export function MaintenancePage() {
   const navigate = useNavigate()
   const setSelectedTicket = useAppStore((s) => s.setSelectedTicket)
   const facilityId = useActiveFacility()
+  // Établissement du formulaire : figé pour un admin d'établissement, choisi par l'admin système.
+  const { facilityId: formFacilityId, setFacilityId: setFormFacilityId, reset: resetFacility, globalAdmin, optionsLoading, options, establishmentName } = useFacilitySelector()
 
   const [draft, setDraft] = useState<{ search: string; status: string; criticality: string; openOnly: boolean }>({ search: '', status: ANY, criticality: ANY, openOnly: true })
   const [applied, setApplied] = useState<TicketFilter>({ page: 1, pageSize: PAGE_SIZE, openOnly: true })
@@ -66,16 +69,16 @@ export function MaintenancePage() {
     enabled: !!facilityId,
   })
 
-  // Cibles pour la déclaration : équipements et espaces de l'établissement.
+  // Cibles pour la déclaration : équipements et espaces de l'établissement choisi dans le formulaire.
   const equipment = useQuery({
-    queryKey: ['equipment', facilityId, 'all-targets'],
-    queryFn: () => getEquipmentList(facilityId!, { page: 1, pageSize: 200 }),
-    enabled: !!facilityId && open && f.targetType === 'Equipment',
+    queryKey: ['equipment', formFacilityId, 'all-targets'],
+    queryFn: () => getEquipmentList(formFacilityId!, { page: 1, pageSize: 200 }),
+    enabled: !!formFacilityId && open && f.targetType === 'Equipment',
   })
   const spaces = useQuery({
-    queryKey: ['spaces', facilityId, 'all-targets'],
-    queryFn: () => getSpacesByFacility(facilityId!),
-    enabled: !!facilityId && open && f.targetType === 'Space',
+    queryKey: ['spaces', formFacilityId, 'all-targets'],
+    queryFn: () => getSpacesByFacility(formFacilityId!),
+    enabled: !!formFacilityId && open && f.targetType === 'Space',
   })
 
   const targetOptions = useMemo(() => {
@@ -84,7 +87,7 @@ export function MaintenancePage() {
   }, [f.targetType, equipment.data, spaces.data])
   const targetLabel = targetOptions.find((o) => o.id === f.targetId)?.label ?? ''
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ticketKeys.all(facilityId ?? '') })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ticketKeys.all(formFacilityId ?? '') })
   const mutation = useMutation({
     mutationFn: () => {
       const input: CreateTicketInput = {
@@ -95,10 +98,13 @@ export function MaintenancePage() {
         criticality: f.criticality,
         blocking: f.blocking,
       }
-      return createTicket(facilityId!, input)
+      return createTicket(formFacilityId!, input)
     },
     onSuccess: () => { invalidate(); setOpen(false); setF(emptyForm) },
   })
+
+  // Changement d'établissement (admin système) : la cible dépend de l'établissement, on la réinitialise.
+  const onPickFacility = (id: string) => { setFormFacilityId(id); set('targetId', '') }
 
   const runSearch = () => setApplied({
     page: 1, pageSize: PAGE_SIZE,
@@ -109,14 +115,14 @@ export function MaintenancePage() {
   })
 
   const openDetail = (tk: MaintenanceTicket) => { setSelectedTicket(tk.id); void navigate({ to: '/admin/maintenance-ticket' as never }) }
-  const openNew = () => { setF(emptyForm); setOpen(true) }
+  const openNew = () => { resetFacility(); setF(emptyForm); setOpen(true) }
 
   const total = query.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = applied.page ?? 1
   const go = (p: number) => setApplied((a) => ({ ...a, page: Math.min(Math.max(1, p), totalPages) }))
 
-  const canSubmit = f.targetId !== '' && f.title.trim() !== '' && !mutation.isPending
+  const canSubmit = !!formFacilityId && f.targetId !== '' && f.title.trim() !== '' && !mutation.isPending
 
   if (!facilityId) return <div className={styles.root}><div className={styles.state}>{t('maintenance.noFacility')}</div></div>
 
@@ -209,6 +215,14 @@ export function MaintenancePage() {
             <DialogTitle>{t('maintenance.declare')}</DialogTitle>
             <DialogContent>
               <div className={styles.form}>
+                <EstablishmentField
+                  globalAdmin={globalAdmin}
+                  facilityId={formFacilityId}
+                  establishmentName={establishmentName}
+                  options={options}
+                  loading={optionsLoading}
+                  onPick={onPickFacility}
+                />
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('maintenance.fields.targetType')} required>
                     <Dropdown value={t(`maintenance.targetTypes.${f.targetType}`)} selectedOptions={[f.targetType]}
