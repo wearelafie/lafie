@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button,
   Field, Input, Spinner, Textarea,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { ArchiveRegular, BoxRegular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   allocateSet, getInstrumentSet, retireInstrumentSet, setKeys, transitionUsage,
   type AllocateSetInput, type UsageAction,
@@ -158,11 +158,17 @@ export function InstrumentSetDetailPage() {
         )}
       </div>
 
-      <Dialog open={allocOpen} onOpenChange={(_, d) => setAllocOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('sterilization.actions.allocate')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={allocOpen}
+        onOpenChange={setAllocOpen}
+        title={t('sterilization.actions.allocate')}
+        onSubmit={() => { if (a.interventionLabel.trim() !== '' && !allocMut.isPending) allocMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setAllocOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={a.interventionLabel.trim() === '' || allocMut.isPending}>
+            {t('sterilization.actions.allocate')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('sterilization.fields.intervention')} required>
                   <Input value={a.interventionLabel} onChange={(_, d) => setField('interventionLabel', d.value)} placeholder={t('sterilization.form.interventionPlaceholder')} />
@@ -183,16 +189,7 @@ export function InstrumentSetDetailPage() {
                 </Field>
                 {allocMut.isError && <span className={styles.error}>{(allocMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAllocOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={a.interventionLabel.trim() === '' || allocMut.isPending} onClick={() => allocMut.mutate()}>
-                {t('sterilization.actions.allocate')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }
