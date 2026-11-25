@@ -2,14 +2,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Spinner, Textarea,
+  Badge, Button, Dropdown, Field, Input, Option, Spinner, Textarea,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular, Delete20Regular, PersonAdd20Regular, PlayCircle20Regular, CheckmarkCircle20Regular, LockClosed20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   TICKET_ASSIGNEE_TYPES, addTicketPart, assignTicket, deleteTicketPart, getTicket, ticketKeys, transitionTicket,
   type TicketAction, type TicketAssigneeType,
@@ -148,12 +147,16 @@ export function MaintenanceTicketDetailPage() {
         )}
       </div>
 
-      {/* Dialogue d'affectation */}
-      <Dialog open={assignOpen} onOpenChange={(_, d) => setAssignOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('maintenance.actions.assign')}</DialogTitle>
-            <DialogContent>
+      {/* Tiroir d'affectation */}
+      <FormDrawer
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        title={t('maintenance.actions.assign')}
+        onSubmit={() => { if (assignRef.trim() !== '' && !assignMut.isPending) assignMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setAssignOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={assignRef.trim() === '' || assignMut.isPending}>{t('actions.save')}</Button>
+        </>}>
               <div className={styles.form}>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('maintenance.fields.assigneeType')}>
@@ -168,42 +171,36 @@ export function MaintenanceTicketDetailPage() {
                 </Field>
                 {assignMut.isError && <span className={styles.error}>{(assignMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAssignOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={assignRef.trim() === '' || assignMut.isPending} onClick={() => assignMut.mutate()}>{t('actions.save')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
 
-      {/* Dialogue de résolution */}
-      <Dialog open={resolveOpen} onOpenChange={(_, d) => setResolveOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('maintenance.actions.resolve')}</DialogTitle>
-            <DialogContent>
+      {/* Tiroir de résolution */}
+      <FormDrawer
+        open={resolveOpen}
+        onOpenChange={setResolveOpen}
+        title={t('maintenance.actions.resolve')}
+        onSubmit={() => { if (!transitionMut.isPending) transitionMut.mutate({ action: 'resolve', res: resolution.trim() || undefined }) }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setResolveOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={transitionMut.isPending}>{t('maintenance.actions.resolve')}</Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('maintenance.fields.resolution')}>
                   <Textarea value={resolution} onChange={(_, d) => setResolution(d.value)} resize="vertical" />
                 </Field>
                 {transitionMut.isError && <span className={styles.error}>{(transitionMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setResolveOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={transitionMut.isPending} onClick={() => transitionMut.mutate({ action: 'resolve', res: resolution.trim() || undefined })}>{t('maintenance.actions.resolve')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
 
-      {/* Dialogue d'ajout de pièce */}
-      <Dialog open={partOpen} onOpenChange={(_, d) => setPartOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('maintenance.parts.add')}</DialogTitle>
-            <DialogContent>
+      {/* Tiroir d'ajout de pièce */}
+      <FormDrawer
+        open={partOpen}
+        onOpenChange={setPartOpen}
+        title={t('maintenance.parts.add')}
+        onSubmit={() => { if (part.label.trim() !== '' && !addPartMut.isPending) addPartMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setPartOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={part.label.trim() === '' || addPartMut.isPending}>{t('actions.save')}</Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('maintenance.parts.fields.label')} required>
                   <Input value={part.label} onChange={(_, d) => setPart((s) => ({ ...s, label: d.value }))} />
@@ -221,14 +218,7 @@ export function MaintenanceTicketDetailPage() {
                 </div>
                 {addPartMut.isError && <span className={styles.error}>{(addPartMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setPartOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={part.label.trim() === '' || addPartMut.isPending} onClick={() => addPartMut.mutate()}>{t('actions.save')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

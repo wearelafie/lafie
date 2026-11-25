@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Badge, Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button, Checkbox,
   Dropdown, Field, Input, Option, SearchBox, Spinner, Textarea, Title3,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, mergeClasses, tokens,
@@ -11,7 +11,7 @@ import {
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
 import { useActiveFacility, useFacilitySelector } from '@features/auth'
-import { EstablishmentField } from '@shared/components'
+import { EstablishmentField, FormDrawer } from '@shared/components'
 import { getEquipmentList } from '@features/equipment/api'
 import { getSpacesByFacility } from '@features/space/api'
 import {
@@ -209,11 +209,17 @@ export function MaintenancePage() {
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('maintenance.next')}</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('maintenance.declare')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t('maintenance.declare')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('maintenance.form.submit')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <EstablishmentField
                   globalAdmin={globalAdmin}
@@ -256,16 +262,7 @@ export function MaintenancePage() {
                 <Checkbox label={t('maintenance.form.blockingHint')} checked={f.blocking} onChange={(_, d) => set('blocking', !!d.checked)} />
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('maintenance.form.submit')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button, Checkbox,
   Dropdown, Field, Input, Option, Spinner, Textarea,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular, Delete20Regular, PlayCircle20Regular, CheckmarkCircle20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   addSetToCycle, closeCycle, getCycle, getInstrumentSets, removeSetFromCycle, startCycle, cycleKeys,
   type CloseCycleInput,
@@ -160,11 +160,15 @@ export function SterilizationCycleDetailPage() {
         )}
       </div>
 
-      <Dialog open={addOpen} onOpenChange={(_, d) => setAddOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('sterilization.load.add')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        title={t('sterilization.load.add')}
+        onSubmit={() => { if (pickSetId !== '' && !addMut.isPending) addMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setAddOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={pickSetId === '' || addMut.isPending}>{t('sterilization.load.add')}</Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('sterilization.load.pickSet')} required>
                   <Dropdown value={pickLabel} selectedOptions={[pickSetId]} placeholder={t('sterilization.load.pickPlaceholder')}
@@ -179,20 +183,17 @@ export function SterilizationCycleDetailPage() {
                 <div className={styles.muted}>{t('sterilization.load.eligibleHint')}</div>
                 {addMut.isError && <span className={styles.error}>{(addMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAddOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={pickSetId === '' || addMut.isPending} onClick={() => addMut.mutate()}>{t('sterilization.load.add')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
 
-      <Dialog open={closeOpen} onOpenChange={(_, d) => setCloseOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('sterilization.close.title')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={closeOpen}
+        onOpenChange={setCloseOpen}
+        title={t('sterilization.close.title')}
+        onSubmit={() => { if (!closeMut.isPending) closeMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setCloseOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={closeMut.isPending}>{t('sterilization.actions.close')}</Button>
+        </>}>
               <div className={styles.form}>
                 <Checkbox label={t('sterilization.close.passed')} checked={c.passed} onChange={(_, d) => setField('passed', !!d.checked)} />
                 <div className={styles.muted}>{c.passed ? t('sterilization.close.passedHint') : t('sterilization.close.failedHint')}</div>
@@ -212,14 +213,7 @@ export function SterilizationCycleDetailPage() {
                 </Field>
                 {closeMut.isError && <span className={styles.error}>{(closeMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setCloseOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={closeMut.isPending} onClick={() => closeMut.mutate()}>{t('sterilization.actions.close')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

@@ -5,10 +5,9 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Textarea, makeStyles, tokens,
+  Button, Dropdown, Field, Input, Option, Textarea, makeStyles, tokens,
 } from '@fluentui/react-components'
-import { Dismiss24Regular } from '@fluentui/react-icons'
+import { FormDrawer } from '@shared/components'
 import {
   SERVICE_CATEGORIES, createService, getServices, serviceKeys, updateService, type Service,
 } from '../api'
@@ -102,14 +101,18 @@ export function ServiceFormDialog({
   const parentOptions = (parents.data?.items ?? []).filter((p) => p.id !== service?.id)
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <form onSubmit={onSubmit}>
-          <DialogBody>
-            <DialogTitle action={<Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} onClick={() => onOpenChange(false)} />}>
-              {isEdit ? t('service.edit') : t('service.new')}
-            </DialogTitle>
-            <DialogContent className={styles.form}>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? t('service.edit') : t('service.new')}
+      onSubmit={onSubmit}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('service.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? t('service.saving') : t('service.save')}
+        </Button>
+      </>}>
+            <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('service.fields.code')} required
                   validationMessage={formState.errors.code ? t('service.validation.code') : undefined}>
@@ -151,16 +154,7 @@ export function ServiceFormDialog({
                 <Textarea {...set('description')} resize="vertical" />
               </Field>
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('service.cancel')}</Button>
-              <Button appearance="primary" type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? t('service.saving') : t('service.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </form>
-      </DialogSurface>
-    </Dialog>
+            </div>
+    </FormDrawer>
   )
 }

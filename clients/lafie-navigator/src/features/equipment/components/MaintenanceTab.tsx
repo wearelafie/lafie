@@ -2,13 +2,12 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Spinner, Textarea,
+  Badge, Button, Dropdown, Field, Input, Option, Spinner, Textarea,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular, Edit20Regular, CheckmarkCircle20Regular, PlayCircle20Regular, DismissCircle20Regular } from '@fluentui/react-icons'
-import { RowActions, type RowAction } from '@shared/components'
+import { FormDrawer, RowActions, type RowAction } from '@shared/components'
 import {
   MAINTENANCE_STATUSES, MAINTENANCE_TYPES, createMaintenance, deleteMaintenance, getMaintenance,
   maintenanceKeys, setMaintenanceStatus, updateMaintenance,
@@ -127,11 +126,17 @@ export function MaintenanceTab({ equipmentId }: { equipmentId: string }) {
         </Table>
       )}
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t(editing ? 'equipment.maintenance.edit' : 'equipment.maintenance.new')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t(editing ? 'equipment.maintenance.edit' : 'equipment.maintenance.new')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('actions.save')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <div className={styles.row}>
                   <Field className={styles.grow} label={t('equipment.maintenance.fields.type')} required>
@@ -173,16 +178,7 @@ export function MaintenanceTab({ equipmentId }: { equipmentId: string }) {
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('actions.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

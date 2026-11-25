@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button,
   SearchBox, Spinner, Tab, TabList,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
-import { Add20Regular, Delete20Regular, Dismiss24Regular } from '@fluentui/react-icons'
+import { Add20Regular, Delete20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
 import { getOrganization } from '@features/organization/api'
 import { getService } from '@features/service/api'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   assignSpace, careUnitKeys, getCareUnit, getCareUnitSpaces, getFacilitySpaces, unassignSpace,
 } from '../api'
@@ -89,13 +89,11 @@ function SpacesPanel({ careUnitId, facilityId }: { careUnitId: string; facilityI
         </Table>
       )}
 
-      <Dialog open={pickerOpen} onOpenChange={(_, d) => setPickerOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle action={<Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} onClick={() => setPickerOpen(false)} />}>
-              {t('careUnit.assignSpace')}
-            </DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        title={t('careUnit.assignSpace')}
+        footer={<Button appearance="secondary" type="button" onClick={() => setPickerOpen(false)}>{t('careUnit.close')}</Button>}>
               <SearchBox value={search} onChange={(_, d) => setSearch(d.value)} placeholder={t('careUnit.spacePickerPlaceholder')} />
               {facilitySpaces.isPending && <div className={styles.state}><Spinner label={t('careUnit.loading')} /></div>}
               {facilitySpaces.isSuccess && candidates.length === 0 && <div className={styles.state}>{t('careUnit.noCandidateSpaces')}</div>}
@@ -108,13 +106,7 @@ function SpacesPanel({ careUnitId, facilityId }: { careUnitId: string; facilityI
                   </div>
                 ))}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setPickerOpen(false)}>{t('careUnit.close')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

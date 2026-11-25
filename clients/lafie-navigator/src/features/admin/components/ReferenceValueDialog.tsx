@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Field, Input, Spinner, makeStyles, tokens,
+  Button, Checkbox, Field, Input, Spinner, makeStyles, tokens,
 } from '@fluentui/react-components'
+import { FormDrawer } from '@shared/components'
 import {
   createReferenceValue, updateReferenceValue, type ReferenceValueAdmin,
 } from '@features/reference/api'
@@ -60,11 +60,17 @@ export function ReferenceValueDialog({ open, onOpenChange, category, editing }: 
   const canSubmit = code.trim() !== '' && labelFr.trim() !== '' && labelEn.trim() !== '' && !mutation.isPending
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>{t(isEdit ? 'adminRef.values.edit' : 'adminRef.values.new')} · {category}</DialogTitle>
-          <DialogContent>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`${t(isEdit ? 'adminRef.values.edit' : 'adminRef.values.new')} · ${category}`}
+      onSubmit={() => { if (canSubmit) mutation.mutate() }}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('actions.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+          {t('actions.save')}
+        </Button>
+      </>}>
             <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('adminRef.fields.code')} required>
@@ -83,15 +89,6 @@ export function ReferenceValueDialog({ open, onOpenChange, category, editing }: 
               <Checkbox label={t('adminRef.fields.active')} checked={active} onChange={(_, d) => setActive(!!d.checked)} />
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
             </div>
-          </DialogContent>
-          <DialogActions>
-            <Button appearance="secondary" onClick={() => onOpenChange(false)}>{t('actions.cancel')}</Button>
-            <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-              {t('actions.save')}
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
-    </Dialog>
+    </FormDrawer>
   )
 }

@@ -164,7 +164,7 @@ const resources = {
       },
       actions: {
         show: 'Voir', edit: 'Modifier', delete: 'Supprimer', deleting: 'Suppression…',
-        archive: 'Archiver', restore: 'Restaurer', more: 'Plus', cancel: 'Annuler', save: 'Enregistrer', create: 'Créer',
+        archive: 'Archiver', restore: 'Restaurer', more: 'Plus', cancel: 'Annuler', save: 'Enregistrer', create: 'Créer', close: 'Fermer',
         showArchived: 'Afficher les archivés',
         confirmDeleteTitle: 'Confirmer la suppression',
         confirmDeleteMessage: 'Cette action est définitive. Continuer ?',
@@ -1038,7 +1038,7 @@ const resources = {
       },
       actions: {
         show: 'View', edit: 'Edit', delete: 'Delete', deleting: 'Deleting…',
-        archive: 'Archive', restore: 'Restore', more: 'More', cancel: 'Cancel', save: 'Save', create: 'Create',
+        archive: 'Archive', restore: 'Restore', more: 'More', cancel: 'Cancel', save: 'Save', create: 'Create', close: 'Close',
         showArchived: 'Show archived',
         confirmDeleteTitle: 'Confirm deletion',
         confirmDeleteMessage: 'This action is permanent. Continue?',
