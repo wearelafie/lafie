@@ -7,12 +7,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
   Checkbox,
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
-  DialogTitle,
   Dropdown,
   Field,
   Input,
@@ -21,7 +15,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { Dismiss24Regular } from '@fluentui/react-icons'
+import { FormDrawer } from '@shared/components'
 import { SPACE_TYPES, createSpace, spaceKeys, updateSpace, type Space, type SpaceType } from '../api'
 
 const useStyles = makeStyles({
@@ -101,16 +95,18 @@ export function SpaceFormDialog({
   const onSubmit = handleSubmit((values) => mutation.mutate(values))
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <form onSubmit={onSubmit}>
-          <DialogBody>
-            <DialogTitle
-              action={<Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} onClick={() => onOpenChange(false)} />}
-            >
-              {isEdit ? t('space.edit') : t('space.new')}
-            </DialogTitle>
-            <DialogContent className={styles.form}>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? t('space.edit') : t('space.new')}
+      onSubmit={onSubmit}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('space.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? t('space.saving') : t('space.save')}
+        </Button>
+      </>}>
+            <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('space.fields.code')} required
                   validationMessage={formState.errors.code ? t('space.validation.code') : undefined}>
@@ -146,16 +142,7 @@ export function SpaceFormDialog({
                 <Textarea {...set('description')} resize="vertical" />
               </Field>
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('space.cancel')}</Button>
-              <Button appearance="primary" type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? t('space.saving') : t('space.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </form>
-      </DialogSurface>
-    </Dialog>
+            </div>
+    </FormDrawer>
   )
 }

@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button, Checkbox,
   Field, Input, ProgressBar, Spinner,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular, Delete20Regular, PersonAdd20Regular, PlayCircle20Regular, CheckmarkCircle20Regular, DismissCircle20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   addCleaningItem, assignCleaningTask, cleaningKeys, deleteCleaningItem, getCleaningTask, toggleCleaningItem, transitionCleaningTask,
   type CleaningAction,
@@ -151,23 +151,20 @@ export function CleaningTaskDetailPage() {
         )}
       </div>
 
-      <Dialog open={assignOpen} onOpenChange={(_, d) => setAssignOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('hygiene.actions.assign')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        title={t('hygiene.actions.assign')}
+        onSubmit={() => { if (assignTo.trim() !== '' && !assignMut.isPending) assignMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setAssignOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={assignTo.trim() === '' || assignMut.isPending}>{t('actions.save')}</Button>
+        </>}>
               <Field label={t('hygiene.fields.assignee')} required>
                 <Input value={assignTo} onChange={(_, d) => setAssignTo(d.value)} placeholder={t('hygiene.form.assigneePlaceholder')} />
               </Field>
               {assignMut.isError && <span className={styles.error}>{(assignMut.error as Error).message}</span>}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAssignOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={assignTo.trim() === '' || assignMut.isPending} onClick={() => assignMut.mutate()}>{t('actions.save')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

@@ -6,19 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
-  DialogTitle,
   Field,
   Input,
   Textarea,
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { Dismiss24Regular } from '@fluentui/react-icons'
+import { FormDrawer } from '@shared/components'
 import { buildingKeys, createBuilding, updateBuilding, type Building } from '../api'
 
 const useStyles = makeStyles({
@@ -84,16 +78,18 @@ export function BuildingFormDialog({
   const onSubmit = handleSubmit((values) => mutation.mutate(values))
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <form onSubmit={onSubmit}>
-          <DialogBody>
-            <DialogTitle
-              action={<Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} onClick={() => onOpenChange(false)} />}
-            >
-              {isEdit ? t('building.edit') : t('building.new')}
-            </DialogTitle>
-            <DialogContent className={styles.form}>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? t('building.edit') : t('building.new')}
+      onSubmit={onSubmit}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('building.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? t('building.saving') : t('building.save')}
+        </Button>
+      </>}>
+            <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('building.fields.code')} required
                   validationMessage={formState.errors.code ? t('building.validation.code') : undefined}>
@@ -111,16 +107,7 @@ export function BuildingFormDialog({
                 <Textarea {...set('description')} resize="vertical" />
               </Field>
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('building.cancel')}</Button>
-              <Button appearance="primary" type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? t('building.saving') : t('building.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </form>
-      </DialogSurface>
-    </Dialog>
+            </div>
+    </FormDrawer>
   )
 }

@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Spinner, Textarea,
+  Button, Dropdown, Field, Input, Option, Spinner, Textarea,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular } from '@fluentui/react-icons'
-import { RowActions } from '@shared/components'
+import { FormDrawer, RowActions } from '@shared/components'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   createMovement, deleteMovement, getMovements, movementKeys, type MovementInput,
@@ -114,11 +113,17 @@ export function MovementsTab({ equipmentId, facilityId, currentSpaceId }: { equi
         </Table>
       )}
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('equipment.movements.new')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t('equipment.movements.new')}
+        onSubmit={() => { if (!mutation.isPending) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={mutation.isPending} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('actions.save')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('equipment.movements.fields.movedOn')} required>
                   <Input type="date" value={movedOn} onChange={(_, d) => setMovedOn(d.value)} />
@@ -152,16 +157,7 @@ export function MovementsTab({ equipmentId, facilityId, currentSpaceId }: { equi
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={mutation.isPending} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('actions.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

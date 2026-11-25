@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button,
   Dropdown, Field, Option, Spinner,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, tokens,
 } from '@fluentui/react-components'
 import { Add20Regular, CheckmarkCircle20Regular, Delete20Regular, DismissCircle20Regular, VehicleTruck20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
-import { DetailHeader, FieldList, type Crumb, type FieldRow } from '@shared/components'
+import { DetailHeader, FieldList, FormDrawer, type Crumb, type FieldRow } from '@shared/components'
 import {
   WASTE_TREATMENTS, addCollectionToSlip, cancelWasteSlip, getWasteCollections, getWasteSlip,
   removeCollectionFromSlip, shipWasteSlip, slipKeys, treatWasteSlip,
@@ -156,11 +156,15 @@ export function WasteSlipDetailPage() {
         )}
       </div>
 
-      <Dialog open={addOpen} onOpenChange={(_, d) => setAddOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('waste.lines.add')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        title={t('waste.lines.add')}
+        onSubmit={() => { if (pickId !== '' && !addMut.isPending) addMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setAddOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={pickId === '' || addMut.isPending}>{t('waste.lines.add')}</Button>
+        </>}>
               <div className={styles.form}>
                 <Field label={t('waste.lines.pickCollection')} required>
                   <Dropdown value={pickLabel} selectedOptions={[pickId]} placeholder={t('waste.lines.pickPlaceholder')}
@@ -175,20 +179,17 @@ export function WasteSlipDetailPage() {
                 <div className={styles.muted}>{t('waste.lines.eligibleHint')}</div>
                 {addMut.isError && <span className={styles.error}>{(addMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAddOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={pickId === '' || addMut.isPending} onClick={() => addMut.mutate()}>{t('waste.lines.add')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
 
-      <Dialog open={treatOpen} onOpenChange={(_, d) => setTreatOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('waste.actions.treat')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={treatOpen}
+        onOpenChange={setTreatOpen}
+        title={t('waste.actions.treat')}
+        onSubmit={() => { if (!treatMut.isPending) treatMut.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setTreatOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={treatMut.isPending}>{t('waste.actions.treat')}</Button>
+        </>}>
               <div className={styles.form}>
                 <div className={styles.muted}>{t('waste.treat.hint')}</div>
                 <Field label={t('waste.fields.treatment')}>
@@ -200,14 +201,7 @@ export function WasteSlipDetailPage() {
                 </Field>
                 {treatMut.isError && <span className={styles.error}>{(treatMut.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setTreatOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={treatMut.isPending} onClick={() => treatMut.mutate()}>{t('waste.actions.treat')}</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </div>
   )
 }

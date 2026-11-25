@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Spinner, makeStyles, tokens,
+  Button, Dropdown, Field, Input, Option, Spinner, makeStyles, tokens,
 } from '@fluentui/react-components'
+import { FormDrawer } from '@shared/components'
 import {
   GEO_LEVELS, createGeoDivision, geoParentLevel, getGeoDivisions, referenceKeys, updateGeoDivision,
   type GeoDivision, type GeoLevel,
@@ -69,11 +69,17 @@ export function GeoDivisionDialog({ open, onOpenChange, editing, defaultLevel }:
   const canSubmit = code.trim() !== '' && name.trim() !== '' && (!needsParent || parentCode !== '') && !mutation.isPending
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>{t(isEdit ? 'adminGeo.edit' : 'adminGeo.new')}</DialogTitle>
-          <DialogContent>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t(isEdit ? 'adminGeo.edit' : 'adminGeo.new')}
+      onSubmit={() => { if (canSubmit) mutation.mutate() }}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('actions.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+          {t('actions.save')}
+        </Button>
+      </>}>
             <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('adminGeo.fields.level')} required>
@@ -113,15 +119,6 @@ export function GeoDivisionDialog({ open, onOpenChange, editing, defaultLevel }:
 
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
             </div>
-          </DialogContent>
-          <DialogActions>
-            <Button appearance="secondary" onClick={() => onOpenChange(false)}>{t('actions.cancel')}</Button>
-            <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-              {t('actions.save')}
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
-    </Dialog>
+    </FormDrawer>
   )
 }
