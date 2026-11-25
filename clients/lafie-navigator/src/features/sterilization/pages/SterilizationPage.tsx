@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button,
   Dropdown, Field, Input, Option, SearchBox, Spinner, Tab, TabList, Textarea, Title3,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, mergeClasses, tokens,
@@ -11,7 +11,7 @@ import {
 import { Add20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
 import { useActiveFacility, useCurrentUser, useFacilitySelector } from '@features/auth'
-import { EstablishmentField } from '@shared/components'
+import { EstablishmentField, FormDrawer } from '@shared/components'
 import {
   SET_STATUSES, CYCLE_STATUSES, setKeys, cycleKeys, createInstrumentSet, createCycle, getInstrumentSets, getCycles,
   type InstrumentSet, type InstrumentSetFilter, type SterilizationCycle, type SterilizationCycleFilter,
@@ -204,11 +204,17 @@ function SetsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: Instr
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('sterilization.next')}</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('sterilization.sets.create')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t('sterilization.sets.create')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('actions.create')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <EstablishmentField
                   globalAdmin={globalAdmin}
@@ -237,16 +243,7 @@ function SetsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: Instr
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('actions.create')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </>
   )
 }
@@ -358,11 +355,17 @@ function CyclesTab({ facilityId, defaultOperator, onOpen }: { facilityId: string
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('sterilization.next')}</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('sterilization.cycles.create')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t('sterilization.cycles.create')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('actions.create')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <EstablishmentField
                   globalAdmin={globalAdmin}
@@ -388,16 +391,7 @@ function CyclesTab({ facilityId, defaultOperator, onOpen }: { facilityId: string
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('actions.create')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </>
   )
 }

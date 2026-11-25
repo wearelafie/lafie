@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Badge, Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Badge, Button, Checkbox,
   Dropdown, Field, Input, Option, SearchBox, Spinner, Tab, TabList, Textarea, Title3,
   Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow,
   makeStyles, mergeClasses, tokens,
@@ -11,7 +11,7 @@ import {
 import { Add20Regular, DismissCircle20Regular, Edit20Regular, Search20Regular } from '@fluentui/react-icons'
 import { useAppStore } from '@app/store/appStore'
 import { useActiveFacility, useCurrentUser, useFacilitySelector } from '@features/auth'
-import { EstablishmentField } from '@shared/components'
+import { EstablishmentField, FormDrawer } from '@shared/components'
 import { getSpacesByFacility } from '@features/space/api'
 import {
   WASTE_STREAMS, COLLECTION_STATUSES, SLIP_STATUSES, WASTE_TREATMENTS,
@@ -237,11 +237,17 @@ function CollectionsTab({ facilityId, defaultCollector }: { facilityId: string; 
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('waste.next')}</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{f.id ? t('waste.collections.edit') : t('waste.collections.create')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={f.id ? t('waste.collections.edit') : t('waste.collections.create')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {f.id ? t('actions.save') : t('actions.create')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <EstablishmentField
                   globalAdmin={globalAdmin}
@@ -288,16 +294,7 @@ function CollectionsTab({ facilityId, defaultCollector }: { facilityId: string; 
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {f.id ? t('actions.save') : t('actions.create')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </>
   )
 }
@@ -418,11 +415,17 @@ function SlipsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: Wast
         <Button size="small" appearance="subtle" disabled={page >= totalPages} onClick={() => go(page + 1)}>{t('waste.next')}</Button>
       </div>
 
-      <Dialog open={open} onOpenChange={(_, d) => setOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>{t('waste.slips.create')}</DialogTitle>
-            <DialogContent>
+      <FormDrawer
+        open={open}
+        onOpenChange={setOpen}
+        title={t('waste.slips.create')}
+        onSubmit={() => { if (canSubmit) mutation.mutate() }}
+        footer={<>
+          <Button appearance="secondary" type="button" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
+          <Button appearance="primary" type="submit" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined}>
+            {t('actions.create')}
+          </Button>
+        </>}>
               <div className={styles.form}>
                 <EstablishmentField
                   globalAdmin={globalAdmin}
@@ -458,16 +461,7 @@ function SlipsTab({ facilityId, onOpen }: { facilityId: string; onOpen: (s: Wast
                 </Field>
                 {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setOpen(false)}>{t('actions.cancel')}</Button>
-              <Button appearance="primary" disabled={!canSubmit} icon={mutation.isPending ? <Spinner size="tiny" /> : undefined} onClick={() => mutation.mutate()}>
-                {t('actions.create')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      </FormDrawer>
     </>
   )
 }

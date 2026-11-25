@@ -5,10 +5,9 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
-  Dropdown, Field, Input, Option, Textarea, makeStyles, tokens,
+  Button, Dropdown, Field, Input, Option, Textarea, makeStyles, tokens,
 } from '@fluentui/react-components'
-import { Dismiss24Regular } from '@fluentui/react-icons'
+import { FormDrawer } from '@shared/components'
 import { CARE_UNIT_TYPES, careUnitKeys, createCareUnit, updateCareUnit, type CareUnit } from '../api'
 
 const useStyles = makeStyles({
@@ -87,14 +86,18 @@ export function CareUnitFormDialog({
   const onSubmit = handleSubmit((values) => mutation.mutate(values))
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => onOpenChange(d.open)}>
-      <DialogSurface>
-        <form onSubmit={onSubmit}>
-          <DialogBody>
-            <DialogTitle action={<Button appearance="subtle" icon={<Dismiss24Regular />} aria-label={t('settings.close')} onClick={() => onOpenChange(false)} />}>
-              {isEdit ? t('careUnit.edit') : t('careUnit.new')}
-            </DialogTitle>
-            <DialogContent className={styles.form}>
+    <FormDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? t('careUnit.edit') : t('careUnit.new')}
+      onSubmit={onSubmit}
+      footer={<>
+        <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('careUnit.cancel')}</Button>
+        <Button appearance="primary" type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? t('careUnit.saving') : t('careUnit.save')}
+        </Button>
+      </>}>
+            <div className={styles.form}>
               <div className={styles.row}>
                 <Field className={styles.grow} label={t('careUnit.fields.code')} required
                   validationMessage={formState.errors.code ? t('careUnit.validation.code') : undefined}>
@@ -125,16 +128,7 @@ export function CareUnitFormDialog({
                 <Textarea {...set('description')} resize="vertical" />
               </Field>
               {mutation.isError && <span className={styles.error}>{(mutation.error as Error).message}</span>}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" type="button" onClick={() => onOpenChange(false)}>{t('careUnit.cancel')}</Button>
-              <Button appearance="primary" type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? t('careUnit.saving') : t('careUnit.save')}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </form>
-      </DialogSurface>
-    </Dialog>
+            </div>
+    </FormDrawer>
   )
 }
