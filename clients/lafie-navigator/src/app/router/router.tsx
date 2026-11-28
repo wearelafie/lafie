@@ -16,7 +16,7 @@ import { MaintenancePage, MaintenanceTicketDetailPage } from '@features/maintena
 import { HygienePage, CleaningTaskDetailPage } from '@features/hygiene'
 import { SterilizationPage, InstrumentSetDetailPage, SterilizationCycleDetailPage } from '@features/sterilization'
 import { WastePage, WasteSlipDetailPage } from '@features/waste'
-import { PharmacyCatalogPage, PharmacyStockPage, PharmacyOrdersPage } from '@features/pharmacy'
+import { PharmacyCatalogPage, PharmacyStockPage, PharmacyOrdersPage, PharmacyDispensingPage } from '@features/pharmacy'
 import { PlaceholderPage } from '@shared/components'
 import { flatRoutes } from '@app/nav/navModel'
 
@@ -35,6 +35,7 @@ const implemented: Record<string, () => ReactElement> = {
   '/pharmacy/catalog': PharmacyCatalogPage,
   '/pharmacy/stock': PharmacyStockPage,
   '/pharmacy/orders': PharmacyOrdersPage,
+  '/pharmacy/dispensing': PharmacyDispensingPage,
 }
 
 // Routage code-based. Les routes modules sont générées depuis le modèle de nav

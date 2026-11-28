@@ -125,7 +125,7 @@ export const navItems: NavItem[] = [
     icon: <PharmacyIcon />,
     children: [
       { key: 'catalog', to: '/pharmacy/catalog', labelKey: 'nav.sub.pharmacy.catalog', icon: <List20Regular /> },
-      { key: 'dispensing', to: '/pharmacy', labelKey: 'nav.sub.pharmacy.dispensing', icon: <Pill20Regular /> },
+      { key: 'dispensing', to: '/pharmacy/dispensing', labelKey: 'nav.sub.pharmacy.dispensing', icon: <Pill20Regular /> },
       { key: 'stock', to: '/pharmacy/stock', labelKey: 'nav.sub.pharmacy.stock', icon: <Box20Regular /> },
       { key: 'orders', to: '/pharmacy/orders', labelKey: 'nav.sub.pharmacy.orders', icon: <Cart20Regular /> },
       { key: 'interactions', to: '/pharmacy/interactions', labelKey: 'nav.sub.pharmacy.interactions', icon: <Warning20Regular /> },
