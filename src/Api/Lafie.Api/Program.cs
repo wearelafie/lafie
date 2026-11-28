@@ -124,6 +124,7 @@ app.MapMedicationEndpoints();
 app.MapStockEndpoints();
 app.MapSupplierEndpoints();
 app.MapPurchaseOrderEndpoints();
+app.MapPrescriptionEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();

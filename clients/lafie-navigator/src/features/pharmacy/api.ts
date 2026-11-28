@@ -347,3 +347,76 @@ export function cancelPurchaseOrder(id: string): Promise<void> {
 export function receivePurchaseOrderLine(orderId: string, lineId: string, input: ReceiveLineInput): Promise<void> {
   return postJson<void>(`/api/pharmacy/purchase-orders/${orderId}/lines/${lineId}/receive`, input)
 }
+
+// --- Prescriptions & dispensation ---
+
+export const PRESCRIPTION_STATUSES = ['Active', 'Completed', 'Cancelled'] as const
+export type PrescriptionStatus = (typeof PRESCRIPTION_STATUSES)[number]
+
+export type Prescription = {
+  id: string
+  facilityId: string
+  patientId: string | null
+  patientName: string
+  patientReference: string | null
+  prescriberName: string | null
+  reference: string | null
+  status: PrescriptionStatus
+  prescribedOn: string | null
+  lineCount: number
+  totalPrescribed: number
+  totalDispensed: number
+  notes: string | null
+}
+
+export type PrescriptionLine = {
+  id: string
+  prescriptionId: string
+  medicationId: string
+  medicationCode: string
+  medicationName: string
+  unit: string
+  dosage: string | null
+  quantityPrescribed: number
+  quantityDispensed: number
+}
+
+export type PrescriptionDetail = { header: Prescription; lines: PrescriptionLine[] }
+
+export type PrescriptionLineInput = { medicationId: string; dosage?: string | null; quantityPrescribed: number }
+export type PrescriptionFilter = { search?: string; status?: string; page?: number; pageSize?: number }
+export type CreatePrescriptionInput = {
+  patientName: string; patientReference?: string | null; prescriberName?: string | null; reference?: string | null
+  prescribedOn?: string | null; notes?: string | null; lines: PrescriptionLineInput[]
+}
+
+export const prescriptionKeys = {
+  all: (facilityId: string) => ['prescriptions', facilityId] as const,
+  list: (facilityId: string, f: PrescriptionFilter) => ['prescriptions', facilityId, 'list', f] as const,
+  detail: (id: string) => ['prescriptions', 'detail', id] as const,
+}
+
+export function getPrescriptions(facilityId: string, filter: PrescriptionFilter): Promise<PagedResult<Prescription>> {
+  const q = new URLSearchParams()
+  if (filter.search) q.set('search', filter.search)
+  if (filter.status) q.set('status', filter.status)
+  q.set('page', String(filter.page ?? 1))
+  q.set('pageSize', String(filter.pageSize ?? 20))
+  return getJson<PagedResult<Prescription>>(`/api/facilities/${facilityId}/pharmacy/prescriptions?${q.toString()}`)
+}
+
+export function getPrescription(id: string): Promise<PrescriptionDetail> {
+  return getJson<PrescriptionDetail>(`/api/pharmacy/prescriptions/${id}`)
+}
+
+export function createPrescription(facilityId: string, input: CreatePrescriptionInput): Promise<{ id: string }> {
+  return postJson<{ id: string }>(`/api/facilities/${facilityId}/pharmacy/prescriptions`, input)
+}
+
+export function cancelPrescription(id: string): Promise<void> {
+  return postJson<void>(`/api/pharmacy/prescriptions/${id}/cancel`, {})
+}
+
+export function dispensePrescriptionLine(prescriptionId: string, lineId: string, quantity: number, performedBy?: string | null): Promise<void> {
+  return postJson<void>(`/api/pharmacy/prescriptions/${prescriptionId}/lines/${lineId}/dispense`, { quantity, performedBy: performedBy ?? null })
+}
