@@ -122,6 +122,8 @@ app.MapWasteCollectionEndpoints();
 app.MapWasteSlipEndpoints();
 app.MapMedicationEndpoints();
 app.MapStockEndpoints();
+app.MapSupplierEndpoints();
+app.MapPurchaseOrderEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();
