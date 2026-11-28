@@ -37,6 +37,12 @@
     <Project Path="src/Modules/Patient/Lafie.Patient.Domain/Lafie.Patient.Domain.csproj" />
     <Project Path="src/Modules/Patient/Lafie.Patient.Infrastructure/Lafie.Patient.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Pharmacy/">
+    <Project Path="src/Modules/Pharmacy/Lafie.Pharmacy.Api/Lafie.Pharmacy.Api.csproj" />
+    <Project Path="src/Modules/Pharmacy/Lafie.Pharmacy.Application/Lafie.Pharmacy.Application.csproj" />
+    <Project Path="src/Modules/Pharmacy/Lafie.Pharmacy.Domain/Lafie.Pharmacy.Domain.csproj" />
+    <Project Path="src/Modules/Pharmacy/Lafie.Pharmacy.Infrastructure/Lafie.Pharmacy.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Terminology/">
     <Project Path="src/Modules/Terminology/Lafie.Terminology.Api/Lafie.Terminology.Api.csproj" />
     <Project Path="src/Modules/Terminology/Lafie.Terminology.Application/Lafie.Terminology.Application.csproj" />

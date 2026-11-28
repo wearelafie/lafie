@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\Modules\Identity\Lafie.Identity.Api\Lafie.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Organization\Lafie.Organization.Api\Lafie.Organization.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Patient\Lafie.Patient.Api\Lafie.Patient.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Pharmacy\Lafie.Pharmacy.Api\Lafie.Pharmacy.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Terminology\Lafie.Terminology.Api\Lafie.Terminology.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Interop\Lafie.Interop.Api\Lafie.Interop.Api.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\Lafie.Persistence\Lafie.Persistence.csproj" />

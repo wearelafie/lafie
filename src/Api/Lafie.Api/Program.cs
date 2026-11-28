@@ -9,6 +9,7 @@ using Lafie.Persistence.Migrations;
 using Lafie.Interop.Api;
 using Lafie.Organization.Api;
 using Lafie.Patient.Api;
+using Lafie.Pharmacy.Api;
 using Lafie.Terminology.Api;
 using Lafie.Web.Authorization;
 using Lafie.Web.Context;
@@ -51,6 +52,7 @@ builder.Services
     .AddIdentityModule()
     .AddOrganizationModule()
     .AddPatientModule()
+    .AddPharmacyModule()
     .AddTerminologyModule()
     .AddInteropModule();
 
@@ -118,6 +120,7 @@ app.MapInstrumentSetEndpoints();
 app.MapSterilizationCycleEndpoints();
 app.MapWasteCollectionEndpoints();
 app.MapWasteSlipEndpoints();
+app.MapMedicationEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok", phase = "0-skeleton" })).AllowAnonymous();
