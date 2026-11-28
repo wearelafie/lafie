@@ -213,3 +213,137 @@ export function setReorderThreshold(facilityId: string, medicationId: string, th
 export function adjustLot(lotId: string, newQuantityOnHand: number, reason?: string | null, performedBy?: string | null): Promise<void> {
   return postJson<void>(`/api/pharmacy/stock/lots/${lotId}/adjust`, { newQuantityOnHand, reason: reason ?? null, performedBy: performedBy ?? null })
 }
+
+// --- Fournisseurs ---
+
+export type Supplier = {
+  id: string
+  facilityId: string
+  code: string
+  name: string
+  contactName: string | null
+  email: string | null
+  phone: string | null
+  address: string | null
+  active: boolean
+  notes: string | null
+  createdOnUtc: string
+  updatedOnUtc: string | null
+}
+
+export type SupplierFilter = { search?: string; active?: boolean; page?: number; pageSize?: number }
+export type SupplierInput = {
+  code: string; name: string; contactName?: string | null; email?: string | null
+  phone?: string | null; address?: string | null; notes?: string | null
+}
+
+export const supplierKeys = {
+  all: (facilityId: string) => ['suppliers', facilityId] as const,
+  list: (facilityId: string, f: SupplierFilter) => ['suppliers', facilityId, 'list', f] as const,
+}
+
+export function getSuppliers(facilityId: string, filter: SupplierFilter): Promise<PagedResult<Supplier>> {
+  const q = new URLSearchParams()
+  if (filter.search) q.set('search', filter.search)
+  if (filter.active != null) q.set('active', String(filter.active))
+  q.set('page', String(filter.page ?? 1))
+  q.set('pageSize', String(filter.pageSize ?? 20))
+  return getJson<PagedResult<Supplier>>(`/api/facilities/${facilityId}/pharmacy/suppliers?${q.toString()}`)
+}
+
+export function createSupplier(facilityId: string, input: SupplierInput): Promise<{ id: string }> {
+  return postJson<{ id: string }>(`/api/facilities/${facilityId}/pharmacy/suppliers`, input)
+}
+
+export function updateSupplier(id: string, input: Omit<SupplierInput, 'code'>): Promise<void> {
+  return putJson(`/api/pharmacy/suppliers/${id}`, input)
+}
+
+export function setSupplierStatus(id: string, active: boolean): Promise<void> {
+  return postJson<void>(`/api/pharmacy/suppliers/${id}/status`, { active })
+}
+
+// --- Bons de commande ---
+
+export const PURCHASE_ORDER_STATUSES = ['Draft', 'Ordered', 'PartiallyReceived', 'Received', 'Cancelled'] as const
+export type PurchaseOrderStatus = (typeof PURCHASE_ORDER_STATUSES)[number]
+
+export type PurchaseOrder = {
+  id: string
+  facilityId: string
+  supplierId: string
+  supplierName: string
+  reference: string
+  status: PurchaseOrderStatus
+  orderDate: string | null
+  expectedOn: string | null
+  lineCount: number
+  totalOrdered: number
+  totalReceived: number
+  totalAmount: number
+  notes: string | null
+}
+
+export type PurchaseOrderLine = {
+  id: string
+  purchaseOrderId: string
+  medicationId: string
+  medicationCode: string
+  medicationName: string
+  unit: string
+  quantityOrdered: number
+  quantityReceived: number
+  unitPrice: number | null
+}
+
+export type PurchaseOrderDetail = { header: PurchaseOrder; lines: PurchaseOrderLine[] }
+
+export type PurchaseOrderLineInput = { medicationId: string; quantityOrdered: number; unitPrice?: number | null }
+export type PurchaseOrderFilter = { search?: string; status?: string; supplierId?: string; page?: number; pageSize?: number }
+export type CreatePurchaseOrderInput = {
+  supplierId: string; reference: string; orderDate?: string | null; expectedOn?: string | null
+  notes?: string | null; lines: PurchaseOrderLineInput[]
+}
+export type ReceiveLineInput = {
+  quantity: number; lotNumber?: string | null; expiryOn?: string | null; receivedOn?: string | null; performedBy?: string | null
+}
+
+export const purchaseOrderKeys = {
+  all: (facilityId: string) => ['purchase-orders', facilityId] as const,
+  list: (facilityId: string, f: PurchaseOrderFilter) => ['purchase-orders', facilityId, 'list', f] as const,
+  detail: (id: string) => ['purchase-orders', 'detail', id] as const,
+}
+
+export function getPurchaseOrders(facilityId: string, filter: PurchaseOrderFilter): Promise<PagedResult<PurchaseOrder>> {
+  const q = new URLSearchParams()
+  if (filter.search) q.set('search', filter.search)
+  if (filter.status) q.set('status', filter.status)
+  if (filter.supplierId) q.set('supplierId', filter.supplierId)
+  q.set('page', String(filter.page ?? 1))
+  q.set('pageSize', String(filter.pageSize ?? 20))
+  return getJson<PagedResult<PurchaseOrder>>(`/api/facilities/${facilityId}/pharmacy/purchase-orders?${q.toString()}`)
+}
+
+export function getPurchaseOrder(id: string): Promise<PurchaseOrderDetail> {
+  return getJson<PurchaseOrderDetail>(`/api/pharmacy/purchase-orders/${id}`)
+}
+
+export function createPurchaseOrder(facilityId: string, input: CreatePurchaseOrderInput): Promise<{ id: string }> {
+  return postJson<{ id: string }>(`/api/facilities/${facilityId}/pharmacy/purchase-orders`, input)
+}
+
+export function updatePurchaseOrder(id: string, input: Omit<CreatePurchaseOrderInput, 'reference'>): Promise<void> {
+  return putJson(`/api/pharmacy/purchase-orders/${id}`, input)
+}
+
+export function submitPurchaseOrder(id: string): Promise<void> {
+  return postJson<void>(`/api/pharmacy/purchase-orders/${id}/submit`, {})
+}
+
+export function cancelPurchaseOrder(id: string): Promise<void> {
+  return postJson<void>(`/api/pharmacy/purchase-orders/${id}/cancel`, {})
+}
+
+export function receivePurchaseOrderLine(orderId: string, lineId: string, input: ReceiveLineInput): Promise<void> {
+  return postJson<void>(`/api/pharmacy/purchase-orders/${orderId}/lines/${lineId}/receive`, input)
+}

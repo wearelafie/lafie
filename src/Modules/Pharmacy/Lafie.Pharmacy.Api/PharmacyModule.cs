@@ -1,4 +1,5 @@
 using Lafie.Pharmacy.Application.Catalog;
+using Lafie.Pharmacy.Application.Purchasing;
 using Lafie.Pharmacy.Application.Stock;
 using Lafie.Pharmacy.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,8 @@ public static class PharmacyModule
     {
         services.AddScoped<IMedicationRepository, MedicationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
+        services.AddScoped<ISupplierRepository, SupplierRepository>();
+        services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
         return services;
     }
 }
